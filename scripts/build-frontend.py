@@ -30,6 +30,9 @@ for filename,mod in [('Painel.html','painel'),('GastosIndex.html','gastos'),('Fo
   s=s.replace("    {key:'maquinas',label:'Controle de Máquinas'},\n    {key:'frotas',label:'Controle de Frotas'}","    {key:'maquinas',label:'Controle de Máquinas'}")
   s=re.sub(r'(<button[^>]+(?:data-view|data-module)="frotas"[\s\S]*?</button>)',lambda m:m[0].replace('>Ativo<','>Pendente<'),s)
   s=s.replace('id="gvgpTopBell"','id="gvgpTopBell" style="display:none"')
+ # Use the ecosystem icon from the bundled assets on every module.
+ s=re.sub(r'<link\b[^>]*rel=["\'](?:icon|shortcut icon|apple-touch-icon)["\'][^>]*>', '', s, flags=re.I)
+ s=s.replace('</head>', '<link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png?v=global1"><link rel="apple-touch-icon" sizes="180x180" href="./assets/icone-180.png"></head>')
  s=s.replace('</head>','<script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>')
  if mod=='painel':
   start=s.index('  function run(fn,...args){');end=s.index('  function setSidebar',start)
