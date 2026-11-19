@@ -899,7 +899,7 @@ body.gvg-access-locked{overflow:hidden}
   document.body.classList.toggle('gvg-no-admin',!(adminAccess||(is&&adminPerm)));
   sessionBar.style.display=authorized||pending?'flex':'none';$('gvgSessionLabel').textContent=adminAccess?(is?'Conectado: '+account.nome+' · Administrador':'Almoxarifado · conectado'):is?'Conectado: '+account.nome:pending?'Recuperando acesso salvo':'';$('tabAdmin').style.display=adminAccess?'':'none';
   $('gvgOrdersBadge').style.display=adminAccess?'inline-block':'none';
-  const demo=$('gvgDemoClear'); if(demo)demo.style.display=(adminAccess&&!!account?.superadmin)?'inline-flex':'none';
+  const demo=$('gvgDemoClear'); if(demo)demo.style.display=adminAccess?'inline-flex':'none';
   $('gvgSessionConnection').textContent=sessionPending?'Conexão temporariamente indisponível. Sua sessão foi mantida.':'';
   $('gvgEmployeeName').textContent=is?'Pedidos de '+account.nome:(adminAccess?'Acesso administrativo':'');
   $('tabHistory').style.display=authorized?'':'none';
@@ -1181,14 +1181,14 @@ body.gvg-access-locked{overflow:hidden}
  };
 
  // Admin: reload only dashboard data, leaving catalogue and unsaved edits intact.
- const tools=document.createElement('div');tools.className='gvg-addon';tools.id='gvgAdminTools';tools.innerHTML=`<div class="gvg-addon-row gvg-tools-head"><strong>Gestão · ferramentas</strong><div class="gvg-tools-actions"><button type="button" id="gvgRefresh">↻ Atualizar pedidos</button><button type="button" id="gvgDemoClear" title="Limpar histórico de pedidos para demonstração" aria-label="Limpar histórico de pedidos para demonstração" style="display:none;border:1px solid #7a3a3a;background:#2a1717;color:#ffb4a8;border-radius:8px;font-weight:800;cursor:pointer">🧹 Limpar histórico</button></div></div><p id="gvgRefreshMsg" class="gvg-addon-message"></p><details class="gvg-tools-help"><summary>Atualização automática e conferência</summary><p class="gvg-addon-message">O painel e o histórico de pedidos são atualizados automaticamente a cada 2 minutos. Uma conferência de entrega aberta não é fechada pela atualização automática.</p></details>`;
+ const tools=document.createElement('div');tools.className='gvg-addon';tools.id='gvgAdminTools';tools.innerHTML=`<div class="gvg-addon-row gvg-tools-head"><strong>Gestão · ferramentas</strong><div class="gvg-tools-actions"><button type="button" id="gvgRefresh">↻ Atualizar pedidos</button><button type="button" id="gvgDemoClear" title="Limpar histórico de pedidos para demonstração" aria-label="Limpar histórico de pedidos para demonstração" style="display:none;background:#b91c1c!important;color:#fff!important;border:2px solid #ff8585!important;border-radius:10px!important;box-shadow:0 0 0 2px rgba(239,68,68,.18),0 6px 16px rgba(185,28,28,.4)!important;font-size:13px!important;font-weight:950!important;letter-spacing:.3px;padding:11px 16px!important;min-height:42px!important;cursor:pointer">🧹 Limpar histórico</button></div></div><p id="gvgRefreshMsg" class="gvg-addon-message"></p><details class="gvg-tools-help"><summary>Atualização automática e conferência</summary><p class="gvg-addon-message">O painel e o histórico de pedidos são atualizados automaticamente a cada 2 minutos. Uma conferência de entrega aberta não é fechada pela atualização automática.</p></details>`;
  adminPanel.insertBefore(tools,adminPanel.firstChild);
  // Atualiza o botão após criar as ferramentas, inclusive em sessões já restauradas.
  renderAccount();
  $('gvgRefresh').onclick=async()=>{try{if(!$('separation').classList.contains('hidden')){if(!confirm('Existe uma conferência aberta. Atualizar os pedidos e fechar essa conferência sem salvar?'))return;$('separation').classList.add('hidden')}const v=await gsCall('relatorioAdmin',$('adminPin').value);reportData=v;renderReport();$('gvgRefreshMsg').textContent='Pedidos atualizados às '+new Date().toLocaleTimeString('pt-BR')}catch(e){$('gvgRefreshMsg').textContent=e.message}};
 
  $('gvgDemoClear').onclick=async()=>{
-  if(!account||!account.superadmin){notify('Somente o Superadministrador pode limpar o histórico de pedidos.');return;}
+  if(!adminAccess||!adminToken){notify('Acesso administrativo obrigatório.');return;}
   if(!confirm('⚠️ LIMPAR HISTÓRICO DE PEDIDOS\n\nIsso apaga TODOS os pedidos, itens, vínculos, ranking e auditorias de entrega. Produtos, obras, usuários e configurações serão mantidos.\n\nConfirmar limpeza para demonstração?'))return;
   const btn=$('gvgDemoClear');btn.disabled=true;const old=btn.textContent;btn.textContent='Limpando...';
   $('gvgRefreshMsg').textContent='Limpando histórico de pedidos...';
