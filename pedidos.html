@@ -899,7 +899,7 @@ body.gvg-access-locked{overflow:hidden}
   document.body.classList.toggle('gvg-no-admin',!(adminAccess||(is&&adminPerm)));
   sessionBar.style.display=authorized||pending?'flex':'none';$('gvgSessionLabel').textContent=adminAccess?(is?'Conectado: '+account.nome+' · Administrador':'Almoxarifado · conectado'):is?'Conectado: '+account.nome:pending?'Recuperando acesso salvo':'';$('tabAdmin').style.display=adminAccess?'':'none';
   $('gvgOrdersBadge').style.display=adminAccess?'inline-block':'none';
-  const demo=$('gvgDemoClear'); if(demo)demo.style.display='none';
+  const demo=$('gvgDemoClear'); if(demo)demo.style.display=(adminAccess&&!!account?.superadmin)?'inline-flex':'none';
   $('gvgSessionConnection').textContent=sessionPending?'Conexão temporariamente indisponível. Sua sessão foi mantida.':'';
   $('gvgEmployeeName').textContent=is?'Pedidos de '+account.nome:(adminAccess?'Acesso administrativo':'');
   $('tabHistory').style.display=authorized?'':'none';
