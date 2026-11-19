@@ -66,48 +66,65 @@
  #otherHead.gvg-cart-hero #pageSubtitle{font-size:11px!important}
 }
 </style>
-<style id="gvg-cart-power-ved-art-v2">
-/* Cabeçalho inteiro: inclui logo, perfil e descricao sem fotografar controles reais. */
+<style id="gvg-cart-power-ved-art-v3">
+/* Removida a ilustracao vetorial defeituosa. Imagem real do catalogo,
+   sem controles duplicados ou sobreposicao no perfil do usuario. */
 .top.gvg-cart-top{
+ position:relative!important;
+ isolation:isolate!important;
+ background:#090b0d!important;
+ border-bottom:1px solid #a77023!important;
+}
+.top.gvg-cart-top::before{
+ content:"";
+ position:absolute;
+ z-index:-1;
+ inset:54px 0 0;
+ pointer-events:none;
  background:
-  linear-gradient(90deg,rgba(3,5,8,.98) 0%,rgba(3,5,8,.94) 36%,rgba(6,7,8,.23) 78%,rgba(4,5,6,.12) 100%),
-  url("./assets/cart-power-ved-3d.svg") center center/cover no-repeat!important;
- border-bottom:1px solid #bb791d!important;
- box-shadow:0 12px 28px #0007!important;
+  linear-gradient(90deg,#080a0dfc 0%,#080a0df0 38%,#080a0d8c 65%,#080a0d20 100%),
+  url("./assets/pedidos-hero-826.webp") 78% 53%/cover no-repeat;
+ opacity:.88;
 }
 .top.gvg-cart-top .brand{position:relative;z-index:2}
 .top.gvg-cart-top #otherHead.gvg-cart-hero{
  background:transparent!important;
  border:0!important;
  box-shadow:none!important;
- min-height:135px!important;
- margin:3px 0 0!important;
- padding:18px 12px 20px!important;
+ min-height:138px!important;
+ margin:6px 0 0!important;
+ padding:20px 12px 22px!important;
  border-radius:0!important;
 }
 .top.gvg-cart-top #otherHead.gvg-cart-hero:before{
  content:"ESQUADRIAS  •  FERRAMENTAS  •  ACESSÓRIOS"!important;
- background:#111a!important;
- border:1px solid #c8872b!important;
+ background:#0a0c0ed9!important;
+ border:1px solid #b47a22!important;
+ color:#ffd16c!important;
 }
 .top.gvg-cart-top #pageTitle{
  color:#fff!important;
  font-weight:950!important;
- text-shadow:0 2px 13px #000,0 0 18px #000!important;
+ text-shadow:0 2px 13px #000!important;
 }
 .top.gvg-cart-top #pageSubtitle{
- color:#fff3dc!important;
+ color:#fff0d6!important;
  font-weight:700!important;
  text-shadow:0 2px 9px #000!important;
 }
 @media(max-width:520px){
- .top.gvg-cart-top{background-position:62% center!important;}
- .top.gvg-cart-top #otherHead.gvg-cart-hero{
-  min-height:115px!important;
-  padding:13px 10px 16px!important;
+ .top.gvg-cart-top::before{
+  inset:54px 0 0;
+  background:
+   linear-gradient(90deg,#080a0dfa 0%,#080a0ded 48%,#080a0d70 100%),
+   url("./assets/pedidos-hero-826.webp") 72% center/cover no-repeat;
  }
- .top.gvg-cart-top #pageTitle{font-size:26px!important}
- .top.gvg-cart-top #otherHead.gvg-cart-hero:before{font-size:6px!important;letter-spacing:.6px!important}
+ .top.gvg-cart-top #otherHead.gvg-cart-hero{
+  min-height:118px!important;
+  padding:13px 10px 18px!important;
+ }
+ .top.gvg-cart-top #pageTitle{font-size:27px!important}
+ .top.gvg-cart-top #otherHead.gvg-cart-hero:before{font-size:7px!important;letter-spacing:.6px!important}
 }
 </style>
 </head><body><div class="shell"><header class="top"><div class="brand"><div class="logo">Order Catalog<small>ALMOXARIFADO DIGITAL</small></div><div class="gvg-header-account" style="display:flex;flex-direction:column;align-items:flex-end;min-width:0;max-width:48%;text-align:right"></div></div><div id="searchWrap"><div class="gvg-hero" role="img" aria-label="Esquadrias: Catálogo de materiais. Aqui cumprimos com o que prometemos!"></div><div class="search">⌕ <input id="search" placeholder="Pesquisar materiais, códigos ou categorias"></div></div><div id="otherHead" class="hidden"><h1 id="pageTitle"></h1><span class="sub" id="pageSubtitle"></span></div></header><div id="catalogView"><div class="chips" id="categories"></div><div class="gvg-chips-scroll" id="gvgCategoriesScroll" aria-hidden="true"><span></span></div><section class="section"><h2 id="results">Produtos</h2><div class="grid" id="products"></div></section></div><section class="section hidden" id="cartView"><div id="cartItems"></div><div class="form"><label for="obra">Obra de destino *</label><select id="obra"></select><label for="solicitante">Nome de quem está solicitando *</label><input id="solicitante" autocomplete="name" placeholder="Ex.: João Silva"><label for="observacao">Observações (opcional)</label><textarea id="observacao" rows="3" placeholder="Informações sobre o pedido"></textarea></div><div class="summary" id="summary"></div><div class="send-actions"><button id="sendGroup" class="big group-btn" onclick="sendOrder('group')">👥 Compartilhar no grupo do WhatsApp</button><button id="send" class="big direct-btn" onclick="sendOrder('direct')">💬 Enviar direto ao almoxarifado</button></div><p class="muted" style="margin-top:10px">No primeiro botão, selecione o grupo no WhatsApp e toque em Enviar. Nenhum pedido é enviado automaticamente.</p><div id="warning" class="notice hidden"></div></section><section id="helpView" class="section hidden"><h2>Como pedir materiais</h2><p>1. Escolha os produtos no Catálogo.<br>2. Selecione Unidade ou Caixa, quando disponível.<br>3. Revise as quantidades no Carrinho.<br>4. Informe seu nome e a obra.<br>5. Escolha compartilhar no grupo ou enviar direto ao almoxarifado.
