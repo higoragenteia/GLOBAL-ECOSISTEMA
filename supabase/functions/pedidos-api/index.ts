@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.1';
 const URL = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const db = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-const BASE = 'https://gvgartefalesquadrias.com.br/pedidos.html';
+const BASE = 'https://gvgartefalesquadrias.com.br/';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Content-Type': 'application/json; charset=utf-8' };
 const answer = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
 const fail = (message: string) => { throw new Error(message); };
@@ -29,7 +29,24 @@ const product = (p: any) => ({ id: p.id, nome: p.nome, categoria: p.categoria, u
 const order = (o: any) => ({ id: o.id, data: o.criado_em, solicitante: o.solicitante, obra: o.obra, canal: o.canal, situacao: o.situacao, status: o.situacao, dataEntrega: o.entregue_em || '' });
 const item = (i: any) => ({ id: i.pedido_id, codigo: i.codigo, nome: i.nome, qtd: Number(i.quantidade), solicitado: Number(i.quantidade), unidade: i.unidade, equiv: Number(i.equivalentes), entregue: i.entregue === null ? null : Number(i.entregue), entregueEquiv: Number(i.entregue_equivalentes), nota: i.nota });
 const confItem = (i: any) => ({ codigo: i.codigo, nome: i.nome, solicitado: Number(i.quantidade), unidade: i.unidade, confirmado: Number(i.entregue || 0), pendente: Number(i.quantidade) - Number(i.entregue || 0), nota: i.nota });
-const orderLink = (o: any) => `${BASE}?conferir=${encodeURIComponent(o.id)}&token=${encodeURIComponent(o.token)}`;
+// Codifica o UUID aleatorio de 128 bits em apenas 22 caracteres seguros para URL.
+function shortConferenceCode(token: unknown) {
+ const hex = val(token, 50).replace(/-/g, '');
+ if (!/^[a-f0-9]{32}$/i.test(hex)) fail('Token de conferência inválido.');
+ const pairs = hex.match(/.{2}/g) || [];
+ return btoa(String.fromCharCode(...pairs.map(x => parseInt(x, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+function fullConferenceToken(code: unknown) {
+ const short = val(code, 30);
+ if (!/^[A-Za-z0-9_-]{22}$/.test(short)) fail('Link de conferência inválido.');
+ let binary = '';
+ try { binary = atob(short.replace(/-/g, '+').replace(/_/g, '/') + '=='); }
+ catch { fail('Link de conferência inválido.'); }
+ if (binary.length !== 16) fail('Link de conferência inválido.');
+ const hex = Array.from(binary, c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+ return [hex.slice(0,8), hex.slice(8,12), hex.slice(12,16), hex.slice(16,20), hex.slice(20)].join('-');
+}
+const orderLink = (o: any) => `${BASE}?c=${shortConferenceCode(o.token)}`;
 async function getOrder(id: unknown) { return checked(await db.from('pedidos_ordens').select('*').eq('id', val(id, 80)).single()); }
 async function audit(u: any, acao: string, referencia: string, detalhes: unknown = {}) { checked(await db.from('pedidos_auditoria').insert({ ator_id: u.id, acao, referencia, detalhes })); }
 async function conference(o: any) {
@@ -111,6 +128,13 @@ async function run(fn: string, a: any[], u: any) {
   return { ok: true, favorito: !exists, ids: (await rows('pedidos_favoritos', { usuario_id: u.id }, 'produto_id')).map(x => x.produto_id) };
  }
  case 'obterLinkConferencia': admin(u); return { ok: true, pedido: a[1], link: orderLink(await getOrder(a[1])) };
+ case 'getConferenciaCurta': {
+  admin(u);
+  const fullToken = fullConferenceToken(a[1]);
+  const o = checked(await db.from('pedidos_ordens').select('*').eq('token', fullToken).maybeSingle());
+  if (!o) fail('Pedido não encontrado para este link.');
+  return { ...await conference(o), token: fullToken };
+ }
  case 'getConferenciaLink': {
   admin(u); const o = await getOrder(a[1]); if (o.token !== a[2]) fail('Link de conferência inválido.'); return conference(o);
  }
