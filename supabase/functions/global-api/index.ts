@@ -10,7 +10,7 @@ const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'au
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
 const checked=r=>{if(r.error)throw Error(r.error.message);return r.data;};
 const factories={gastos,fornecedores,maquinas};
-const keys=['pedidos','gastos','fornecedores','maquinas'];
+const keys=['pedidos','gastos','fornecedores','maquinas','frotas'];
 const str=(v,max=200)=>String(v??'').trim().slice(0,max);
 const isSuper=u=>u.perfil==='SUPERADMIN';
 function level(u,m){if(!keys.includes(m))return '';return u.perfil==='SUPERADMIN'?'GERENCIAR':u.permissoes?.[m]||'';}
