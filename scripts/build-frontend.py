@@ -32,7 +32,7 @@ for filename,mod in [('Painel.html','painel'),('GastosIndex.html','gastos'),('Fo
   s=s.replace('id="gvgpTopBell"','id="gvgpTopBell" style="display:none"')
  # Use the ecosystem icon from the bundled assets on every module.
  s=re.sub(r'<link\b[^>]*rel=["\'](?:icon|shortcut icon|apple-touch-icon)["\'][^>]*>', '', s, flags=re.I)
- s=s.replace('</head>', '<link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png?v=global1"><link rel="apple-touch-icon" sizes="180x180" href="./assets/icone-180.png"></head>')
+ s=s.replace('</head>', '<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"></head>')
  s=s.replace('</head>','<script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>')
  if mod=='painel':
   start=s.index('  function run(fn,...args){');end=s.index('  function setSidebar',start)
