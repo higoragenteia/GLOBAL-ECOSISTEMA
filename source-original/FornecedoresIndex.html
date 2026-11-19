@@ -90,11 +90,12 @@
     .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
     .stat{
       background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:17px 18px;
-      box-shadow:var(--shadow);position:relative;overflow:hidden;
+      box-shadow:var(--shadow);position:relative;overflow:hidden;min-width:0;container-type:inline-size;
     }
     .stat:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--gold)}
     .stat .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:800}
     .stat .value{font-size:27px;font-weight:900;letter-spacing:-1px;margin:7px 0 2px;color:var(--navy)}
+    .stat .value.is-money{font-size:clamp(16px,12cqi,27px);letter-spacing:-.6px;line-height:1.2;max-width:100%;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
     .stat .hint{font-size:11px;color:var(--muted)}
     .stat .ico{position:absolute;right:14px;top:14px;font-size:20px;opacity:.7}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
@@ -598,7 +599,7 @@
     }
 
     function card(label,value,hint,ico){
-      return '<section class="stat"><div class="ico">'+(ico||'')+'</div><div class="label">'+esc(label)+'</div><div class="value">'+esc(value)+'</div><div class="hint">'+esc(hint||'')+'</div></section>';
+      return '<section class="stat"><div class="ico">'+(ico||'')+'</div><div class="label">'+esc(label)+'</div><div class="value'+(/^R\$/.test(String(value))?' is-money':'')+'">'+esc(value)+'</div><div class="hint">'+esc(hint||'')+'</div></section>';
     }
     function empty(icon,title,text,button){
       return '<div class="empty"><div class="big">'+esc(icon||'—')+'</div><h3>'+esc(title)+'</h3><p>'+esc(text||'')+'</p>'+(button||'')+'</div>';
