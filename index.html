@@ -490,6 +490,58 @@
     #gvgpApp.gvgp-module-open .gvgp-content{height:calc(100vh - 64px)}
     #gvgpApp.gvgp-module-open .gvgp-view{height:calc(100vh - 64px)}
   }
+  /* PWA/mobile: o iframe precisa ocupar somente a area abaixo do
+     cabecalho real. O antigo calc(100vh - 64px) cortava a barra
+     inferior dos aplicativos em celulares com topbar de duas linhas. */
+  @media (max-width:980px){
+    #gvgpApp.gvgp-module-open{
+      height:100dvh!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-main{
+      display:flex!important;
+      flex-direction:column!important;
+      height:100dvh!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-topbar{
+      flex:0 0 auto!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-content{
+      display:flex!important;
+      flex-direction:column!important;
+      flex:1 1 auto!important;
+      height:auto!important;
+      min-height:0!important;
+      overflow:hidden!important;
+      padding:0!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-view:not(.gvgp-hidden){
+      display:flex!important;
+      flex-direction:column!important;
+      flex:1 1 auto!important;
+      height:auto!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-frame-wrap{
+      display:flex!important;
+      flex:1 1 auto!important;
+      height:auto!important;
+      min-height:0!important;
+      overflow:hidden!important;
+    }
+    #gvgpApp.gvgp-module-open .gvgp-frame{
+      display:block!important;
+      flex:1 1 auto!important;
+      width:100%!important;
+      height:100%!important;
+      min-height:0!important;
+      border:0!important;
+    }
+  }
   .gvgp-frame-loading{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border-radius:18px;background:radial-gradient(60% 55% at 50% 0%,rgba(201,154,46,.12),transparent 62%),radial-gradient(50% 55% at 100% 100%,rgba(15,118,110,.12),transparent 62%),linear-gradient(160deg,#121b21,#080c10);color:#f6f6f6;transition:opacity .3s ease;pointer-events:none}
   .gvgp-frame-loading.gvgp-hidden{display:none}
   .gvgp-frame-loading strong{font-size:14px;letter-spacing:-.2px}
