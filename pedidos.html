@@ -587,6 +587,8 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
 #products .gvg-inline-total{min-height:15px;font-size:10px;color:#426977;line-height:1.35}
 #products .gvg-inline-add{background:#078b60;color:white;border:0;border-radius:10px;font-size:11px;font-weight:900;padding:10px 3px;width:100%;cursor:pointer}
 #products .gvg-inline-add:disabled{opacity:.55}
+#products .gvg-cart-feedback{min-height:18px;color:#74df91;font-size:11px;font-weight:700;text-align:center;line-height:1.4}
+#products .gvg-inline-add.gvg-added:disabled{background:#075c32!important;color:#e7ffed!important;border:1px solid #208b45!important;opacity:1!important;cursor:default!important}
 </style>
 <script>
 (function(){
@@ -617,6 +619,7 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
   const options=hasAlternate(p)?`<div class="gvg-inline-opt"><button type="button" data-gvg-choice="Unidade" class="${state.unit==='Unidade'?'sel':''}">Unidade</button><button type="button" data-gvg-choice="${pack}" class="${state.unit===pack?'sel':''}">${pack}${['Litro','Quilo'].includes(pack)?'':` (${f})`}</button></div>`:'';
   const ref=p.referencia?'Ref. '+safe(p.referencia):'Cód. '+id;
   const q=Number(state.qty);const valid=Number.isInteger(q)&&q>=1&&q<=10000;
+  const added=state.confirmation&&state.confirmation.until>Date.now()?state.confirmation:null;
   return `<article class="product" data-gvg-product="${id}">
    <button type="button" class="gvg-fav-toggle${fav?' is-fav':''}" data-gvg-fav="${id}" aria-label="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}" title="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}">${fav?'♥':'♡'}</button>
    <div class="visual">${gvgVisualBg(p)}${gvgProductArtwork(p)}</div>
@@ -627,7 +630,8 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
     ${options}
     <div class="gvg-inline-qty"><span class="gvg-inline-label">Quantidade</span><div class="gvg-inline-row"><button type="button" data-gvg-step="-1">−</button><input type="number" inputmode="numeric" min="1" max="10000" step="1" data-gvg-qty value="${safe(state.qty)}" aria-label="Quantidade de ${safe(p.nome)}"><button type="button" data-gvg-step="1">+</button></div></div>
     <div class="gvg-inline-total">${valid?`${(q*(state.unit==='Unidade'?1:f)).toLocaleString('pt-BR')} ${['Litro','Quilo'].includes(state.unit)?amountLabel(p):'un.'} no total`:'Digite uma quantidade válida'}</div>
-    <button type="button" class="gvg-inline-add" data-gvg-add ${valid?'':'disabled'}>🛒 Adicionar ao carrinho</button>
+    <button type="button" class="gvg-inline-add${added?' gvg-added':''}" data-gvg-add ${valid&&!added?'':'disabled'}>${added?added.label:'🛒 Adicionar ao carrinho'}</button>
+    <div class="gvg-cart-feedback" role="status" aria-live="polite" aria-atomic="true">${added?'🛒 Enviado para o carrinho':''}</div>
    </div>
    </article>`;
  }
@@ -656,7 +660,11 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
   const id=article.dataset.gvgProduct,p=DATA.produtos.find(x=>x.id===id);if(!p)return;
   const state=draft[id],n=Number(state.qty),valid=Number.isInteger(n)&&n>=1&&n<=10000;
   const total=article.querySelector('.gvg-inline-total'),btn=article.querySelector('[data-gvg-add]');
-  total.textContent=valid?`${(n*(state.unit==='Unidade'?1:factor(p))).toLocaleString('pt-BR')} ${['Litro','Quilo'].includes(state.unit)?amountLabel(p):'un.'} no total`:'Digite uma quantidade válida';btn.disabled=!valid;
+  total.textContent=valid?`${(n*(state.unit==='Unidade'?1:factor(p))).toLocaleString('pt-BR')} ${['Litro','Quilo'].includes(state.unit)?amountLabel(p):'un.'} no total`:'Digite uma quantidade válida';
+  const added=state.confirmation&&state.confirmation.until>Date.now()?state.confirmation:null;
+  btn.disabled=!valid||!!added;btn.classList.toggle('gvg-added',!!added);
+  btn.textContent=added?added.label:'🛒 Adicionar ao carrinho';
+  article.querySelector('.gvg-cart-feedback').textContent=added?'🛒 Enviado para o carrinho':'';
   article.querySelectorAll('[data-gvg-choice]').forEach(b=>b.classList.toggle('sel',b.dataset.gvgChoice===state.unit));
  };
  grid.addEventListener('input',e=>{const inp=e.target.closest('[data-gvg-qty]');if(!inp)return;const article=inp.closest('[data-gvg-product]');draft[article.dataset.gvgProduct].qty=inp.value;update(article)});
@@ -667,9 +675,16 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
   if(b.hasAttribute('data-gvg-choice'))state.unit=b.dataset.gvgChoice;
   if(b.hasAttribute('data-gvg-step')){state.qty=String(Math.max(1,Math.min(10000,(Number(state.qty)||1)+Number(b.dataset.gvgStep))));article.querySelector('[data-gvg-qty]').value=state.qty}
   if(b.hasAttribute('data-gvg-add')){
+   if(state.confirmation&&state.confirmation.until>Date.now())return;
    const q=Number(state.qty);if(!Number.isInteger(q)||q<1||q>10000)return;
    const k=key(id,state.unit);cart[k]=(cart[k]||0)+q;save();count();
-   b.textContent='✓ Adicionado';setTimeout(()=>{if(b.isConnected)b.textContent='🛒 Adicionar ao carrinho'},900);
+   const description=state.unit==='Unidade'?(q===1?'1 unidade adicionada':q.toLocaleString('pt-BR')+' unidades adicionadas'):q.toLocaleString('pt-BR')+' × '+state.unit+' adicionado';
+   state.confirmation={until:Date.now()+1800,label:'✓ '+description};
+   state.qty='1';article.querySelector('[data-gvg-qty]').value='1';
+   setTimeout(()=>{
+    state.confirmation=null;
+    grid.querySelectorAll('[data-gvg-product]').forEach(card=>{if(card.dataset.gvgProduct===id)update(card)});
+   },1800);
   }
   update(article);
  });
