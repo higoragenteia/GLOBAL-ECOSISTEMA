@@ -14,49 +14,51 @@
 }
 </style>
 <script src="./global-api.js"></script><script src="./shared-profile.js"></script><link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2">
-<style id="gvg-cart-no-text-v5">
-/* Somente no carrinho: foto ilustrativa SEM titulos embutidos. */
+<style id="gvg-cart-hd-v6">
+/* High-definition banner uses existing 1920px architectural asset.
+   Compact product vignette stays at/below intrinsic 400px width. */
 .top.gvg-cart-top{
- position:relative!important;
- isolation:isolate!important;
+ position:relative!important;isolation:isolate!important;
  overflow:hidden!important;
- background:#090a0d!important;
- border-bottom:1px solid #a97824!important;
+ background:#0b0d11!important;
+ border-bottom:1px solid #b9862e!important;
 }
 .top.gvg-cart-top::before{
  content:""!important;
- position:absolute!important;
- inset:68px 0 0 36%!important;
- z-index:0!important;
- pointer-events:none!important;
- opacity:1!important;
- background:url("./assets/cart-power-no-text.svg") right bottom/contain no-repeat!important;
+ position:absolute!important;inset:0!important;
+ z-index:0!important;pointer-events:none!important;
+ background:
+  linear-gradient(90deg,#080a0dfd 0%,#080a0de9 32%,#080a0da6 56%,#080a0d57 100%),
+  url("./assets/fundo-central-1920.webp") 70% center / cover no-repeat!important;
 }
 .top.gvg-cart-top::after{
- content:""!important;
- position:absolute!important;
- inset:0!important;
- z-index:1!important;
- pointer-events:none!important;
- background:linear-gradient(90deg,#090a0d 0%,#090a0df7 31%,#090a0d96 50%,transparent 76%)!important;
+ content:""!important;position:absolute!important;
+ z-index:1!important;pointer-events:none!important;
+ inset:72px 0 0 43%!important;
+ background:url("./assets/cart-power-no-text.svg") right bottom / min(100%, 340px) auto no-repeat!important;
+ filter:drop-shadow(0 7px 12px #000a);
 }
 .top.gvg-cart-top .brand,
 .top.gvg-cart-top #otherHead{position:relative!important;z-index:2!important}
 .top.gvg-cart-top #otherHead.gvg-cart-hero{
- display:flex!important;flex-direction:column!important;align-items:flex-start!important;
- justify-content:center!important;
+ display:flex!important;flex-direction:column!important;justify-content:center!important;
+ align-items:flex-start!important;
  min-height:122px!important;
  margin:0!important;padding:14px 12px 18px!important;
- border:0!important;box-shadow:none!important;
- border-radius:0!important;background:transparent!important;
+ border:0!important;border-radius:0!important;
+ box-shadow:none!important;background:transparent!important;
 }
-.top.gvg-cart-top #otherHead.gvg-cart-hero::before{display:none!important;content:none!important}
-.top.gvg-cart-top #pageTitle{color:#fff!important;text-shadow:0 2px 10px #000!important}
-.top.gvg-cart-top #pageSubtitle{color:#f6e5c2!important;text-shadow:0 2px 8px #000!important}
+.top.gvg-cart-top #otherHead.gvg-cart-hero:before{display:none!important;content:none!important}
+.top.gvg-cart-top #pageTitle{color:#fff!important;text-shadow:0 3px 13px #000!important}
+.top.gvg-cart-top #pageSubtitle{color:#f9e8c6!important;text-shadow:0 2px 9px #000!important}
 @media(max-width:520px){
- .top.gvg-cart-top::before{inset:67px 0 0 33%!important;background-position:right center!important;background-size:cover!important}
- .top.gvg-cart-top::after{background:linear-gradient(90deg,#090a0d 0%,#090a0df8 35%,#090a0dbb 57%,transparent 100%)!important}
- .top.gvg-cart-top #otherHead.gvg-cart-hero{min-height:106px!important;padding:12px 10px 15px!important}
+ .top.gvg-cart-top::before{background:
+   linear-gradient(90deg,#090b0dfa 0%,#090b0de8 44%,#090b0d75 100%),
+   url("./assets/fundo-central-1920.webp") 65% center/cover no-repeat!important}
+ .top.gvg-cart-top::after{inset:72px 0 0 51%!important;
+   background-size:min(100%,270px) auto!important}
+ .top.gvg-cart-top #otherHead.gvg-cart-hero{
+   min-height:106px!important;padding:12px 10px 15px!important}
  .top.gvg-cart-top #pageTitle{font-size:27px!important}
 }
 </style>
