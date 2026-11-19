@@ -59,7 +59,7 @@ function load(){
  try{
   const v=DADOS_INICIAIS;
   if(!v || !Array.isArray(v.produtos)){clearCatalog();return;}
-  DATA={produtos:v.produtos,obras:Array.isArray(v.obras)?v.obras:[],whatsapp:v.whatsapp||''};
+  DATA={produtos:v.produtos.filter(p=>String(p.ativo||'').trim().toUpperCase()==='SIM'),obras:Array.isArray(v.obras)?v.obras:[],whatsapp:v.whatsapp||''};
   el('obra').innerHTML='<option value="">Selecione uma obra</option>'+DATA.obras.map(o=>`<option value="${safe(o)}">${safe(o)}</option>`).join('');
   draw();
  }catch(e){
@@ -83,7 +83,7 @@ async function loadAuthenticatedCatalog(sessao){
  try{
   const v=await gsCall('getCatalogo',sessao);
   if(!v||!Array.isArray(v.produtos))throw new Error('Resposta do catálogo inválida.');
-  DATA={produtos:v.produtos,obras:Array.isArray(v.obras)?v.obras:[],whatsapp:v.whatsapp||''};
+  DATA={produtos:v.produtos.filter(p=>String(p.ativo||'').trim().toUpperCase()==='SIM'),obras:Array.isArray(v.obras)?v.obras:[],whatsapp:v.whatsapp||''};
   el('obra').innerHTML='<option value="">Selecione uma obra</option>'+DATA.obras.map(o=>`<option value="${safe(o)}">${safe(o)}</option>`).join('');
   draw();
   if(typeof window.gvgRefreshFavoritesView==='function')window.gvgRefreshFavoritesView();
