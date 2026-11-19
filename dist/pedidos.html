@@ -598,6 +598,30 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
  const packing=p=>gvgTipoEmbalagem(p).tipo;
  const hasAlternate=p=>gvgTipoEmbalagem(p).alternativa;
  const amountLabel=p=>packing(p)==='Litro'?'L':packing(p)==='Quilo'?'kg':'un.';
+ let cartAudio=null;
+ function playCartChime(){
+  // Generated locally, only after a successful click; audio must never block the cart.
+  try{
+   const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+   if(!cartAudio||cartAudio.state==='closed')cartAudio=new Audio();
+   const context=cartAudio;
+   const play=()=>{
+    try{
+     if(context.state!=='running')return;
+     const start=context.currentTime;
+     [1174.66,1567.98].forEach((frequency,i)=>{
+      const oscillator=context.createOscillator(),gain=context.createGain(),at=start+i*0.075;
+      oscillator.type='sine';oscillator.frequency.setValueAtTime(frequency,at);
+      gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(0.075,at+0.008);gain.gain.exponentialRampToValueAtTime(0.0001,at+0.3);
+      oscillator.connect(gain);gain.connect(context.destination);
+      oscillator.onended=()=>{oscillator.disconnect();gain.disconnect()};
+      oscillator.start(at);oscillator.stop(at+0.32);
+     });
+    }catch(_){}
+   };
+   if(context.state==='running')play();else context.resume().then(play).catch(()=>{});
+  }catch(_){}
+ }
  let draft={};
  // Conserva o desenho original dos produtos, fotos, pesquisa, categorias e carrinho.
  // Renderiza em lotes para reduzir o DOM inicial em celulares; novos lotes entram
@@ -677,7 +701,7 @@ body{background:linear-gradient(150deg,#e6eef6,#f4f8fb)!important}
   if(b.hasAttribute('data-gvg-add')){
    if(state.confirmation&&state.confirmation.until>Date.now())return;
    const q=Number(state.qty);if(!Number.isInteger(q)||q<1||q>10000)return;
-   const k=key(id,state.unit);cart[k]=(cart[k]||0)+q;save();count();
+   const k=key(id,state.unit);cart[k]=(cart[k]||0)+q;save();count();playCartChime();
    const description=state.unit==='Unidade'?(q===1?'1 unidade adicionada':q.toLocaleString('pt-BR')+' unidades adicionadas'):q.toLocaleString('pt-BR')+' × '+state.unit+' adicionado';
    state.confirmation={until:Date.now()+1800,label:'✓ '+description};
    state.qty='1';article.querySelector('[data-gvg-qty]').value='1';

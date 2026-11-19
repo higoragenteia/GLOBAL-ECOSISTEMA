@@ -78,17 +78,17 @@ test('Catálogo: adicionar reseta quantidade, confirma e ignora clique repetido'
  const html=readFileSync(new URL('../pedidos.html',import.meta.url),'utf8');
  const code=html.slice(html.indexOf(' const update=article=>{'),html.indexOf(' // load() já foi chamado'));
  const make=(unit='Unidade',qty='5')=>{
-  let clock=1000,saves=0,counts=0;const timers=[],events={},cart={},draft={p:{unit,qty}};
+  let clock=1000,saves=0,counts=0,chimes=0;const timers=[],events={},cart={},draft={p:{unit,qty}};
   const button={textContent:'',disabled:false,classList:{toggle(){}},hasAttribute:a=>a==='data-gvg-add',closest:()=>article};
   const input={value:qty},total={},feedback={};
   const article={dataset:{gvgProduct:'p'},querySelector:s=>({'[data-gvg-add]':button,'[data-gvg-qty]':input,'.gvg-inline-total':total,'.gvg-cart-feedback':feedback}[s]),querySelectorAll:()=>[]};
   const grid={addEventListener:(name,fn)=>events[name]=fn,querySelectorAll:()=>[article]};
-  runInNewContext(code,{grid,draft,cart,DATA:{produtos:[{id:'p'}]},factor:()=>12,amountLabel:()=> 'un.',key:(id,u)=>id+'|'+u,save:()=>saves++,count:()=>counts++,Date:{now:()=>clock},setTimeout:fn=>timers.push(fn)});
-  return {draft,cart,button,input,total,feedback,click:()=>events.click({target:{closest:()=>button}}),expire:()=>{clock+=1800;timers.shift()()},get saves(){return saves},get counts(){return counts}};
+  runInNewContext(code,{playCartChime:()=>chimes++,grid,draft,cart,DATA:{produtos:[{id:'p'}]},factor:()=>12,amountLabel:()=> 'un.',key:(id,u)=>id+'|'+u,save:()=>saves++,count:()=>counts++,Date:{now:()=>clock},setTimeout:fn=>timers.push(fn)});
+  return {draft,cart,button,input,total,feedback,click:()=>events.click({target:{closest:()=>button}}),expire:()=>{clock+=1800;timers.shift()()},get saves(){return saves},get counts(){return counts},get chimes(){return chimes}};
  };
  const a=make();a.click();assert.equal(a.cart['p|Unidade'],5);assert.equal(a.input.value,'1');assert.equal(a.draft.p.qty,'1');assert.equal(a.button.disabled,true);assert.match(a.button.textContent,/5 unidades adicionadas/);assert.match(a.feedback.textContent,/carrinho/);
- a.click();assert.equal(a.cart['p|Unidade'],5);assert.equal(a.saves,1);assert.equal(a.counts,1);
+ a.click();assert.equal(a.cart['p|Unidade'],5);assert.equal(a.saves,1);assert.equal(a.counts,1);assert.equal(a.chimes,1);
  a.expire();assert.equal(a.button.disabled,false);assert.equal(a.feedback.textContent,'');a.click();assert.equal(a.cart['p|Unidade'],6);assert.match(a.button.textContent,/1 unidade adicionada/);
  const pack=make('Caixa','3');pack.click();assert.equal(pack.cart['p|Caixa'],3);assert.equal(pack.draft.p.unit,'Caixa');assert.equal(pack.input.value,'1');assert.match(pack.total.textContent,/12 un/);assert.match(pack.button.textContent,/3 × Caixa/);
- for(const qty of ['0','-1','1.5','10001']){const invalid=make('Unidade',qty);invalid.click();assert.equal(invalid.saves,0);assert.equal(invalid.input.value,qty);}
+ for(const qty of ['0','-1','1.5','10001']){const invalid=make('Unidade',qty);invalid.click();assert.equal(invalid.saves,0);assert.equal(invalid.chimes,0);assert.equal(invalid.input.value,qty);}
 });
