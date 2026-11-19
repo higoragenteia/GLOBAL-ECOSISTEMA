@@ -164,7 +164,13 @@ async function run(fn: string, a: any[], u: any) {
   const password = String(a[2] || ''); if (password.length < 8 || password.length > 128) fail('Use uma senha entre 8 e 128 caracteres.');
   checked(await db.auth.admin.updateUserById(target.id, { password })); await audit(u, 'REDEFINIR_SENHA', target.id); return { ok: true };
  }
- case 'limparPedidosDemo': fail('A limpeza de histórico está desativada neste aplicativo.'); break;
+ case 'limparPedidosDemo': {
+  superadmin(u);
+  if (val(a[1]) !== 'LIMPAR') fail('Confirmação inválida.');
+  // A operação no PostgreSQL é atômica, mantendo produtos, obras e contas intactos.
+  const result = checked(await db.rpc('pedidos_limpar_historico'));
+  return { ok: true, ...result };
+ }
  default: fail('Operação não disponível: ' + fn);
  }
 }
