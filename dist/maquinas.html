@@ -950,190 +950,12 @@ body.sidebar-open .toast-root { display: none; }
     <div class="boot-text">Carregando o painel…</div>
   </div>
 
-  <section id="authView" class="auth hidden" aria-label="Acesso ao sistema">
-    <div class="auth-brand">
-      <div class="auth-brand-inner">
-        <div class="brand-lockup">
-          <div class="brand-mark brand-mark-lg" aria-hidden="true">GVG</div>
-          <div>
-            <div class="brand-name">GVG <span>&amp;</span> ARTEFAL</div>
-            <div class="brand-sub">Máquinas e Ferramentas</div>
-          </div>
-        </div>
-        <h1>Controle completo do seu ferramental.</h1>
-        <p>Disponibilidade, entregas, devoluções, acessórios e manutenção em um só lugar — com histórico preservado.</p>
-        <div class="auth-3d" aria-hidden="true">
-          <div class="auth-3d-card">
-            <div class="auth-3d-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-            <div class="auth-3d-row"><span class="auth-3d-pill gold"></span><span class="auth-3d-line"></span></div>
-            <div class="auth-3d-row"><span class="auth-3d-pill green"></span><span class="auth-3d-line short"></span></div>
-            <div class="auth-3d-grid">
-              <div class="auth-3d-box"></div><div class="auth-3d-box"></div><div class="auth-3d-box"></div>
-            </div>
-          </div>
-          <div class="auth-3d-drill">⌁</div>
-        </div>
-        <div class="auth-points">
-          <span>✓ Perfis de acesso</span>
-          <span>✓ Devoluções parciais</span>
-          <span>✓ Histórico completo</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-panel">
-      <button type="button" class="auth-install" id="authInstallBtn" aria-label="Instalar aplicativo">
-        <span data-icon="download"></span><span>Instalar app</span>
-      </button>
-      <div class="auth-card">
-        <div id="loginBox">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Acesso restrito</div>
-            <h2>Entrar no painel</h2>
-            <p>Entre com seu usuário e senha.</p>
-          </div>
-          <form id="loginForm" class="form-stack" autocomplete="on" novalidate>
-            <label class="field">
-              <span>Usuário ou e-mail</span>
-              <input id="loginEmail" name="email" type="text" inputmode="text" autocomplete="username" placeholder="seu usuário ou e-mail" required>
-            </label>
-            <label class="field">
-              <span>Senha</span>
-              <div class="input-with-action">
-                <input id="loginPassword" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
-                <button type="button" class="icon-btn input-action" data-toggle-password="loginPassword" aria-label="Mostrar senha">◉</button>
-              </div>
-            </label>
-            <div id="loginMessage" class="form-message" role="status" aria-live="polite"></div>
-            <button id="loginSubmit" class="btn btn-primary btn-lg btn-block" type="submit">Entrar</button>
-          </form>
-          <div class="auth-links">
-            <button type="button" class="link-btn" id="showRecovery">Esqueci a senha do administrador</button>
-          </div>
-          <div class="auth-divider"><span>Primeiro acesso?</span></div>
-          <div class="auth-signup">
-            <div class="auth-signup-head">
-              <strong>Cadastre-se</strong>
-              <span>O acesso é liberado pelo administrador.</span>
-            </div>
-            <form id="signupForm" class="form-stack" novalidate>
-              <label class="field">
-                <span>Usuário</span>
-                <input id="signupUser" name="usuario" type="text" autocomplete="username" placeholder="Escolha um usuário" required>
-              </label>
-              <label class="field">
-                <span>Senha</span>
-                <div class="input-with-action">
-                  <input id="signupPassword" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 5 caracteres" required>
-                  <button type="button" class="icon-btn input-action" data-toggle-password="signupPassword" aria-label="Mostrar senha">◉</button>
-                </div>
-              </label>
-              <div id="signupMessage" class="form-message" role="status" aria-live="polite"></div>
-              <button id="signupSubmit" class="btn btn-secondary btn-block" type="submit">Criar cadastro</button>
-            </form>
-            <div class="auth-note">A senha pode ser simples (inclusive 12345), mas o cadastro só entra no sistema após aprovação do administrador.</div>
-          </div>
-        </div>
-
-        <div id="panelBox" class="hidden">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Acesso centralizado</div>
-            <h2>Acesse pelo Painel</h2>
-            <p>O acesso direto ao Controle de Máquinas está desativado. Entre no Painel GVG&ARTEFAL e abra o módulo pelo menu.</p>
-          </div>
-          <p class="auth-note">Se você já está no painel, confirme com o Superadministrador se o seu perfil tem permissão para este projeto.</p>
-          <button class="btn btn-primary btn-lg btn-block" type="button" id="panelRetryBtn">Tentar novamente</button>
-          <div class="auth-divider"><span>ou</span></div>
-          <button class="btn btn-secondary btn-block" type="button" id="panelOpenBtn">Abrir o Painel GVG&ARTEFAL</button>
-        </div>
-
-        <div id="setupBox" class="hidden">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Primeira configuração</div>
-            <h2>Criar o administrador</h2>
-            <p>Use o código de configuração inicial fornecido com o projeto. Esta tela desaparece após a criação.</p>
-          </div>
-          <form id="setupForm" class="form-stack" novalidate>
-            <label class="field">
-              <span>Código de configuração</span>
-              <input id="setupCode" name="codigo" type="text" autocomplete="one-time-code" placeholder="CFG-XXXX-XXXX" required>
-            </label>
-            <label class="field">
-              <span>Nome do administrador</span>
-              <input id="setupName" name="nome" type="text" autocomplete="name" placeholder="Nome completo" required>
-            </label>
-            <label class="field">
-              <span>E-mail de acesso</span>
-              <input id="setupEmail" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seuemail@exemplo.com" required>
-            </label>
-            <div class="form-row">
-              <label class="field">
-                <span>Senha</span>
-                <input id="setupPassword" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required>
-              </label>
-              <label class="field">
-                <span>Confirmar senha</span>
-                <input id="setupPassword2" name="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required>
-              </label>
-            </div>
-            <div id="setupMessage" class="form-message" role="status" aria-live="polite"></div>
-            <button id="setupSubmit" class="btn btn-primary btn-lg btn-block" type="submit">Criar administrador</button>
-          </form>
-          <div class="auth-note">A senha é gravada apenas como hash com sal. O código de configuração é invalidado após o uso.</div>
-        </div>
-
-        <div id="recoveryBox" class="hidden">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Recuperação protegida</div>
-            <h2>Redefinir senha do administrador</h2>
-            <p>O código de recuperação é gerado no Apps Script pelo proprietário e vale por 30 minutos.</p>
-          </div>
-          <form id="recoveryForm" class="form-stack" novalidate>
-            <label class="field">
-              <span>Código de recuperação</span>
-              <input id="recoveryCode" name="codigo" type="text" autocomplete="one-time-code" placeholder="REC-XXXX-XXXX" required>
-            </label>
-            <label class="field">
-              <span>Usuário ou e-mail do administrador</span>
-              <input id="recoveryEmail" name="email" type="text" inputmode="text" autocomplete="username" placeholder="usuário ou e-mail" required>
-            </label>
-            <div class="form-row">
-              <label class="field">
-                <span>Nova senha</span>
-                <input id="recoveryPassword" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required>
-              </label>
-              <label class="field">
-                <span>Confirmar senha</span>
-                <input id="recoveryPassword2" name="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required>
-              </label>
-            </div>
-            <div id="recoveryMessage" class="form-message" role="status" aria-live="polite"></div>
-            <button id="recoverySubmit" class="btn btn-primary btn-lg btn-block" type="submit">Redefinir senha</button>
-            <button type="button" class="btn btn-ghost btn-block" id="backToLogin">Voltar para o login</button>
-          </form>
-        </div>
-
-        <div id="setupPendingBox" class="hidden">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Configuração pendente</div>
-            <h2>Primeiro acesso ainda não habilitado</h2>
-            <p>Não há administrador e o código de configuração inicial não está ativo. Solicite a geração de um novo código no Apps Script.</p>
-          </div>
-          <button type="button" class="btn btn-primary btn-block" id="retrySetupStatus">Verificar novamente</button>
-        </div>
-
-        <div id="connectionBox" class="hidden">
-          <div class="auth-card-head">
-            <div class="auth-kicker">Conexão instável</div>
-            <h2>Não foi possível carregar</h2>
-            <p>Se você já estava conectado, sua sessão foi mantida. Verifique a internet e tente novamente; não é preciso digitar a senha de novo.</p>
-          </div>
-          <div id="connectionMessage" class="form-message" role="status" aria-live="polite"></div>
-          <button type="button" class="btn btn-primary btn-lg btn-block" id="retryConnection">Tentar novamente</button>
-          <button type="button" class="btn btn-ghost btn-block" id="connectionLogout">Entrar com outra conta</button>
-        </div>
-      </div>
-      <div class="auth-foot">GVG &amp; ARTEFAL · Controle de Máquinas e Ferramentas · Acesso protegido</div>
+  <section id="authView" class="hidden" aria-label="Acesso pelo painel" style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f4f7fb">
+    <div style="max-width:480px;padding:32px;background:white;border:1px solid #dbe5ee;border-radius:20px;text-align:center">
+      <h1>Controle de Máquinas</h1>
+      <p id="panelAccessMessage">Use sua sessão do painel principal para acessar.</p>
+      <button type="button" class="btn btn-primary" id="panelOpenBtn">Voltar ao painel</button>
+      <button type="button" class="btn btn-ghost" id="panelRetryBtn">Tentar novamente</button>
     </div>
   </section>
 
@@ -1530,71 +1352,21 @@ function clearFormErrors(form) {
 
 /* ---------- Auth ---------- */
 function showAuth(mode, message, type) {
-  showBoot(false);
-  closeSidebar();
-  hideApp();
-  const auth = $('authView');
-  if (auth) auth.classList.remove('hidden');
-  ['loginBox', 'panelBox', 'setupBox', 'recoveryBox', 'setupPendingBox', 'connectionBox'].forEach((id) => {
-    const el = $(id); if (el) el.classList.add('hidden');
-  });
-  const map = { login: 'loginBox', panel: 'panelBox', setup: 'setupBox', recovery: 'recoveryBox', pending: 'setupPendingBox', connection: 'connectionBox' };
-  const box = $(map[mode] || 'loginBox');
-  if (box) box.classList.remove('hidden');
-  if (mode === 'login') {
-    if (message) setFormMessage($('loginMessage'), message, type || 'error');
-    setTimeout(() => { const el = $('loginEmail'); if (el && !el.value) el.focus(); }, 80);
-  }
-  if (mode === 'setup') {
-    if (message) setFormMessage($('setupMessage'), message, type || 'error');
-    setTimeout(() => { const el = $('setupCode'); if (el) el.focus(); }, 80);
-  }
-  if (mode === 'recovery') {
-    if (message) setFormMessage($('recoveryMessage'), message, type || 'error');
-    setTimeout(() => { const el = $('recoveryCode'); if (el) el.focus(); }, 80);
-  }
-  if (mode === 'connection') {
-    if (message) setFormMessage($('connectionMessage'), message, type || 'error');
-    setTimeout(() => { const el = $('retryConnection'); if (el) el.focus(); }, 80);
-  }
+  showBoot(false);closeSidebar();hideApp();
+  $('authView').classList.remove('hidden');
+  $('panelAccessMessage').textContent=message||'Entre no painel principal para continuar. O acesso é compartilhado entre os aplicativos.';
 }
 
 async function checkInitial() {
   showBoot(true);
-  if (!API_URL) {
-    showAuth('login', 'O endereço da API não foi configurado. Publique o backend e atualize o config.js.', 'error');
-    return;
-  }
-  // Com sessão salva, tenta abrir direto. Assim o F5 faz uma única chamada
-  // em vez de setupStatus + bootstrap em sequência.
-  if (state.token || getPanelToken()) {
-    try {
-      const data = await api('bootstrap', {});
-      enterApp(data);
-      return;
-    } catch (e) {
-      if (!isAuthError(e)) {
-        showConnectionError(e.message);
-        return;
-      }
-      saveToken('');
-      resetListCaches();
-      if (e.code === 'SEM_PERMISSAO' || e.code === 'ACESSE_PELO_PAINEL' || getPanelToken()) {
-        showAuth('panel');
-        return;
-      }
-      showAuth('login', e.message, 'error');
-      return;
-    }
-  }
   try {
-    const st = await api('setupStatus', {}, { token: '' });
-    state.setupStatus = st;
-    if (st.precisaSetup) { showAuth('setup'); return; }
-    if (st.configuracaoPendente) { showAuth('pending'); return; }
-    showAuth('login');
-  } catch (e) {
-    showConnectionError(e.message || 'Não foi possível conectar ao servidor.');
+    const access=await window.GlobalSession.access();
+    if(!access){showAuth('panel','Sua sessão terminou. Entre novamente pelo painel principal.');return;}
+    state.token='GVG_PAINEL_SSO';
+    const data=await api('bootstrap', {});
+    enterApp(data);
+  } catch(e) {
+    showAuth('panel',e.message||'Não foi possível carregar o Controle de Máquinas. Tente novamente.');
   }
 }
 
@@ -3524,7 +3296,7 @@ function openHelp(tab) {
       <div class="help-item"><span class="help-num">3</span><div><strong>Atualização dos dados</strong><p>O aplicativo lê os dados atuais ao abrir e ao tocar em <b>Atualizar</b>. Alterações feitas diretamente na planilha aparecem ao recarregar a tela. Não há promessa de atualização em tempo real.</p></div></div>
       <div class="help-item"><span class="help-num">4</span><div><strong>Permissões</strong><p><b>Administrador</b> cadastra, edita, entrega, devolve, transfere, mantém e administra contas. <b>Colaborador</b> apenas visualiza, pesquisa e consulta. O servidor bloqueia qualquer tentativa de alteração por esse perfil.</p></div></div>
       <div class="help-item"><span class="help-num">5</span><div><strong>Histórico e exclusão</strong><p>Equipamentos com movimentações não são excluídos: são inativados para preservar o histórico. A exclusão definitiva só é liberada quando não existe nenhum registro vinculado.</p></div></div>
-      <div class="help-item"><span class="help-num">6</span><div><strong>Esqueci a senha do administrador</strong><p>O proprietário gera um código de recuperação no Apps Script. O código vale por 30 minutos e é usado na tela “Esqueci a senha do administrador”.</p></div></div>
+      <div class="help-item"><span class="help-num">6</span><div><strong>Esqueci a senha do administrador</strong><p>A recuperação de acesso é feita pelo painel principal. Não existe uma senha separada para este aplicativo.</p></div></div>
     </div>
     ${ios && !window.navigator.standalone ? `<div class="alert alert-info mt-16">${icon('info')}<div>Você está no iPhone/iPad. Use o Safari e o menu Compartilhar para adicionar à Tela de Início.</div></div>` : ''}`,
     foot: `<button type="button" class="btn btn-secondary" data-action="close-modal">Fechar</button>`,
@@ -3708,17 +3480,17 @@ function closeUserMenu() { const m = $('userMenu'); if (m) m.classList.add('hidd
 
 /* ---------- Eventos estáticos / inicialização ---------- */
 function bindStaticEvents() {
-  $('loginForm').addEventListener('submit', doLogin);
-  $('setupForm').addEventListener('submit', doSetup);
-  $('recoveryForm').addEventListener('submit', doRecovery);
-  $('signupForm').addEventListener('submit', doSignup);
-  $('showRecovery').addEventListener('click', () => showAuth('recovery'));
-  $('backToLogin').addEventListener('click', () => showAuth('login'));
-  $('retrySetupStatus').addEventListener('click', checkInitial);
-  $('retryConnection').addEventListener('click', checkInitial);
-  $('connectionLogout').addEventListener('click', () => { saveToken(''); resetListCaches(); showAuth('login'); });
-  $('helpBtn').addEventListener('click', () => openHelp());
-  $('authInstallBtn').addEventListener('click', async () => {
+  $('loginForm')?.addEventListener('submit', doLogin);
+  $('setupForm')?.addEventListener('submit', doSetup);
+  $('recoveryForm')?.addEventListener('submit', doRecovery);
+  $('signupForm')?.addEventListener('submit', doSignup);
+  $('showRecovery')?.addEventListener('click', () => showAuth('recovery'));
+  $('backToLogin')?.addEventListener('click', () => showAuth('login'));
+  $('retrySetupStatus')?.addEventListener('click', checkInitial);
+  $('retryConnection')?.addEventListener('click', checkInitial);
+  $('connectionLogout')?.addEventListener('click', () => { saveToken(''); resetListCaches(); showAuth('login'); });
+  $('helpBtn')?.addEventListener('click', () => openHelp());
+  $('authInstallBtn')?.addEventListener('click', async () => {
     if (state.deferredPrompt) {
       state.deferredPrompt.prompt();
       await state.deferredPrompt.userChoice;
@@ -3772,7 +3544,7 @@ function initPWA() {
   const panelRetry = document.getElementById('panelRetryBtn');
   if (panelRetry) panelRetry.addEventListener('click', () => { saveToken(''); location.reload(); });
   const panelOpen = document.getElementById('panelOpenBtn');
-  if (panelOpen) panelOpen.addEventListener('click', () => { location.href = './'; });
+  if (panelOpen) panelOpen.addEventListener('click', () => { window.top.location.href = new URL('./',location.href).href; });
 
   /* Service worker desativado no painel: o app roda dentro do iframe do GVG&ARTEFAL. */
   window.addEventListener('beforeinstallprompt', (e) => {
