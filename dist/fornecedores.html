@@ -435,8 +435,6 @@
         <div class="top-actions">
           <span class="sync"><span class="dot"></span><span id="syncText">Conectado</span></span>
           <button class="icon-btn" onclick="app.refresh()" title="Atualizar dados">↻</button>
-          <button class="icon-btn" onclick="app.openMyPassword()" title="Alterar minha senha">🔑</button>
-          <button class="icon-btn" onclick="app.logout()" title="Sair">⏻</button>
           <div class="user-chip" id="userChip"></div>
         </div>
       </header>
@@ -667,7 +665,7 @@
       }catch(e){
         state.loading=false;
         const msg=e.message||String(e);
-        if(/GVG_SEM_ACESSO_PROJETO|ACESSE_PELO_PAINEL/.test(msg)){
+        if(/GVG_SEM_ACESSO_PROJETO|ACESSE_PELO_PAINEL|Entre pelo painel principal|Sessão expirada|Cadastro pendente ou bloqueado|não tem acesso a este aplicativo/i.test(msg)){
           state.auth={state:'login'};state.painelRequired=true;state.data=null;state.user=null;
           render();return;
         }
@@ -753,32 +751,9 @@
     }
 
     function renderAuth(){
-      if(state.painelRequired){
-        $('#content').innerHTML='<div class="auth-wrap"><div class="auth-card"><div class="auth-logo">GVG<span>&amp;</span>ARTEFAL</div><div class="auth-sub">APP DE FORNECEDORES</div><h2>Acesso pelo Painel</h2><p class="auth-desc">O acesso direto ao módulo Fornecedores está desativado. Entre no Painel GVG&ARTEFAL e abra o módulo pelo menu.</p><p class="auth-note">Se você já está no painel, confirme com o Superadministrador se o seu perfil tem permissão para este projeto.</p><button class="auth-btn" type="button" onclick="location.reload()">Tentar novamente</button></div></div>';
-        return;
-      }
-      let body='';
-      if(state.authForm==='register'){
-        body='<h2>Criar cadastro</h2><p class="auth-desc">Seu cadastro será enviado para aprovação da gestão.</p>'+
-          '<form id="authForm" onsubmit="app.submitRegister(event)">'+
-          '<label class="auth-field"><span>Nome e sobrenome</span><input name="nome" autocomplete="name" required placeholder="Ex.: João Silva"></label>'+
-          '<label class="auth-field"><span>E-mail</span><input name="email" type="email" autocomplete="email" required placeholder="seu@email.com"></label>'+
-          '<label class="auth-field"><span>Senha</span><input name="senha" type="password" autocomplete="new-password" required placeholder="Crie uma senha"></label>'+
-          '<label class="auth-field"><span>Confirmar senha</span><input name="confirmar" type="password" autocomplete="new-password" required placeholder="Repita a senha"></label>'+
-          '<button id="authSubmit" class="auth-btn" type="submit">Criar cadastro</button>'+
-          '<div id="authMsg" class="auth-msg hidden"></div>'+
-          '<p class="auth-switch">Já tem cadastro? <a onclick="app.showLogin()">Entrar</a></p>'+
-          '<p class="auth-note">A senha é armazenada com hash e salt; nunca em texto puro.</p></form>';
-      } else {
-        body='<h2>Entrar no sistema</h2><p class="auth-desc">Use o e-mail e a senha cadastrados para acessar o painel.</p>'+
-          '<form id="authForm" onsubmit="app.submitLogin(event)">'+
-          '<label class="auth-field"><span>E-mail</span><input name="email" type="email" autocomplete="username" required placeholder="seu@email.com"></label>'+
-          '<label class="auth-field"><span>Senha</span><input name="senha" type="password" autocomplete="current-password" required placeholder="Sua senha"></label>'+
-          '<button id="authSubmit" class="auth-btn" type="submit">Entrar</button>'+
-          '<div id="authMsg" class="auth-msg hidden"></div>'+
-          '<p class="auth-switch">Ainda não tem cadastro? <a onclick="app.showRegister()">Criar cadastro</a></p></form>';
-      }
-      $('#content').innerHTML='<div class="auth-wrap"><div class="auth-card"><div class="auth-logo">GVG<span>&amp;</span>ARTEFAL</div><div class="auth-sub">APP DE FORNECEDORES</div>'+body+'</div></div>';
+      // Acesso unico: formulario de login/senha exclusivo do painel principal.
+      // O servidor do GLOBAL ECOSISTEMA continua validando cada permissao.
+      $('#content').innerHTML='<div class="auth-wrap"><div class="auth-card"><div class="auth-logo">GVG<span>&amp;</span>ARTEFAL</div><div class="auth-sub">APP DE FORNECEDORES</div><h2>Acesso pelo Painel GLOBAL</h2><p class="auth-desc">Entre no GLOBAL ECOSISTEMA e abra Fornecedores pelo menu. O aplicativo usará sua sessão e as permissões concedidas.</p><p class="auth-note">Se você já entrou no painel, atualize a página ou solicite ao administrador acesso ao módulo.</p><button class="auth-btn" type="button" onclick="location.reload()">Verificar acesso novamente</button></div></div>';
     }
 
     /* ------------------------------ visão geral ------------------------------ */
@@ -990,7 +965,7 @@
       ).join('')+'</tbody></table></div>':'<p class="muted">Nenhum cadastro aguardando aprovação.</p>';
       const activeTable=active.length?'<div class="table-wrap"><table class="table"><thead><tr><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th class="actions">Ações</th></tr></thead><tbody>'+active.map(u=>{
         const self=state.user && u.email.toLowerCase()===state.user.email.toLowerCase();
-        return '<tr><td><div class="main-cell">'+esc(u.nome||u.email)+'</div><div class="small">'+esc(u.email)+(self?' · você':'')+'</div></td><td>'+badge(u.perfil==='ADMIN'?'Administrador':'Usuário Comum')+'</td><td>'+esc(dateTimeBR(u.ultimoAcesso))+'</td><td class="actions">'+(self?'<button class="btn sm" onclick="app.openMyPassword()">Trocar senha</button>':'<button class="btn sm" onclick="app.openRole(\''+jsq(u.email)+'\')">Trocar perfil</button> <button class="btn sm" onclick="app.openPassword(\''+jsq(u.email)+'\')">Redefinir senha</button> <button class="btn sm danger" onclick="app.toggleBlock(\''+jsq(u.email)+'\')">Bloquear</button> <button class="btn sm danger" onclick="app.deleteUser(\''+jsq(u.email)+'\')">Excluir</button>')+'</td></tr>';
+        return '<tr><td><div class="main-cell">'+esc(u.nome||u.email)+'</div><div class="small">'+esc(u.email)+(self?' · você':'')+'</div></td><td>'+badge(u.perfil==='ADMIN'?'Administrador':'Usuário Comum')+'</td><td>'+esc(dateTimeBR(u.ultimoAcesso))+'</td><td class="actions">'+(self?'<span class="small">Conta gerenciada no Painel GLOBAL</span>':'<button class="btn sm" onclick="app.openRole(\''+jsq(u.email)+'\')">Trocar perfil</button> <button class="btn sm" onclick="app.openPassword(\''+jsq(u.email)+'\')">Redefinir senha</button> <button class="btn sm danger" onclick="app.toggleBlock(\''+jsq(u.email)+'\')">Bloquear</button> <button class="btn sm danger" onclick="app.deleteUser(\''+jsq(u.email)+'\')">Excluir</button>')+'</td></tr>';
       }).join('')+'</tbody></table></div>':'<p class="muted">Nenhum usuário ativo.</p>';
       const otherTable=other.length?'<div class="table-wrap"><table class="table compact"><thead><tr><th>Usuário</th><th>Status</th><th class="actions">Ações</th></tr></thead><tbody>'+other.map(u=>
         '<tr><td><div class="main-cell">'+esc(u.nome||u.email)+'</div><div class="small">'+esc(u.email)+'</div></td><td>'+badge(u.status)+'</td><td class="actions"><button class="btn sm" onclick="app.toggleBlock(\''+jsq(u.email)+'\')">Reativar</button> <button class="btn sm" onclick="app.openPassword(\''+jsq(u.email)+'\')">Redefinir senha</button> <button class="btn sm danger" onclick="app.deleteUser(\''+jsq(u.email)+'\')">Excluir</button></td></tr>'
