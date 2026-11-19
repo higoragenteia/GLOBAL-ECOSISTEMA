@@ -9,7 +9,7 @@
    As credenciais permanecem na URL original e chegam apenas ao modulo Pedidos. */
 (function () {
   var query = new URLSearchParams(window.location.search);
-  if (query.has('c') || (query.has('conferir') && query.has('token'))) {
+  if (query.has('k') || query.has('c') || (query.has('conferir') && query.has('token'))) {
     window.location.replace('./pedidos.html' + window.location.search + window.location.hash);
   }
 })();
