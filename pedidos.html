@@ -891,7 +891,7 @@ body.gvg-access-locked{overflow:hidden}
  const $=id=>document.getElementById(id);const escape=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},remove(k){try{localStorage.removeItem(k)}catch(e){}}};
  let token=store.get('pedidosTeste:gvgUsrToken'),account=null,adminToken=store.get('pedidosTeste:gvgAdminToken'),adminAccess=false;
- let sessionRestoring=!!(token||adminToken),sessionPending=false,restoration=null,adminAuthentication=null,authEpoch=0;
+ let sessionRestoring=!!(token||adminToken||store.get('pedidosTeste:auth')),sessionPending=false,restoration=null,adminAuthentication=null,authEpoch=0;
  const favoriteIds=new Set();window.gvgFavoriteIds=favoriteIds;
  let favoritesLoadedFor='',favoritesLoadingFor='',favoritesRequest=0;
 
@@ -1419,7 +1419,55 @@ body.gvg-access-locked{overflow:hidden}
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void pollAdminAlerts();});
  window.addEventListener('online',()=>{void check();});
 
- renderAccount();check();
+ // SSO do GLOBAL ECOSISTEMA: usa a sessao Supabase ja validada pelo painel.
+ // Nenhuma senha extra e nenhuma permissao e inferida de parametros da pagina.
+ let unifiedRestore=null;
+ function restoreUnifiedSession(){
+  if(unifiedRestore)return unifiedRestore;
+  unifiedRestore=(async()=>{
+   const epoch=authEpoch;
+   try{
+    const jwt=await window.GlobalSession.access();
+    if(jwt&&epoch===authEpoch){
+     const profile=await originalCall('estadoSessaoFuncionarioGVG');
+     if(epoch!==authEpoch)return;
+     const level=String(profile?.permissoes?.pedidos||'').toUpperCase();
+     if(profile?.ok&&profile?.id&&['VISUAL','OPERAR','GERENCIAR'].includes(level)){
+      const credential='SUPABASE-'+profile.id;
+      const manager=!!(profile.podeGerenciarPedidos||profile.superadmin);
+      token=credential;
+      account={id:profile.id,nome:profile.nome,login:profile.login,email:profile.email||'',perfil:String(profile.perfil||'OPERADOR').toUpperCase(),permissoes:profile.permissoes||{},superadmin:!!profile.superadmin,projetos:profile.projetos||[]};
+      adminAccess=manager;
+      adminToken=manager?credential:'';
+      store.set('pedidosTeste:gvgUsrToken',credential);
+      if(manager){store.set('pedidosTeste:gvgAdminToken',credential);$('adminPin').value=credential;}
+      else{store.remove('pedidosTeste:gvgAdminToken');$('adminPin').value='';}
+      sessionRestoring=false;sessionPending=false;
+      renderAccount();
+      show('catalog');
+      if(!DATA.produtos.length)void loadAuthenticatedCatalog(token).catch(e=>notify('Não foi possível carregar o catálogo: '+(e.message||String(e))));
+      if(manager){startAdminAlerts();startAdminAutoRefresh();void adminLoad();}
+      abrirConferenciaLink();
+      return;
+     }
+    }
+   }catch(e){
+    // Mantem a rotina existente de recuperacao em caso de rede ou sessao expirada.
+   }
+   if(epoch===authEpoch)await check();
+  })().finally(()=>{unifiedRestore=null;});
+  return unifiedRestore;
+ }
+ // Permite que o login no painel atualize um iframe aberto anteriormente.
+ window.addEventListener('storage',event=>{
+  if(event.key!=='pedidosTeste:auth')return;
+  if(event.newValue){if(!account)void restoreUnifiedSession();}
+  else{
+   ++authEpoch;forgetEmployee();forgetAdmin();clearCatalog();
+   sessionRestoring=false;sessionPending=false;renderAccount();
+  }
+ });
+ renderAccount();void restoreUnifiedSession();
 })();
 </script>
 <style id="gvg-v3-correcoes-finais">
