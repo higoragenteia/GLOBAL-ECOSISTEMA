@@ -13,7 +13,60 @@
  -webkit-appearance:none!important;margin:0!important
 }
 </style>
-<script src="./global-api.js"></script><script src="./shared-profile.js"></script><link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"></head><body><div class="shell"><header class="top"><div class="brand"><div class="logo">Order Catalog<small>ALMOXARIFADO DIGITAL</small></div><div class="gvg-header-account" style="display:flex;flex-direction:column;align-items:flex-end;min-width:0;max-width:48%;text-align:right"></div></div><div id="searchWrap"><div class="gvg-hero" role="img" aria-label="Esquadrias: Catálogo de materiais. Aqui cumprimos com o que prometemos!"></div><div class="search">⌕ <input id="search" placeholder="Pesquisar materiais, códigos ou categorias"></div></div><div id="otherHead" class="hidden"><h1 id="pageTitle"></h1><span class="sub" id="pageSubtitle"></span></div></header><div id="catalogView"><div class="chips" id="categories"></div><div class="gvg-chips-scroll" id="gvgCategoriesScroll" aria-hidden="true"><span></span></div><section class="section"><h2 id="results">Produtos</h2><div class="grid" id="products"></div></section></div><section class="section hidden" id="cartView"><div id="cartItems"></div><div class="form"><label for="obra">Obra de destino *</label><select id="obra"></select><label for="solicitante">Nome de quem está solicitando *</label><input id="solicitante" autocomplete="name" placeholder="Ex.: João Silva"><label for="observacao">Observações (opcional)</label><textarea id="observacao" rows="3" placeholder="Informações sobre o pedido"></textarea></div><div class="summary" id="summary"></div><div class="send-actions"><button id="sendGroup" class="big group-btn" onclick="sendOrder('group')">👥 Compartilhar no grupo do WhatsApp</button><button id="send" class="big direct-btn" onclick="sendOrder('direct')">💬 Enviar direto ao almoxarifado</button></div><p class="muted" style="margin-top:10px">No primeiro botão, selecione o grupo no WhatsApp e toque em Enviar. Nenhum pedido é enviado automaticamente.</p><div id="warning" class="notice hidden"></div></section><section id="helpView" class="section hidden"><h2>Como pedir materiais</h2><p>1. Escolha os produtos no Catálogo.<br>2. Selecione Unidade ou Caixa, quando disponível.<br>3. Revise as quantidades no Carrinho.<br>4. Informe seu nome e a obra.<br>5. Escolha compartilhar no grupo ou enviar direto ao almoxarifado.
+<script src="./global-api.js"></script><script src="./shared-profile.js"></script><link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><style id="gvg-cart-header-art-v1">
+/* Arte de esquadrias no cabecalho real do carrinho */
+#otherHead.gvg-cart-hero{
+ position:relative!important;
+ isolation:isolate;
+ min-height:168px!important;
+ margin:17px 0 4px!important;
+ padding:24px 22px 22px!important;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:flex-start;
+ overflow:hidden;
+ border-radius:18px!important;
+ border:1px solid rgba(241,191,72,.67)!important;
+ background:
+  linear-gradient(90deg,rgba(6,8,12,.96) 0%,rgba(6,8,12,.87) 35%,rgba(6,8,12,.36) 70%,rgba(6,8,12,.07) 100%),
+  url("./assets/pedidos-hero-826.webp") center right/cover no-repeat!important;
+ box-shadow:0 13px 30px rgba(0,0,0,.38),inset 0 1px rgba(255,222,148,.15)!important;
+}
+#otherHead.gvg-cart-hero:before{
+ content:"ESQUADRIAS  /  GVG & ARTEFAL";
+ position:relative;z-index:1;display:block;
+ margin:0 0 12px;padding:6px 10px;
+ border-radius:5px;border:1px solid rgba(245,192,69,.35);
+ background:rgba(16,16,18,.56);
+ font:800 8px/1.2 Inter,system-ui,sans-serif;
+ letter-spacing:1.9px;color:#ffd76b;
+}
+#otherHead.gvg-cart-hero #pageTitle{
+ position:relative;z-index:1;
+ margin:0 0 7px!important;
+ font-size:clamp(26px,5vw,38px)!important;line-height:1.08!important;
+ font-weight:950!important;letter-spacing:-1px!important;color:#fff!important;
+ text-shadow:0 3px 14px rgba(0,0,0,.9);
+}
+#otherHead.gvg-cart-hero #pageSubtitle{
+ position:relative;z-index:1;
+ color:#f7e8c8!important;font-size:12px!important;font-weight:650!important;
+ text-shadow:0 2px 12px rgba(0,0,0,.9);
+}
+@media(max-width:520px){
+ #otherHead.gvg-cart-hero{
+  min-height:144px!important;
+  margin:12px 0 4px!important;
+  padding:18px 14px!important;
+  background-position:60% center!important;
+ }
+ #otherHead.gvg-cart-hero:before{font-size:7px;letter-spacing:1.1px;margin-bottom:11px}
+ #otherHead.gvg-cart-hero #pageTitle{font-size:28px!important}
+ #otherHead.gvg-cart-hero #pageSubtitle{font-size:11px!important}
+}
+</style>
+</head><body><div class="shell"><header class="top"><div class="brand"><div class="logo">Order Catalog<small>ALMOXARIFADO DIGITAL</small></div><div class="gvg-header-account" style="display:flex;flex-direction:column;align-items:flex-end;min-width:0;max-width:48%;text-align:right"></div></div><div id="searchWrap"><div class="gvg-hero" role="img" aria-label="Esquadrias: Catálogo de materiais. Aqui cumprimos com o que prometemos!"></div><div class="search">⌕ <input id="search" placeholder="Pesquisar materiais, códigos ou categorias"></div></div><div id="otherHead" class="hidden"><h1 id="pageTitle"></h1><span class="sub" id="pageSubtitle"></span></div></header><div id="catalogView"><div class="chips" id="categories"></div><div class="gvg-chips-scroll" id="gvgCategoriesScroll" aria-hidden="true"><span></span></div><section class="section"><h2 id="results">Produtos</h2><div class="grid" id="products"></div></section></div><section class="section hidden" id="cartView"><div id="cartItems"></div><div class="form"><label for="obra">Obra de destino *</label><select id="obra"></select><label for="solicitante">Nome de quem está solicitando *</label><input id="solicitante" autocomplete="name" placeholder="Ex.: João Silva"><label for="observacao">Observações (opcional)</label><textarea id="observacao" rows="3" placeholder="Informações sobre o pedido"></textarea></div><div class="summary" id="summary"></div><div class="send-actions"><button id="sendGroup" class="big group-btn" onclick="sendOrder('group')">👥 Compartilhar no grupo do WhatsApp</button><button id="send" class="big direct-btn" onclick="sendOrder('direct')">💬 Enviar direto ao almoxarifado</button></div><p class="muted" style="margin-top:10px">No primeiro botão, selecione o grupo no WhatsApp e toque em Enviar. Nenhum pedido é enviado automaticamente.</p><div id="warning" class="notice hidden"></div></section><section id="helpView" class="section hidden"><h2>Como pedir materiais</h2><p>1. Escolha os produtos no Catálogo.<br>2. Selecione Unidade ou Caixa, quando disponível.<br>3. Revise as quantidades no Carrinho.<br>4. Informe seu nome e a obra.<br>5. Escolha compartilhar no grupo ou enviar direto ao almoxarifado.
 <br>6. No WhatsApp, selecione o destinatário e toque em Enviar.</p><p class="muted">O aplicativo não mostra nem desconta quantidades do estoque.</p></section><section id="conferenceView" class="section hidden">
 <div class="gvg-addon gvg-conf">
  <div class="gvg-conf-head"><div><h2>Conferência do pedido</h2><p id="gvgConfMeta" class="gvg-conf-meta"></p><p class="gvg-conf-note">A abertura do WhatsApp não confirma envio nem entrega.</p></div><span id="gvgConfRevision" class="gvg-conf-rev"></span></div>
@@ -135,7 +188,7 @@ function show(page){
  const views={catalog:'catalogView',cart:'cartView',favorites:'gvgFavoritesView',help:'helpView',admin:'adminView',history:'gvgEmployeeHistory',conference:'conferenceView'};
  for(const p of Object.keys(views)){const v=el(views[p]);if(v)v.classList.toggle('hidden',p!==page);const t=el('tab'+p[0].toUpperCase()+p.slice(1));if(t)t.classList.toggle('active',p===page);}
  el('searchWrap').classList.toggle('hidden',page!=='catalog');
- el('otherHead').classList.toggle('hidden',page==='catalog');
+ el('otherHead').classList.toggle('hidden',page==='catalog');el('otherHead').classList.toggle('gvg-cart-hero',page==='cart');
  const titles={cart:'Seu carrinho',favorites:'Meus Favoritos',admin:'Administração',help:'Como usar',history:'Histórico de Pedidos',conference:'Conferência do pedido'};
  el('pageTitle').textContent=titles[page]||'Como usar';
  el('pageSubtitle').textContent=page==='cart'?'Confira os itens antes de enviar':page==='favorites'?'Itens salvos para pedir novamente':page==='history'?'Seus pedidos e entregas confirmadas':page==='conference'?'Ajuste quantidades e reenvie o pedido ao WhatsApp':'';
