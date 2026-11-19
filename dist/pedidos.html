@@ -937,7 +937,7 @@ body.gvg-access-locked{overflow:hidden}
     sessionPending=false;
     if(adminToken){const current=adminToken,result=await originalCall('validarSessaoAdminGVG',current);if(epoch!==authEpoch||adminToken!==current)return;
      if(!result||typeof result.ok!=='boolean')throw new Error('Resposta de sessão inválida. Atualize a página e tente novamente.');
-     if(result.ok){adminAccess=true;$('adminPin').value=current;renderAccount();if(!hadAdmin){show('admin');await adminLoad();}abrirConferenciaLink();}
+     if(result.ok){adminAccess=true;$('adminPin').value=current;account={id:result.id||'',nome:result.nome||'',login:result.login||'',email:result.email||'',perfil:String(result.perfil||'OPERADOR').toUpperCase(),permissoes:result.permissoes||{},superadmin:!!result.superadmin,projetos:result.projetos||[]};renderAccount();if(!hadAdmin){show('admin');await adminLoad();}abrirConferenciaLink();}
      else forgetAdmin();
     }
     if(!adminAccess&&token){const current=token,result=await originalCall('estadoSessaoFuncionarioGVG',current);if(epoch!==authEpoch||token!==current)return;
@@ -1183,6 +1183,8 @@ body.gvg-access-locked{overflow:hidden}
  // Admin: reload only dashboard data, leaving catalogue and unsaved edits intact.
  const tools=document.createElement('div');tools.className='gvg-addon';tools.id='gvgAdminTools';tools.innerHTML=`<div class="gvg-addon-row gvg-tools-head"><strong>Gestão · ferramentas</strong><div class="gvg-tools-actions"><button type="button" id="gvgRefresh">↻ Atualizar pedidos</button><button type="button" id="gvgDemoClear" title="Limpar histórico de pedidos para demonstração" aria-label="Limpar histórico de pedidos para demonstração" style="display:none;border:1px solid #7a3a3a;background:#2a1717;color:#ffb4a8;border-radius:8px;font-weight:800;cursor:pointer">🧹 Limpar histórico</button></div></div><p id="gvgRefreshMsg" class="gvg-addon-message"></p><details class="gvg-tools-help"><summary>Atualização automática e conferência</summary><p class="gvg-addon-message">O painel e o histórico de pedidos são atualizados automaticamente a cada 2 minutos. Uma conferência de entrega aberta não é fechada pela atualização automática.</p></details>`;
  adminPanel.insertBefore(tools,adminPanel.firstChild);
+ // Atualiza o botão após criar as ferramentas, inclusive em sessões já restauradas.
+ renderAccount();
  $('gvgRefresh').onclick=async()=>{try{if(!$('separation').classList.contains('hidden')){if(!confirm('Existe uma conferência aberta. Atualizar os pedidos e fechar essa conferência sem salvar?'))return;$('separation').classList.add('hidden')}const v=await gsCall('relatorioAdmin',$('adminPin').value);reportData=v;renderReport();$('gvgRefreshMsg').textContent='Pedidos atualizados às '+new Date().toLocaleTimeString('pt-BR')}catch(e){$('gvgRefreshMsg').textContent=e.message}};
 
  $('gvgDemoClear').onclick=async()=>{
