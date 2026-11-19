@@ -46,7 +46,7 @@ function fullConferenceToken(code: unknown) {
  const hex = Array.from(binary, c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
  return [hex.slice(0,8), hex.slice(8,12), hex.slice(12,16), hex.slice(16,20), hex.slice(20)].join('-');
 }
-const orderLink = (o: any) => `${BASE}?c=${shortConferenceCode(o.token)}`;
+const orderLink = (o: any) => `${BASE}?k=${encodeURIComponent(o.codigo_curto)}`;
 async function getOrder(id: unknown) { return checked(await db.from('pedidos_ordens').select('*').eq('id', val(id, 80)).single()); }
 async function audit(u: any, acao: string, referencia: string, detalhes: unknown = {}) { checked(await db.from('pedidos_auditoria').insert({ ator_id: u.id, acao, referencia, detalhes })); }
 async function conference(o: any) {
@@ -128,6 +128,14 @@ async function run(fn: string, a: any[], u: any) {
   return { ok: true, favorito: !exists, ids: (await rows('pedidos_favoritos', { usuario_id: u.id }, 'produto_id')).map(x => x.produto_id) };
  }
  case 'obterLinkConferencia': admin(u); return { ok: true, pedido: a[1], link: orderLink(await getOrder(a[1])) };
+ case 'getConferenciaCodigo': {
+  admin(u);
+  const code = val(a[1], 11);
+  if (!/^[A-Za-z0-9_-]{10}$/.test(code)) fail('Link de conferência inválido.');
+  const o = checked(await db.from('pedidos_ordens').select('*').eq('codigo_curto', code).maybeSingle());
+  if (!o) fail('Pedido não encontrado para este link.');
+  return { ...await conference(o), token: o.token };
+ }
  case 'getConferenciaCurta': {
   admin(u);
   const fullToken = fullConferenceToken(a[1]);
