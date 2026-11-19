@@ -1,0 +1,48 @@
+name: Publicar GLOBAL ECOSISTEMA no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publicar frontend
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Validar arquivos de publicacao
+        run: |
+          test -f dist/index.html
+          test -f dist/pedidos.html
+          test -f dist/pedidos-api.js
+          test -f dist/global-api.js
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar site da pasta dist
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Publicar site
+        id: deployment
+        uses: actions/deploy-pages@v4
