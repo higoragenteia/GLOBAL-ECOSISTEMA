@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.1';
 const URL = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const db = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-const BASE = 'https://gvg-pedidos-supabase-teste.higoragenteia.chatgpt.site/';
+const BASE = 'https://global-ecosistema.higoragenteia.chatgpt.site/';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Content-Type': 'application/json; charset=utf-8' };
 const answer = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
 const fail = (message: string) => { throw new Error(message); };
@@ -164,7 +164,7 @@ async function run(fn: string, a: any[], u: any) {
   const password = String(a[2] || ''); if (password.length < 8 || password.length > 128) fail('Use uma senha entre 8 e 128 caracteres.');
   checked(await db.auth.admin.updateUserById(target.id, { password })); await audit(u, 'REDEFINIR_SENHA', target.id); return { ok: true };
  }
- case 'limparPedidosDemo': fail('A limpeza de histórico está desativada nesta primeira versão de teste.'); break;
+ case 'limparPedidosDemo': fail('A limpeza de histórico está desativada neste aplicativo.'); break;
  default: fail('Operação não disponível: ' + fn);
  }
 }

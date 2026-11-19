@@ -95,7 +95,7 @@ async function panel(u){
   if(m==='fornecedores'){const r=checked(await db.from('global_registros').select('dados').match({modulo:m,colecao:'FORNECEDORES'}));apps[m]={valor:r.filter(x=>x.dados.Status!=='Inativo').length,label:'fornecedores ativos',ativo:true};}
   if(m==='maquinas'){const r=checked(await db.from('global_registros').select('dados').match({modulo:m,colecao:'EQUIPAMENTOS'}));apps[m]={valor:r.filter(x=>x.dados.STATUS!=='INATIVO').length,label:'equipamentos ativos',ativo:true};}
  })());}
- await Promise.all(jobs);return {ok:true,usuario:publicUser(u),ambiente:'TESTE — GLOBAL ECOSISTEMA',atualizadoEm:new Date().toLocaleString('pt-BR',{timeZone:'America/Recife'}),vazio:!apps.pedidos?.valor,apps,atividades:[]};
+ await Promise.all(jobs);return {ok:true,usuario:publicUser(u),ambiente:'GLOBAL ECOSISTEMA',atualizadoEm:new Date().toLocaleString('pt-BR',{timeZone:'America/Recife'}),vazio:!apps.pedidos?.valor,apps,atividades:[]};
 }
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response(null,{headers:cors});if(req.method!=='POST')return reply({error:'Método inválido.'},405);

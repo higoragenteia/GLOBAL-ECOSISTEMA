@@ -10,7 +10,7 @@ Painel integrado em migração de Google Sheets/Apps Script para PostgreSQL e Su
 - Máquinas: 50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções. Regras de estoque, entrega, devolução, transferência e manutenção preservadas.
 - **Frotas não iniciado. Aguardar os pontos específicos do Higor antes de implementar.** O botão do novo painel informa essa pendência.
 
-Publicação de revisão: https://gvg-pedidos-supabase-teste.higoragenteia.chatgpt.site . O endereço de teste anterior foi mantido. A hospedagem oferece domínio próprio; o domínio atual só deve ser transferido depois da conclusão e homologação.
+Publicação oficial: https://global-ecosistema.higoragenteia.chatgpt.site . O endereço foi atualizado para a identificação oficial GLOBAL ECOSISTEMA. A hospedagem oferece domínio próprio; o domínio atual só deve ser transferido depois da conclusão e homologação.
 
 ## Identidade e acesso
 

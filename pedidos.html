@@ -172,7 +172,7 @@ async function sendOrder(destino){
  let popup=null;
  try{
   const msg=montarPedido();
-  if(destino==='direct'&&!/^\d{12,13}$/.test(DATA.whatsapp))throw new Error('O WhatsApp direto ainda não foi configurado neste ambiente de teste. Use a opção de compartilhar.');
+  if(destino==='direct'&&!/^\d{12,13}$/.test(DATA.whatsapp))throw new Error('O WhatsApp direto ainda não foi configurado neste aplicativo. Use a opção de compartilhar.');
   // Abrir janela ANTES da chamada ao servidor evita bloqueio de pop-up após espera.
   if(destino==='direct'||destino==='group')popup=window.open('about:blank','_blank');
   const itens=Object.entries(cart).filter(([k,q])=>q>0).map(([k,q])=>({id:k.split('|')[0],unidade:k.split('|')[1],quantidade:q}));
@@ -1619,4 +1619,4 @@ async function loadUsers(){
 @media(max-width:900px){.gvg-conf-info{grid-template-columns:repeat(2,minmax(0,1fr))}.gvg-conf-item{grid-template-columns:minmax(0,1fr) minmax(80px,.7fr) minmax(80px,.7fr) minmax(80px,.7fr)}.gvg-conf-item .gvg-conf-note{grid-column:1/-1}.gvg-conf-item .gvg-conf-zero{grid-column:1/-1;justify-self:start}}
 @media(max-width:600px){.gvg-conf-head{display:block}.gvg-conf-rev{display:inline-block;margin-top:8px}.gvg-conf-info{grid-template-columns:1fr 1fr}.gvg-conf-item{grid-template-columns:1fr 1fr;align-items:start}.gvg-conf-name{grid-column:1/-1}.gvg-conf-item .gvg-conf-note{grid-column:1/-1}.gvg-conf-item .gvg-conf-zero{grid-column:1/-1;justify-self:stretch}.gvg-conf-actions{display:grid}.gvg-conf-actions .big{min-width:0}}
 </style>
-<script>(function(){try{if(window.top&&window.top!==window)window.top.postMessage({type:'gvg-panel-ready'},'*');}catch(e){}})();</script><div aria-label="Ambiente de teste" style="position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:99999;background:#e6b74e;color:#111;font:700 9px system-ui;padding:2px 12px;border-radius:0 0 7px 7px;pointer-events:none">PEDIDOS · TESTE</div></body></html>
+<script>(function(){try{if(window.top&&window.top!==window)window.top.postMessage({type:'gvg-panel-ready'},'*');}catch(e){}})();</script></body></html>
