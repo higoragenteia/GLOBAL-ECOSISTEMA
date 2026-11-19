@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380">
+<defs>
+<linearGradient id="a" x2="1" y2=".5"><stop stop-color="#f5f7f9"/><stop offset=".25" stop-color="#525e6b"/><stop offset=".55" stop-color="#b9c3c9"/><stop offset=".8" stop-color="#1f2933"/><stop offset="1" stop-color="#9aaab5"/></linearGradient>
+<linearGradient id="b" x2="1" y2=".8"><stop stop-color="#101317"/><stop offset=".6" stop-color="#3e2919"/><stop offset="1" stop-color="#0c0e12"/></linearGradient>
+<linearGradient id="o" x2=".3" y2="1"><stop stop-color="#ffc12b"/><stop offset=".5" stop-color="#fc8100"/><stop offset="1" stop-color="#9e3200"/></linearGradient>
+<linearGradient id="t" x2="1"><stop stop-color="#aeb0b2"/><stop offset=".2" stop-color="#fff"/><stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#afb1b3"/></linearGradient>
+<filter id="s"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-opacity=".85"/></filter>
+<filter id="g"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<rect width="1200" height="380" fill="url(#b)"/>
+<path d="M610 0L720 0L505 160M0 376H1200" stroke="#f39911" stroke-width="3" fill="none"/>
+<path d="M550 0H1200V300L880 348Z" fill="#090b0e" stroke="#c78c39" stroke-opacity=".5"/>
+<path d="M726 22L1155 15V277L727 286Z" fill="#71543b" fill-opacity=".44" stroke="#1b2228" stroke-width="24"/>
+<path d="M734 36L1151 29M734 157L1151 149M865 30V276M1018 27V276" stroke="#14191e" stroke-width="16"/>
+<path d="M738 37L1151 29M867 30V274M1017 25V271" stroke="#e6a24a" stroke-opacity=".6" stroke-width="3"/>
+<path d="M733 52L865 39L733 227M1028 34L1134 29L1027 211" stroke="#fff" stroke-opacity=".10" stroke-width="12"/>
+<path d="M608 332H1195" stroke="#fca82d" stroke-opacity=".85" stroke-width="4" filter="url(#g)"/>
+<g filter="url(#s)">
+<path d="M612 252L796 192L838 217L671 283Z" fill="url(#a)" stroke="#d7dfe4" stroke-width="3"/>
+<path d="M612 252L671 283V329L612 302Z" fill="#202932" stroke="#c3ccd5" stroke-width="4"/>
+<path d="M671 283L838 217V268L671 329Z" fill="url(#a)" stroke="#8e9ca5" stroke-width="3"/>
+<path d="M627 275L656 287V311L627 298Z" fill="#07090c" stroke="#8c99a3" stroke-width="4"/>
+<path d="M695 288L815 243M690 317L824 269" stroke="#151a20" stroke-width="9"/>
+</g>
+<g transform="translate(864 170)" filter="url(#s)">
+<path d="M18 4H117Q150 4 154 28V55Q146 70 128 70H61L43 104L45 152H7L-2 101L19 68Q-10 57 1 31Z" fill="url(#o)" stroke="#433019" stroke-width="5"/>
+<path d="M-70 11H11V56H-70Q-83 36-70 11Z" fill="#23272b" stroke="#858d96" stroke-width="4"/>
+<path d="M-54 12V55M-35 12V55M-15 12V55" stroke="#57606a" stroke-width="7"/>
+<path d="M-98 26H-70V38H-98Z" fill="#c9d5dc"/>
+<path d="M48 73L77 70L64 125L47 124Z" fill="#15181c"/>
+<path d="M10 142H80L92 162H5Z" fill="#26292d" stroke="#d79416" stroke-width="4"/>
+<rect x="81" y="12" width="61" height="28" rx="5" fill="#181818"/><text x="111" y="31" fill="#ffd238" font-family="Arial" font-size="13" font-weight="900" text-anchor="middle">TOOLS</text>
+</g>
+<g transform="translate(1097 99)" filter="url(#s)">
+<path d="M22 1L31-27L40 1Z" fill="#fff" stroke="#ddd"/>
+<rect x="23" y="0" width="17" height="27" fill="#fff"/>
+<rect x="0" y="26" width="78" height="213" rx="10" fill="url(#t)" stroke="#c4c4c4" stroke-width="3"/>
+<rect x="8" y="60" width="62" height="168" fill="#fff"/>
+<text x="39" y="85" font-size="15" font-family="Arial" font-weight="900" fill="#131313" text-anchor="middle">Silicone</text>
+<text x="39" y="103" font-size="16" font-family="Arial" font-weight="900" fill="#131313" text-anchor="middle">Neutro</text>
+<text x="39" y="119" font-size="12" font-family="Arial" font-weight="900" fill="#f25d00" text-anchor="middle">INCOLOR</text>
+<path d="M8 137Q57 164 70 139V229H8Z" fill="url(#o)"/>
+<text x="43" y="196" transform="rotate(-90 43 196)" font-family="Arial" font-size="24" font-weight="900" fill="#131313" text-anchor="middle">Power</text>
+<text x="22" y="195" transform="rotate(-90 22 195)" font-family="Arial" font-size="17" font-weight="900" fill="#fff" text-anchor="middle">Ved</text>
+<text x="39" y="221" font-size="10" font-family="Arial" font-weight="800" text-anchor="middle" fill="#fff">260 g</text>
+</g>
+<path d="M0 376H1200" stroke="#ff9b00" stroke-width="5"/>
+</svg>
