@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.119.1';
 const URL = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const db = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-const BASE = 'https://global-ecosistema.higoragenteia.chatgpt.site/';
+const BASE = 'https://gvgartefalesquadrias.com.br/pedidos.html';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Content-Type': 'application/json; charset=utf-8' };
 const answer = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: cors });
 const fail = (message: string) => { throw new Error(message); };
