@@ -47,5 +47,6 @@
   try { return await call(fn, args); }
   catch (e) { if (['estadoSessaoFuncionarioGVG', 'validarSessaoAdminGVG'].includes(fn) && [400,401].includes(e.status)) { save(null); return { ok: false }; } throw e; }
  };
+ window.GlobalSession = { access, logout: () => window.pedidosCall('sairFuncionario') };
  window.addEventListener('storage', event => { if (event.key === STORAGE) { try { session = JSON.parse(event.newValue || 'null'); } catch (_) { session = null; } } });
 })();

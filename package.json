@@ -1,0 +1,1 @@
+{"name":"global-ecossistema","private":true,"type":"module","scripts":{"test":"node --test tests/global.test.js","build":"python3 scripts/build-frontend.py"}}

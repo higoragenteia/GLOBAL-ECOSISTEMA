@@ -16,13 +16,14 @@ async function rows(table: string, match: Record<string, unknown> = {}, sort?: s
   const page = checked(await query); out.push(...page); if (page.length < 1000) return out;
  }
 }
-const isAdmin = (u: any) => ['SUPERADMIN', 'ADMIN'].includes(u.perfil);
+const pedidoLevel = (u: any) => u.perfil === 'SUPERADMIN' ? 'GERENCIAR' : u.permissoes?.pedidos || '';
+const isAdmin = (u: any) => pedidoLevel(u) === 'GERENCIAR';
 const admin = (u: any) => { if (!isAdmin(u)) fail('Acesso administrativo obrigatório.'); };
 const superadmin = (u: any) => { if (u.perfil !== 'SUPERADMIN') fail('Somente o Superadministrador pode gerenciar usuários.'); };
 function publicUser(u: any) {
  return { id: u.id, nome: u.nome, login: u.login, email: u.email, foto: u.foto, perfil: u.perfil, status: u.status,
-  superadmin: u.perfil === 'SUPERADMIN', permissoes: { pedidos: isAdmin(u) ? 'GERENCIAR' : 'OPERAR' }, projetos: ['pedidos'],
-  podeGerenciarPedidos: isAdmin(u), podeOperarPedidos: true };
+  superadmin: u.perfil === 'SUPERADMIN', permissoes: { pedidos: pedidoLevel(u) }, projetos: pedidoLevel(u) ? ['pedidos'] : [],
+  podeGerenciarPedidos: isAdmin(u), podeOperarPedidos: ['GERENCIAR','OPERAR'].includes(pedidoLevel(u)) };
 }
 const product = (p: any) => ({ id: p.id, nome: p.nome, categoria: p.categoria, unidade: p.unidade, descricao: p.descricao, porCaixa: Number(p.por_caixa), ativo: p.ativo, imagem: p.imagem, referencia: p.referencia });
 const order = (o: any) => ({ id: o.id, data: o.criado_em, solicitante: o.solicitante, obra: o.obra, canal: o.canal, situacao: o.situacao, status: o.situacao, dataEntrega: o.entregue_em || '' });
@@ -57,13 +58,14 @@ async function signup(req: Request, d: any) {
  return { status: 'PENDENTE' };
 }
 async function run(fn: string, a: any[], u: any) {
+ if (!pedidoLevel(u) && !['estadoSessaoFuncionarioGVG','sessaoFuncionario','validarSessaoAdminGVG','salvarFotoPerfil'].includes(fn)) fail('Seu perfil não tem acesso ao Pedidos.');
  switch (fn) {
  case 'estadoSessaoFuncionarioGVG': case 'sessaoFuncionario': return { ok: true, ...publicUser(u) };
  case 'validarSessaoAdminGVG': return { ok: isAdmin(u), ...publicUser(u) };
  case 'entrarAdminGVG': admin(u); return { token: 'SUPABASE-' + u.id };
  case 'getCatalogo': {
   const [products, obras, configs] = await Promise.all([rows('pedidos_produtos', {}, 'ordem'), rows('pedidos_obras', { ativa: true }, 'ordem'), rows('pedidos_config', {}, 'chave')]);
-  return { produtos: products.filter(p => p.ativo !== 'NÃO').map(product), obras: obras.map(o => o.nome), whatsapp: configs.find(c => c.chave === 'WHATSAPP_DESTINO')?.valor || '', titulo: 'GVG&ARTEFAL | Pedidos', acesso: { nivel: isAdmin(u) ? 'GERENCIAR' : 'OPERAR', podeOperar: true, podeGerenciar: isAdmin(u) } };
+  return { produtos: products.filter(p => p.ativo !== 'NÃO').map(product), obras: obras.map(o => o.nome), whatsapp: configs.find(c => c.chave === 'WHATSAPP_DESTINO')?.valor || '', titulo: 'GVG&ARTEFAL | Pedidos', acesso: { nivel: isAdmin(u) ? 'GERENCIAR' : 'OPERAR', podeOperar: ['GERENCIAR','OPERAR'].includes(pedidoLevel(u)), podeGerenciar: isAdmin(u) } };
  }
  case 'adminListar': admin(u); return { produtos: (await rows('pedidos_produtos', {}, 'ordem')).map(product) };
  case 'salvarProduto': {
@@ -82,6 +84,7 @@ async function run(fn: string, a: any[], u: any) {
   await audit(u, 'DISPONIBILIDADE', result.id, { ativo: a[2] }); return true;
  }
  case 'registrarSolicitacao': {
+  if (!['GERENCIAR','OPERAR'].includes(pedidoLevel(u))) fail('Seu acesso ao Pedidos é somente leitura.');
   const d = a[0] || {}; if (!Array.isArray(d.itens) || !d.itens.length) fail('Escolha os itens.');
   const id = checked(await db.rpc('pedidos_criar', { p_usuario: u.id, p_dados: d }));
   const o = await getOrder(id); return { pedido: o.id, link: orderLink(o) };
@@ -148,8 +151,8 @@ async function run(fn: string, a: any[], u: any) {
   const changes: any = {};
   if (fn === 'adminSituacaoUsuario') {
    if (!['ATIVO', 'BLOQUEADO', 'EXCLUIDO', 'PENDENTE'].includes(a[2])) fail('Status inválido.'); changes.status = a[2];
-   if (a[4]) changes.perfil = ['ADMIN', 'GERENCIAR'].includes(a[4].pedidos) ? 'ADMIN' : 'OPERADOR';
-  } else if (fn === 'adminDefinirPermissoes') changes.perfil = ['ADMIN', 'GERENCIAR'].includes(a[2]?.pedidos) ? 'ADMIN' : 'OPERADOR';
+   if (a[4]) changes.permissoes = {...target.permissoes, pedidos: ['ADMIN','GERENCIAR'].includes(a[4].pedidos) ? 'GERENCIAR' : a[4].pedidos === 'VISUAL' ? 'VISUAL' : a[4].pedidos ? 'OPERAR' : ''};
+  } else if (fn === 'adminDefinirPermissoes') changes.permissoes = {...target.permissoes, pedidos: ['ADMIN','GERENCIAR'].includes(a[2]?.pedidos) ? 'GERENCIAR' : a[2]?.pedidos === 'VISUAL' ? 'VISUAL' : a[2]?.pedidos ? 'OPERAR' : ''};
   else { if (!['ADMIN', 'OPERADOR'].includes(a[2])) fail('Perfil inválido.'); changes.perfil = a[2]; }
   const out = checked(await db.from('pedidos_usuarios').update(changes).eq('id', target.id).select('*').single());
   await audit(u, fn, target.id, changes);

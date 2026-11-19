@@ -1,40 +1,49 @@
-# GVG&ARTEFAL | Pedidos — Supabase
+# GLOBAL ECOSISTEMA — GVG&ARTEFAL
 
-Primeira versão isolada do Pedidos. Interface copiada de `higoragenteia/gvg-artefal`, commit `e844395157299a3e18fc5f51ed2355b3815f0aea`, sem alterações na origem ou nos outros quatro aplicativos.
+Painel integrado em migração de Google Sheets/Apps Script para PostgreSQL e Supabase. Repositório privado `higoragenteia/GLOBAL-ECOSISTEMA` (anteriormente `higorteste`). O sistema original e seu domínio continuam intactos.
 
-## Componentes
+## Estado em 19/11/2026
 
-- `index.html`: catálogo, carrinho, favoritos, histórico, gestão e conferência do aplicativo original.
-- `pedidos-api.js`: autenticação Supabase e chamadas para a Edge Function, com renovação de sessão.
-- `supabase/functions/pedidos-api/index.ts`: backend autenticado. Apenas a chave pública está no navegador; a chave de serviço vem do ambiente da Edge Function.
-- `database/schema.sql`: estrutura nova com prefixo `pedidos_`, RLS e acesso direto negado aos papéis `anon` e `authenticated`.
-- `database/catalogo.json`: catálogo e obras copiados da planilha ativa em 19/11/2026. O backend preserva os fatores especiais de embalagem do original.
-- `dist/`: arquivos estáticos para publicação.
+- Pedidos: catálogo, carrinho, histórico, conferência e gestão da réplica Supabase existente.
+- Gastos: 11 lançamentos, orçamentos por mês/pessoa, ajustes, cadastros, auditoria e relatórios da interface original.
+- Fornecedores: 24 fornecedores, 18 produtos, 17 cotações, históricos de preços/ações; compras, relatórios e backup JSON pelo novo backend.
+- Máquinas: 50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções. Regras de estoque, entrega, devolução, transferência e manutenção preservadas.
+- **Frotas não iniciado. Aguardar os pontos específicos do Higor antes de implementar.** O botão do novo painel informa essa pendência.
 
-## Estado inicial
+Publicação de revisão: https://gvg-pedidos-supabase-teste.higoragenteia.chatgpt.site . O endereço de teste anterior foi mantido. A hospedagem oferece domínio próprio; o domínio atual só deve ser transferido depois da conclusão e homologação.
 
-Foram copiados 327 produtos e 17 opções de obra. Os pedidos e usuários antigos da planilha não foram importados. A conta Supabase existente `higoragenteia@gmail.com` recebeu o perfil de Superadministrador exclusivo deste app. Entre com a senha já cadastrada nessa conta do aplicativo Supabase; a sessão do painel antigo não é compartilhada.
+## Identidade e acesso
 
-Novos cadastros ficam pendentes até aprovação. A senha mínima é de oito caracteres. Usuários sem e-mail usam internamente um identificador sob `pedidos.gvg.invalid`; não há envio de e-mail nesse fluxo. Aprovação e perfis pertencem somente ao Pedidos.
+Supabase Auth é a fonte única de credenciais. O cadastro compartilhado continua na tabela `pedidos_usuarios`, agora com `permissoes` por módulo. Superadministrador tem acesso aos quatro módulos; Admin recebe acesso por aplicativo; Operador pode visualizar/operar os aplicativos liberados. Operador não pode receber GERENCIAR no formulário central. Todas as chamadas validam o token e o status atual do perfil no servidor.
 
-O destino direto do WhatsApp está vazio porque a planilha de origem trazia um número fictício. Compartilhar no WhatsApp permanece disponível e a ação final de envio é manual. Configure o destino real em `pedidos_config`, chave `WHATSAPP_DESTINO`, antes de usar o envio direto. O reenvio da conferência mantém o solicitante original.
+As contas e senhas antigas dos outros apps não foram copiadas. Não são compatíveis diretamente com Supabase Auth. Os novos usuários devem cadastrar-se ou ser criados/aprovados pelo Superadministrador no painel. A conta Supabase do Higor foi preservada. Colaboradores de Máquinas são dados operacionais, não contas de login.
 
-Fotos existentes mantêm as URLs da origem. Novas fotos são armazenadas no bucket `pedidos-fotos`. Sessões e carrinho têm chaves próprias para evitar conflito com o aplicativo atual.
+## Persistência e compatibilidade
 
-## Publicação
+Pedidos mantém suas tabelas próprias `pedidos_*` e RPCs de criação/conferência. Os demais módulos usam registros JSONB individuais em `global_registros`, identificados por módulo/coleção/ordem, e metadados em `global_colecoes`. Há índice GIN para consulta de campos JSONB. Não há gravação ou leitura operacional de Sheets.
 
-O repositório `higorteste` é privado. Uma publicação privada separada permite revisão sem modificar o domínio da operação. `.openai/hosting.json` identifica essa publicação; `dist/` contém somente arquivos públicos do frontend.
+`source-original/` preserva a origem e `scripts/build-global.py` gera as regras de negócio do servidor com substituição de identidade e persistência. `records.js` adapta chamadas de linhas/colunas em memória para os registros PostgreSQL, preservando os contratos da interface. É uma camada de transição: as leituras carregam a base do módulo e as escritas substituem as coleções alteradas. Não é ainda uma remodelagem relacional específica por entidade; com crescimento significativo deve-se migrar para consultas paginadas e atualizações por registro.
 
-## Verificação e limites
+Uma escrita passa por `global_aplicar`: revisão otimista, todos os registros/histórico na mesma transação e identificador de operação persistido para evitar duplicação em reenvios. Conflitos concorrentes pedem atualização, sem sobrescrever dados. As tabelas têm RLS e acesso direto negado a anon/authenticated. Somente Edge Functions autenticadas usam service_role. O aviso RLS sem políticas é intencional neste modelo. A proteção de senhas vazadas do Supabase permanece com o ajuste preexistente; ver https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection .
 
-- Confirmados: implantação da Edge Function, negação de acesso sem login, criação de cadastros pendentes, conteúdo do catálogo no banco, abertura da tela de login e verificação sintática do JavaScript.
-- O teste completo com perfil administrativo não foi concluído: a revisão automática recusou ativar/promover as contas temporárias de QA.
-- O botão de limpeza de histórico está desativado nesta primeira versão.
-- A exclusão das 12 tabelas antigas e, depois, o arquivamento reversível foram bloqueados pela revisão automática por envolverem estruturas compartilhadas. Nenhuma tabela antiga foi alterada. Uma contagem exata encontrou registros em algumas delas, embora as estimativas iniciais indicassem zero.
-- As novas tabelas usam RLS sem políticas de cliente por projeto: somente a Edge Function, que valida identidade e perfil, acessa os dados.
+As datas de Gastos foram convertidas dos números de série do Sheets para ISO preservando a data exibida. Imagens e arquivos locais da interface foram copiados. Fotos antigas do Pedidos ainda usam URLs da origem; não apagar a pasta original do Drive.
 
-## Desenvolvimento
+## Desenvolvimento e publicação
 
-Sirva `dist/` com qualquer servidor HTTP estático. Para atualizar a Edge Function, publique seu diretório com o nome `pedidos-api`; a verificação JWT do gateway fica desativada porque o próprio handler valida o token usando Supabase Auth e permite cadastro público sujeito a aprovação. Nenhuma operação de dados privados é pública.
+- `python3 scripts/build-global.py`: gera os três módulos do servidor.
+- `python3 scripts/build-frontend.py`: gera painel e rotas estáticas em `dist/`.
+- `npm test`: testes de regras de negócio e permissões de leitura.
+- `database/global.sql` e `database/global-permissoes.sql`: estrutura e adaptações das RPCs.
+- `database/importacao/*-records.json`: cópia de dados usada na migração; sem sessões, senhas ou códigos de recuperação.
+- Edge Functions: `global-api` e `pedidos-api`, com autenticação explícita por `auth.getUser` (gateway JWT desativado para permitir o preflight e o cadastro pendente no Pedidos).
+- `.openai/hosting.json` mantém a publicação de revisão privada existente. `dist/` contém somente frontend público.
 
-Nunca inclua `SUPABASE_SERVICE_ROLE_KEY` no HTML, JavaScript público ou repositório.
+Não reexecutar os seeds em uma base já importada. Novas gravações na origem após a cópia não são sincronizadas automaticamente. Antes da virada do domínio, conciliar as alterações feitas durante a homologação.
+
+Nunca incluir a chave de serviço no frontend ou repositório.
+
+## Verificação
+
+Passaram testes locais de CRUD/saldos de Gastos, importação/CRUD de produtos de Fornecedores e ciclo de equipamento com entrega, transferência e devolução (incluindo bloqueio de saldo insuficiente). No banco, testes em transação revertida verificaram idempotência, rejeição de revisão obsoleta, usuário não autorizado e negação de leitura direta. As verificações pelo navegador são registradas no relatório de implementação; uma publicação não equivale à homologação completa pelos usuários.
+
+A limpeza antiga dos objetos alheios ao Pedidos foi concluída antes desta implementação; a configuração dos schemas expostos foi corrigida para `public,graphql_public`. Nenhuma estrutura de Frotas foi criada.
