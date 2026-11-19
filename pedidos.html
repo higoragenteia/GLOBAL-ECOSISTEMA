@@ -252,7 +252,12 @@ function renderReport(){
     <p class="muted" style="line-height:1.5;margin:0">Solicitado indica registro no aplicativo, não confirmação de envio pelo WhatsApp. O filtro Entregues mostra pedidos marcados como entregues ou parcialmente entregues. Os períodos consideram a data de solicitação dos pedidos.</p>
   </div>`;
   // A listagem de pedidos e a separação permanecem exatamente com seus comandos existentes.
-  el('orders').innerHTML=ps.slice().reverse().slice(0,100).map(p=>`<div class="cartrow"><div class="body"><b>${safe(p.id)}</b><div class="muted">${safe(p.solicitante)} · ${safe(p.obra)} · ${safe(p.situacao)}</div>${!['ENTREGUE','ENTREGUE PARCIAL','NÃO ENTREGUE'].includes(p.situacao)?`<button class="add" data-separate="${safe(p.id)}">Conferir materiais</button>`:''}<button class="add" data-conf-link="${safe(p.id)}" title="Gerar ou abrir o link de conferência">Link de conferência</button><button class="add" data-share-link="${safe(p.id)}" title="Enviar o link de conferência no WhatsApp">Enviar link no WhatsApp</button></div></div>`).join('')||'<p class="muted">Sem pedidos.</p>';
+  const finalStatus=p=>['ENTREGUE','ENTREGUE PARCIAL','NÃO ENTREGUE'].includes(String(p.situacao||'').trim().toUpperCase());
+  const pendingOrders=ps.filter(p=>!finalStatus(p)).slice().reverse();
+  const finishedOrders=ps.filter(finalStatus).slice().reverse();
+  const orderRow=p=>`<div class="cartrow"><div class="body"><b>${safe(p.id)}</b><div class="muted">${safe(p.solicitante)} · ${safe(p.obra)} · ${safe(p.situacao)}</div>${!finalStatus(p)?`<button class="add" data-separate="${safe(p.id)}">Conferir materiais</button>`:''}<button class="add" data-conf-link="${safe(p.id)}" title="Gerar ou abrir o link de conferência">Link de conferência</button><button class="add" data-share-link="${safe(p.id)}" title="Enviar o link de conferência no WhatsApp">Enviar link no WhatsApp</button></div></div>`;
+  // Pedidos confirmados deixam a fila de conferência, mas continuam disponíveis no histórico.
+  el('orders').innerHTML=(pendingOrders.slice(0,100).map(orderRow).join('')||'<p class="muted">Nenhum pedido aguardando conferência.</p>')+(finishedOrders.length?`<details class="gvg-finished-orders"><summary style="cursor:pointer;padding:12px 0;font-weight:800">✓ Pedidos finalizados (${finishedOrders.length}) · Ver histórico</summary>${finishedOrders.slice(0,100).map(orderRow).join('')}</details>`:'');
 }
 
 function openSeparation(id){
