@@ -396,7 +396,7 @@
     }
   </style>
 <link rel="apple-touch-icon" sizes="180x180" href="https://higoragenteia.github.io/gvg-fornecedores/icons/apple-touch-icon-v3.png">
-<script src="./pedidos-api.js"></script><script src="./global-api.js"></script></head>
+<script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>
 <body>
   <div class="app">
     <aside id="sidebar" class="sidebar">
@@ -416,7 +416,6 @@
         <div class="nav-sep"></div>
         <button class="nav-item" data-view="atividades" onclick="app.setView('atividades')"><span class="ico">🕘</span> Histórico de Atividades</button>
         <button class="nav-item" data-view="relatorios" onclick="app.setView('relatorios')"><span class="ico">📊</span> Relatórios</button>
-        <button class="nav-item" id="navUsuarios" data-view="usuarios" onclick="app.setView('usuarios')"><span class="ico">👥</span> Gestão de Usuários</button>
         <button class="nav-item" id="navConfig" data-view="configuracoes" onclick="app.setView('configuracoes')"><span class="ico">⚙</span> Configurações</button>
       </nav>
       <div class="sidebar-foot">
@@ -661,7 +660,7 @@
         const loaded = await loadData(true);
         if(!loaded){ state.loading=false; render(); return; }
         const requested = (location.hash||'').replace('#','') || INITIAL_VIEW || 'visao';
-        state.view = VIEWS[requested] ? requested : 'visao';
+        state.view = requested!=='usuarios' && VIEWS[requested] ? requested : 'visao';
         state.loading=false;
         render();
         setInterval(()=>{ if(!document.hidden) refreshSilent(); },60000);
@@ -723,7 +722,6 @@
       $('#sideVersion').textContent = (state.meta && state.meta.version) || '2.0.0';
       $('#userChip').innerHTML = state.user ? '<div class="avatar">'+esc(initial(state.user.nome||state.user.email))+'</div><div class="who"><b>'+esc(state.user.nome||state.user.email)+'</b><span>'+esc(roleLabel(state.user.perfil))+'</span></div>' : '';
       $('#navConfig').classList.toggle('hidden', !state.isAdmin);
-      $('#navUsuarios').classList.toggle('hidden', !state.isAdmin);
       $$('.nav-item').forEach(b=>b.classList.toggle('active', b.getAttribute('data-view')===state.view));
       $('#syncText').textContent = state.meta ? 'Atualizado '+String(state.meta.serverTime||'').slice(11,16) : 'Conectado';
       const fn = ({
@@ -1010,7 +1008,7 @@
       const cfgTable=cfg.length?'<div class="table-wrap"><table class="table compact"><thead><tr><th>Chave</th><th>Valor</th><th>Descrição</th><th class="actions"></th></tr></thead><tbody>'+cfg.map(c=>
         '<tr><td><b>'+esc(c.chave)+'</b></td><td>'+esc(c.valor)+'</td><td>'+esc(c.descricao||'')+'</td><td class="actions"><button class="btn sm" onclick="app.editConfig(\''+jsq(c.chave)+'\')">Editar</button></td></tr>'
       ).join('')+'</tbody></table></div>':'<p class="muted">Nenhuma configuração.</p>';
-      return pageHead('Configurações','Parâmetros do sistema e backup','<button class="btn" onclick="app.selfTest()">Executar autoteste</button><button class="btn gold" onclick="app.backup()">Criar backup agora</button>')+panel('Usuários e permissões','Aprovação de cadastros, perfis, bloqueios e exclusão ficam na Gestão de Usuários.','<button class="btn primary" onclick="app.setView(\'usuarios\')">👥 Abrir Gestão de Usuários</button>')+panel('Parâmetros do sistema','Chaves usadas pelo aplicativo',cfgTable)+panel('Informações técnicas','Conexão e versão','<div class="kpi-inline"><span>Planilha: <b>'+esc((state.meta&&state.meta.spreadsheetId)||'')+'</b></span><span>Fuso: <b>'+esc((state.meta&&state.meta.timezone)||'')+'</b></span><span>Versão: <b>'+esc((state.meta&&state.meta.version)||'')+'</b></span></div><div style="margin-top:12px"><a class="btn" href="'+escAttr((state.meta&&state.meta.spreadsheetUrl)||'#')+'" target="_blank">Abrir planilha</a></div>');
+      return pageHead('Configurações','Parâmetros do sistema e backup','<button class="btn" onclick="app.selfTest()">Executar autoteste</button><button class="btn gold" onclick="app.backup()">Criar backup agora</button>')+panel('Parâmetros do sistema','Chaves usadas pelo aplicativo',cfgTable);
     }
 
     /* ------------------------------ modais e formulários ------------------------------ */
@@ -1197,6 +1195,7 @@
 
     const app = {
       setView(v){
+        if(v==='usuarios')v='visao';
         if((v==='configuracoes' || v==='usuarios') && !state.isAdmin){ toast('Apenas administradores.','error'); return; }
         state.view=v; location.hash=v; this.closeMenu(); window.scrollTo({top:0,behavior:'smooth'});
         if(v==='relatorios' && !state.report) this.loadReport(); else render();

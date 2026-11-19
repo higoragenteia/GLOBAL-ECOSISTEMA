@@ -34,7 +34,7 @@
    const email = login.includes('@') ? login : login + '@pedidos.gvg.invalid';
    const result = await auth('token?grant_type=password', { email, password: String(args[1] || '') });
    save({ ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + result.expires_in });
-   try { const profile = await call('estadoSessaoFuncionarioGVG', []); return { ...profile, token: 'SUPABASE-' + profile.id }; }
+   try { const profile = await call('estadoSessaoFuncionarioGVG', []); window.dispatchEvent(new Event('global-profile-updated')); return { ...profile, token: 'SUPABASE-' + profile.id }; }
    catch (e) { save(null); throw e; }
   }
   if (fn === 'sairFuncionario' || fn === 'sairAdminGVG') {

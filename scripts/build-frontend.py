@@ -30,7 +30,7 @@ for filename,mod in [('Painel.html','painel'),('GastosIndex.html','gastos'),('Fo
   s=s.replace("    {key:'maquinas',label:'Controle de Máquinas'},\n    {key:'frotas',label:'Controle de Frotas'}","    {key:'maquinas',label:'Controle de Máquinas'}")
   s=re.sub(r'(<button[^>]+(?:data-view|data-module)="frotas"[\s\S]*?</button>)',lambda m:m[0].replace('>Ativo<','>Pendente<'),s)
   s=s.replace('id="gvgpTopBell"','id="gvgpTopBell" style="display:none"')
- s=s.replace('</head>','<script src="./pedidos-api.js"></script><script src="./global-api.js"></script></head>')
+ s=s.replace('</head>','<script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>')
  if mod=='painel':
   start=s.index('  function run(fn,...args){');end=s.index('  function setSidebar',start)
   s=s[:start]+"  function run(fn,...args){return window.globalPanelCall(fn,...args);}\n"+s[end:]
@@ -52,6 +52,6 @@ for filename,mod in [('Painel.html','painel'),('GastosIndex.html','gastos'),('Fo
  filename='index.html' if mod=='painel' else mod+'.html'
  (dist/filename).write_text(s)
 (root/'index.html').write_text((dist/'index.html').read_text())
-for filename in ['pedidos.html','pedidos-api.js','global-api.js','manifest.webmanifest']:shutil.copy2(root/filename,dist/filename)
+for filename in ['pedidos.html','pedidos-api.js','global-api.js','shared-profile.js','manifest.webmanifest']:shutil.copy2(root/filename,dist/filename)
 shutil.copytree(root/'assets',dist/'assets',dirs_exist_ok=True)
 print('Frontend: painel + Pedidos + Gastos + Fornecedores + Máquinas. Frotas não implementado.')
