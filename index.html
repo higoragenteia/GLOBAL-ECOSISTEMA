@@ -1616,21 +1616,22 @@ const FROTAS_URL = "https://script.google.com/macros/s/AKfycby3W5KlwLYtX7j3_lvi6
   }
   function renderApps(d){
     const a=(d&&d.apps)||{};
+    const frotasInfo=a.frotas||(canViewProject(state.user,'frotas')?{valor:'Abrir',label:'Veículos e alertas no aplicativo original'}:null);
     setMetric('gvgpAppPedidos','gvgpAppPedidosLabel',a.pedidos,false);
     setMetric('gvgpAppGastos','gvgpAppGastosLabel',a.gastos,true);
     setMetric('gvgpAppFornecedores','gvgpAppFornecedoresLabel',a.fornecedores,false);
     setMetric('gvgpAppMaquinas','gvgpAppMaquinasLabel',a.maquinas,false);
-    setMetric('gvgpAppFrotas','gvgpAppFrotasLabel',a.frotas,false);
+    setMetric('gvgpAppFrotas','gvgpAppFrotasLabel',frotasInfo,false);
     setMetric('gvgpCatPedidos','gvgpCatPedidosLabel',a.pedidos,false);
     setMetric('gvgpCatGastos','gvgpCatGastosLabel',a.gastos,true);
     setMetric('gvgpCatFornecedores','gvgpCatFornecedoresLabel',a.fornecedores,false);
     setMetric('gvgpCatMaquinas','gvgpCatMaquinasLabel',a.maquinas,false);
-    setMetric('gvgpCatFrotas','gvgpCatFrotasLabel',a.frotas,false);
+    setMetric('gvgpCatFrotas','gvgpCatFrotasLabel',frotasInfo,false);
     setMetric('gvgpDarkPedidos','gvgpDarkPedidosLabel',a.pedidos,false);
     setMetric('gvgpDarkGastos','gvgpDarkGastosLabel',a.gastos,true);
     setMetric('gvgpDarkFornecedores','gvgpDarkFornecedoresLabel',a.fornecedores,false);
     setMetric('gvgpDarkMaquinas','gvgpDarkMaquinasLabel',a.maquinas,false);
-    setMetric('gvgpDarkFrotas','gvgpDarkFrotasLabel',a.frotas,false);
+    setMetric('gvgpDarkFrotas','gvgpDarkFrotasLabel',frotasInfo,false);
     const cupdated=d&&d.atualizadoEm?'Atualizado em '+d.atualizadoEm:'Atualizado agora';
     const cu=$('gvgpCleanUpdated');if(cu)cu.textContent=cupdated;
     const du=$('gvgpDarkUpdated');if(du)du.textContent=(d&&d.atualizadoEm)||'—';
