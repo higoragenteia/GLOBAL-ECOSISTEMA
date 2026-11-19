@@ -65,7 +65,7 @@ async function run(fn: string, a: any[], u: any) {
  case 'entrarAdminGVG': admin(u); return { token: 'SUPABASE-' + u.id };
  case 'getCatalogo': {
   const [products, obras, configs] = await Promise.all([rows('pedidos_produtos', {}, 'ordem'), rows('pedidos_obras', { ativa: true }, 'ordem'), rows('pedidos_config', {}, 'chave')]);
-  return { produtos: products.filter(p => p.ativo !== 'NÃO').map(product), obras: obras.map(o => o.nome), whatsapp: configs.find(c => c.chave === 'WHATSAPP_DESTINO')?.valor || '', titulo: 'GVG&ARTEFAL | Pedidos', acesso: { nivel: isAdmin(u) ? 'GERENCIAR' : 'OPERAR', podeOperar: ['GERENCIAR','OPERAR'].includes(pedidoLevel(u)), podeGerenciar: isAdmin(u) } };
+  return { produtos: products.filter(p => String(p.ativo || '').trim().toUpperCase() === 'SIM').map(product), obras: obras.map(o => o.nome), whatsapp: configs.find(c => c.chave === 'WHATSAPP_DESTINO')?.valor || '', titulo: 'GVG&ARTEFAL | Pedidos', acesso: { nivel: isAdmin(u) ? 'GERENCIAR' : 'OPERAR', podeOperar: ['GERENCIAR','OPERAR'].includes(pedidoLevel(u)), podeGerenciar: isAdmin(u) } };
  }
  case 'adminListar': admin(u); return { produtos: (await rows('pedidos_produtos', {}, 'ordem')).map(product) };
  case 'salvarProduto': {
