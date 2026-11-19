@@ -26,7 +26,7 @@ async function userAction(fn,args,u){
   const status=d.status||'ATIVO';if(!['ATIVO','PENDENTE','BLOQUEADO','EXCLUIDO'].includes(status))throw Error('Situação inválida.');
   const login=str(d.login,120).toLowerCase();if(!/^[a-z0-9._-]{2,40}$/.test(login)&&!/^\S+@\S+\.\S+$/.test(login))throw Error('Login inválido.');
   const email=str(d.email,200).toLowerCase()||(login.includes('@')?login:login+'@pedidos.gvg.invalid');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('E-mail inválido.');
-  const perms={};for(const m of keys){const v=d.permissoes?.[m]||'';if(!['','VISUAL','OPERAR','GERENCIAR'].includes(v)||(perfil==='OPERADOR'&&v==='GERENCIAR'))throw Error('Permissão inválida.');perms[m]=v;}
+  const perms={};for(const m of keys){const v=d.permissoes?.[m]||'';if(!['','VISUAL','OPERAR','GERENCIAR'].includes(v)||(perfil==='OPERADOR'&&v==='GERENCIAR'&&m!=='pedidos'))throw Error('Permissão inválida.');perms[m]=v;}
   const record={nome:str(d.nome,120),login,email,perfil,status,permissoes:perms};if(!record.nome)throw Error('Informe o nome.');
   if(!id){const password=String(d.senha||'');if(password.length<8||password.length>128)throw Error('Use senha de 8 a 128 caracteres.');const a=checked(await db.auth.admin.createUser({email,password,email_confirm:true}));id=a.user.id;const saved=await db.from('pedidos_usuarios').insert({id,...record});if(saved.error){await db.auth.admin.deleteUser(id);throw Error(saved.error.message);}}
   else {if(email!==existing.email)checked(await db.auth.admin.updateUserById(id,{email,email_confirm:true}));checked(await db.from('pedidos_usuarios').update(record).eq('id',id));}

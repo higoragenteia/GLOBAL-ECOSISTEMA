@@ -1634,29 +1634,30 @@ const FROTAS_URL = <?!= JSON.stringify(frotasUrl) ?>;
     if(v==='ADMIN')return 'GERENCIAR';
     if(v==='OPERADOR')return 'OPERAR';
     const nivel=['VISUAL','OPERAR','GERENCIAR'].indexOf(v)>=0?v:'';
-    if(String(user&&user.perfil||'').toUpperCase()==='OPERADOR'&&nivel==='GERENCIAR')return 'OPERAR';
+    if(String(user&&user.perfil||'').toUpperCase()==='OPERADOR'&&nivel==='GERENCIAR'&&key!=='pedidos')return 'OPERAR';
     return nivel;
   }
   function canViewProject(user,key){return !!projectLevel(user,key);}
   function cadNorm(v){return String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();}
-  function levelOptions(role,selected){
-    const vals=role==='SUPERADMIN'?['GERENCIAR']:role==='ADMIN'?['','VISUAL','OPERAR','GERENCIAR']:['','VISUAL','OPERAR'];
+  function levelOptions(role,selected,key){
+    const vals=role==='SUPERADMIN'?['GERENCIAR']:(role==='ADMIN'||key==='pedidos')?['','VISUAL','OPERAR','GERENCIAR']:['','VISUAL','OPERAR'];
     return vals.map(v=>'<option value="'+v+'" '+(String(v)===String(selected===undefined?'':selected)?'selected':'')+'>'+GVG_LEVEL_LABEL[v]+'</option>').join('');
   }
   function permGrid(user,role,disabled,isNew){
     return GVG_PROJECTS.map(p=>{
       let val=isSuperadmin(user)?'GERENCIAR':String(user&&user.permissoes&&user.permissoes[p.key]||'').toUpperCase();
       if(val==='ADMIN')val='GERENCIAR';if(val==='OPERADOR')val='OPERAR';
-      if(role==='SUPERADMIN')val='GERENCIAR';else if(role==='OPERADOR'&&val==='GERENCIAR')val='OPERAR';
+      if(role==='SUPERADMIN')val='GERENCIAR';else if(role==='OPERADOR'&&val==='GERENCIAR'&&p.key!=='pedidos')val='OPERAR';
       if(['','VISUAL','OPERAR','GERENCIAR'].indexOf(val)<0)val='';
       const attrs=isNew?'data-new-perm="'+p.key+'"':('data-user-perm="'+p.key+'"');
-      return '<label class="gvgp-perm-field"><span>'+safe(p.label)+'</span><select '+attrs+' '+(disabled||role==='SUPERADMIN'?'disabled':'')+'>'+levelOptions(role,val)+'</select></label>';
+      return '<label class="gvgp-perm-field"><span>'+safe(p.label)+'</span><select '+attrs+' '+(disabled||role==='SUPERADMIN'?'disabled':'')+'>'+levelOptions(role,val,p.key)+'</select></label>';
     }).join('');
   }
   function syncPermSelects(scope,role,isNew){
     scope.querySelectorAll(isNew?'[data-new-perm]':'[data-user-perm]').forEach(sel=>{
-      const old=sel.value;sel.innerHTML=levelOptions(role);sel.disabled=role==='SUPERADMIN';
-      let val=role==='SUPERADMIN'?'GERENCIAR':old;if(role==='OPERADOR'&&val==='GERENCIAR')val='OPERAR';
+      const key=sel.getAttribute(isNew?'data-new-perm':'data-user-perm');
+      const old=sel.value;sel.innerHTML=levelOptions(role,undefined,key);sel.disabled=role==='SUPERADMIN';
+      let val=role==='SUPERADMIN'?'GERENCIAR':old;if(role==='OPERADOR'&&val==='GERENCIAR'&&key!=='pedidos')val='OPERAR';
       sel.value=[...sel.options].some(o=>o.value===val)?val:'';
     });
   }

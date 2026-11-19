@@ -44,3 +44,33 @@ test('Cotações: m² aceita área fracionada, calcula desconto/frete e preserva
  assert.throws(()=>a.call('salvarCotacao',{...payload,unidade:'un'}),/inteiro/);
  a.call('salvarCotacao',{...payload,quantidade:2,unidade:'un'});assert.ok(a.call('getBootstrap').data.cotacoes.some(q=>q.unidade==='un'&&q.quantidade===2&&q.precoTotal===164));
 });
+
+// Run the real panel permission functions against the account/access matrix.
+import {runInNewContext} from 'node:vm';
+test('Pedidos: gestão depende da permissão central; operador pode receber liberação específica',()=>{
+ const panel=readFileSync(new URL('../source-original/Painel.html',import.meta.url),'utf8');
+ const helpers=panel.slice(panel.indexOf('  const GVG_LEVEL_LABEL='),panel.indexOf('  function permGrid('));
+ const api=runInNewContext(helpers+';({projectLevel,levelOptions})');
+ const pedidos=readFileSync(new URL('../supabase/functions/pedidos-api/index.ts',import.meta.url),'utf8');
+ const backend=pedidos.slice(pedidos.indexOf('const pedidoLevel ='),pedidos.indexOf('const admin =')).replaceAll('(u: any)','(u)');
+ const isAdmin=runInNewContext(backend+';isAdmin');
+ for(const [perfil,permission,allowed] of [['SUPERADMIN','',true],['ADMIN','GERENCIAR',true],['ADMIN','OPERAR',false],['OPERADOR','GERENCIAR',true],['OPERADOR','OPERAR',false],['OPERADOR','VISUAL',false],['OPERADOR','',false]]){
+  const u={perfil,permissoes:{pedidos:permission}};
+  assert.equal(api.projectLevel(u,'pedidos')==='GERENCIAR',allowed,perfil+':'+permission);
+  assert.equal(isAdmin(u),allowed,perfil+':'+permission);
+ }
+ assert.match(api.levelOptions('OPERADOR','GERENCIAR','pedidos'),/value="GERENCIAR" selected/);
+ assert.doesNotMatch(api.levelOptions('OPERADOR','','maquinas'),/value="GERENCIAR"/);
+});
+test('Painel: somente superadmin altera contas; liberação de operador fica restrita ao Pedidos',async()=>{
+ const source=readFileSync(new URL('../supabase/functions/global-api/index.ts',import.meta.url),'utf8');
+ const action=source.slice(source.indexOf('async function userAction('),source.indexOf('const userFns='));
+ const saved=[];
+ const db={from:table=>({insert:async row=>{saved.push({table,row});return {data:row};}}),auth:{admin:{createUser:async()=>({data:{user:{id:'new-user'}}})}}};
+ const call=runInNewContext(action+';userAction',{db,keys:['pedidos','gastos','fornecedores','maquinas'],isSuper:u=>u.perfil==='SUPERADMIN',str:(v)=>String(v||'').trim(),checked:r=>{if(r.error)throw Error(r.error.message);return r.data;}});
+ const payload={nome:'Operador',login:'operador',senha:'password-qa',perfil:'OPERADOR',permissoes:{pedidos:'GERENCIAR'}};
+ await call('adminSalvarUsuario',[null,payload],{id:'super',perfil:'SUPERADMIN'});
+ assert.equal(saved.find(x=>x.table==='pedidos_usuarios').row.permissoes.pedidos,'GERENCIAR');
+ for(const perfil of ['ADMIN','OPERADOR'])await assert.rejects(call('adminSalvarUsuario',[null,payload],{id:'other',perfil}),/Superadministrador/);
+ for(const key of ['maquinas','gastos','fornecedores'])await assert.rejects(call('adminSalvarUsuario',[null,{...payload,permissoes:{[key]:'GERENCIAR'}}],{id:'super',perfil:'SUPERADMIN'}),/Permissão inválida/);
+});

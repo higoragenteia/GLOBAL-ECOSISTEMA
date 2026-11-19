@@ -1137,10 +1137,8 @@ body.gvg-access-locked{overflow:hidden}
  };
 
  // Admin: reload only dashboard data, leaving catalogue and unsaved edits intact.
- const tools=document.createElement('div');tools.className='gvg-addon';tools.id='gvgAdminTools';tools.innerHTML=`<div class="gvg-addon-row gvg-tools-head"><strong>Gestão · ferramentas</strong><div class="gvg-tools-actions"><button type="button" id="gvgRefresh">↻ Atualizar pedidos</button><button type="button" id="gvgDemoClear" title="Limpar histórico de pedidos para demonstração" aria-label="Limpar histórico de pedidos para demonstração" style="display:none;border:1px solid #7a3a3a;background:#2a1717;color:#ffb4a8;border-radius:8px;font-weight:800;cursor:pointer">🧹 Limpar histórico</button></div></div><p id="gvgRefreshMsg" class="gvg-addon-message"></p><details class="gvg-tools-help"><summary>Atualização automática e conferência</summary><p class="gvg-addon-message">O painel e o histórico de pedidos são atualizados automaticamente a cada 2 minutos. Uma conferência de entrega aberta não é fechada pela atualização automática.</p></details><div id="gvgUserAdminTools"><h3>Gerenciar usuários</h3><div class="gvg-addon-row"><label for="gvgUserFilter">Exibir cadastros<select id="gvgUserFilter" style="display:block;width:100%;margin-top:6px;padding:10px;border-radius:9px;background:#21242a;color:#fff;border:1px solid #785c20"><option value="TODOS" selected>Todos os cadastros</option><option value="PENDENTE">Pendentes de aprovação</option><option value="ATIVO">Aprovados / ativos</option><option value="BLOQUEADO">Bloqueados</option></select></label><button type="button" id="gvgLoadUsers">Atualizar usuários</button><button type="button" id="gvgToggleUsers" aria-expanded="true" aria-controls="gvgUsers">Ocultar lista</button></div><p class="gvg-addon-message">Escolha o perfil antes de aprovar. Todos os cadastros ficam visíveis abaixo; excluir desativa o cadastro e preserva o histórico de pedidos.</p><p id="gvgUsersMessage" class="gvg-addon-message" role="status" aria-live="polite"></p><div id="gvgUsers" aria-live="polite"></div></div>`;
+ const tools=document.createElement('div');tools.className='gvg-addon';tools.id='gvgAdminTools';tools.innerHTML=`<div class="gvg-addon-row gvg-tools-head"><strong>Gestão · ferramentas</strong><div class="gvg-tools-actions"><button type="button" id="gvgRefresh">↻ Atualizar pedidos</button><button type="button" id="gvgDemoClear" title="Limpar histórico de pedidos para demonstração" aria-label="Limpar histórico de pedidos para demonstração" style="display:none;border:1px solid #7a3a3a;background:#2a1717;color:#ffb4a8;border-radius:8px;font-weight:800;cursor:pointer">🧹 Limpar histórico</button></div></div><p id="gvgRefreshMsg" class="gvg-addon-message"></p><details class="gvg-tools-help"><summary>Atualização automática e conferência</summary><p class="gvg-addon-message">O painel e o histórico de pedidos são atualizados automaticamente a cada 2 minutos. Uma conferência de entrega aberta não é fechada pela atualização automática.</p></details>`;
  adminPanel.insertBefore(tools,adminPanel.firstChild);
- // Exibir gestão de usuários automaticamente após login administrativo.
- const originalAdminLoad=window.adminLoad;window.adminLoad=async function(...args){const value=await originalAdminLoad(...args);const tools=$('gvgUserAdminTools');if(tools)tools.style.display=(account&&account.superadmin)?'block':'none';return value};
  $('gvgRefresh').onclick=async()=>{try{if(!$('separation').classList.contains('hidden')){if(!confirm('Existe uma conferência aberta. Atualizar os pedidos e fechar essa conferência sem salvar?'))return;$('separation').classList.add('hidden')}const v=await gsCall('relatorioAdmin',$('adminPin').value);reportData=v;renderReport();$('gvgRefreshMsg').textContent='Pedidos atualizados às '+new Date().toLocaleTimeString('pt-BR')}catch(e){$('gvgRefreshMsg').textContent=e.message}};
 
  $('gvgDemoClear').onclick=async()=>{
@@ -1178,93 +1176,6 @@ body.gvg-access-locked{overflow:hidden}
   }finally{adminAutoFlight=false;}
  }
 
- // A lista inicial é uma fila de aprovação; outros status continuam consultáveis.
- let usersRequest=0,userChangeInProgress=false;
- const userStatus=u=>String(u.status||'').trim().toUpperCase();
- function renderUsers(users){
- const filter=$('gvgUserFilter').value;
- const visible=users.filter(u=>userStatus(u)!=='EXCLUIDO'&&(filter==='TODOS'||userStatus(u)===filter));
- const empty={PENDENTE:'Nenhum cadastro pendente de aprovação.',ATIVO:'Nenhum usuário ativo.',BLOQUEADO:'Nenhum usuário bloqueado.',EXCLUIDO:'Nenhum cadastro excluído.',TODOS:'Nenhum usuário cadastrado.'};
- const permLabels={ADMIN:'Admin',OPERADOR:'Operador'};
- const permKeys=[['pedidos','Order Catalog']];
- const permOptions=val=>`<option value="ADMIN" ${val==='ADMIN'?'selected':''}>Admin</option><option value="OPERADOR" ${val!=='ADMIN'?'selected':''}>Operador</option>`;
- function effectivePerms(u,status){const p=u.permissoes||{};const v=String(p.pedidos||'').toUpperCase();return {pedidos:['ADMIN','GERENCIAR'].includes(v)?'ADMIN':'OPERADOR'};}
- function permSelects(u,status,self){
-  const p=effectivePerms(u,status);
-  return `<div style="display:grid;grid-template-columns:1fr;gap:7px;flex:1 1 100%;margin-top:8px">`+permKeys.map(([k,label])=>`<label style="font-size:9px;font-weight:800;color:#aeb8c2;display:grid;gap:3px">${label}<select data-perm="${k}" ${self?'disabled':''} style="width:100%;padding:7px;border-radius:7px;background:#252a32;color:#fff;border:1px solid #5d6a76">${permOptions(p[k])}</select></label>`).join('')+`</div>`;
- }
- function permSummary(p){return 'Order Catalog: '+(permLabels[String(p&&p.pedidos||'').toUpperCase()]||(['GERENCIAR'].includes(String(p&&p.pedidos||'').toUpperCase())?'Admin':'Operador'));}
- $('gvgUsers').innerHTML=visible.map(u=>{
-  const status=userStatus(u),perfil=String(u.perfil||'CONSULTA').toUpperCase(),self=account&&String(u.id)===String(account.id);
-  const eff=effectivePerms(u,status);
-  const btn=(action,label,cls)=>`<button type="button" class="${cls}" data-action="${action}" data-user="${escape(u.id)}" style="flex:0 0 auto">${label}</button>`;
-  let actions='';
-  if(status==='PENDENTE')actions=btn('approve','Aprovar cadastro','secondary')+btn('reject','Recusar','gvg-del')+btn('delete','Excluir cadastro','gvg-del');
-  else if(status==='ATIVO')actions=(self?'':btn('permissions','Salvar permissões','secondary'))+btn('password',self?'Alterar minha senha':'Redefinir senha','secondary')+(self?'':btn('block','Bloquear','secondary')+btn('delete','Excluir','gvg-del'));
-  else actions=btn('reactivate','Reativar','secondary')+btn('password','Redefinir senha','secondary')+btn('delete','Excluir','gvg-del');
-  return `<div class="gvg-useritem"><b>${escape(u.nome||u.email||u.login)}</b> · ${escape(u.email||u.login)}${perfil==='ADMIN'?' · Administrador':''}<p>Status: ${escape(status)}</p><p style="font-size:10px;color:#9aa7b3;margin:4px 0 0">Permissões: ${escape(permSummary(eff))}</p><div class="gvg-addon-row">${permSelects(u,status,self)}${actions}</div></div>`;
- }).join('')||empty[filter]||empty.TODOS;
-}
-async function loadUsers(){
-  const request=++usersRequest,box=$('gvgUsers');
-  box.textContent='Buscando…';box.setAttribute('aria-busy','true');
-  try{
-   const users=await gsCall('adminUsuarios',$('adminPin').value);
-   if(request!==usersRequest)return;
-   if(!Array.isArray(users))throw new Error('O servidor não retornou a lista de usuários.');
-   renderUsers(users);
-  }catch(e){if(request===usersRequest)box.textContent='Não foi possível atualizar os usuários: '+(e.message||String(e));}
-  finally{if(request===usersRequest)box.setAttribute('aria-busy','false');}
- }
- $('gvgLoadUsers').onclick=()=>{if(!userChangeInProgress){$('gvgUsersMessage').textContent='';return loadUsers();}};
- $('gvgToggleUsers').onclick=()=>{const list=$('gvgUsers'),toggle=$('gvgToggleUsers'),hidden=list.style.display==='none';list.style.display=hidden?'block':'none';toggle.textContent=hidden?'Ocultar lista':'Mostrar lista';toggle.setAttribute('aria-expanded',String(hidden));};
- $('gvgUserFilter').onchange=()=>{if(!userChangeInProgress){$('gvgUsersMessage').textContent='';return loadUsers();}};
- $('gvgUsers').onclick=async e=>{
- const b=e.target.closest('button[data-user]');if(!b||userChangeInProgress)return;
- const action=b.dataset.action,id=b.dataset.user,card=b.closest('.gvg-useritem'),name=card?card.querySelector('b')?.textContent:'este usuário';
- const permLabels={ADMIN:'Admin',OPERADOR:'Operador'};
- const readPerms=()=>{const el=card&&card.querySelector('select[data-perm="pedidos"]');const v=el&&el.value==='ADMIN'?'ADMIN':'OPERADOR';return v==='ADMIN'?{pedidos:'ADMIN'}:{pedidos:'OPERADOR'};};
- const permSummary=p=>'Order Catalog: '+(permLabels[String(p&&p.pedidos||'').toUpperCase()]||(['GERENCIAR'].includes(String(p&&p.pedidos||'').toUpperCase())?'Admin':'Operador'));
- let request=null,success='',permissoes=null;
- if(action==='password'){
-  const nova=prompt('Nova senha para '+name+' (8 a 128 caracteres):');if(nova===null)return;if(!nova){$('gvgUsersMessage').textContent='Informe uma senha.';return;}
-  request=()=>gsCall('adminRedefinirSenha',$('adminPin').value,id,nova);success='Senha redefinida. O usuário deverá entrar novamente.';
- }else if(action==='approve'){
-  permissoes=readPerms();
-  if(!confirm('Aprovar '+name+' com estas permissões?\n\n'+permSummary(permissoes)))return;
-  request=()=>gsCall('adminSituacaoUsuario',$('adminPin').value,id,'ATIVO','CONSULTA',permissoes);success='Cadastro aprovado com as permissões definidas.';
- }else if(action==='permissions'){
-  permissoes=readPerms();
-  if(!confirm('Salvar as permissões de '+name+'?\n\n'+permSummary(permissoes)))return;
-  request=()=>gsCall('adminDefinirPermissoes',$('adminPin').value,id,permissoes);success='Permissões atualizadas.';
- }else if(action==='reject'){
-  if(!confirm('Recusar o cadastro de '+name+'? O acesso será bloqueado.'))return;
-  request=()=>gsCall('adminSituacaoUsuario',$('adminPin').value,id,'BLOQUEADO');success='Cadastro recusado e bloqueado.';
- }else if(action==='block'){
-  if(!confirm('Bloquear o acesso de '+name+'? O histórico será preservado.'))return;
-  request=()=>gsCall('adminSituacaoUsuario',$('adminPin').value,id,'BLOQUEADO');success='Usuário bloqueado.';
- }else if(action==='reactivate'){
-  if(!confirm('Reativar o acesso de '+name+'?'))return;
-  request=()=>gsCall('adminSituacaoUsuario',$('adminPin').value,id,'ATIVO');success='Usuário reativado.';
- }else if(action==='delete'){
-  if(!confirm('Desativar o cadastro de '+name+' e suas sessões? O histórico de pedidos será preservado.'))return;
-  request=()=>gsCall('adminSituacaoUsuario',$('adminPin').value,id,'EXCLUIDO');success='Cadastro excluído; histórico de pedidos preservado.';
- }
- if(!request)return;
- userChangeInProgress=true;
- const controls=[...$('gvgUsers').querySelectorAll('button,select'),$('gvgLoadUsers'),$('gvgUserFilter')];
- controls.forEach(control=>control.disabled=true);
- $('gvgUsersMessage').textContent='Salvando alteração…';
- try{
-  const result=await request();
-  if(action==='permissions'){if(!result||result.ok!==true)throw new Error('O servidor não confirmou as permissões.');}
-  else if(action==='password'){if(!result||result.ok!==true)throw new Error('O servidor não confirmou a nova senha.');}
-  else if(action==='approve'){if(!result||result.status!=='ATIVO')throw new Error('O servidor não confirmou a aprovação.');}
-  else {const expected=action==='reactivate'?'ATIVO':action==='delete'?'EXCLUIDO':'BLOQUEADO';if(!result||result.status!==expected)throw new Error('O servidor não confirmou a alteração. Atualize a lista para conferir.');if(action==='delete'&&result.excluido!==true)throw new Error('A exclusão definitiva não foi confirmada.');}
-  $('gvgUsersMessage').textContent=success;await loadUsers();
- }catch(err){$('gvgUsersMessage').textContent='Não foi possível confirmar a alteração: '+(err.message||String(err));}
- finally{userChangeInProgress=false;controls.forEach(control=>control.disabled=false);}
-};
 // Compact existing history behind a disclosure button.
  const orders=$('orders');const btn=document.createElement('button');btn.type='button';btn.className='gvg-orders-toggle';btn.textContent='◷ Abrir histórico de pedidos ▾';orders.before(btn);orders.style.display='none';btn.onclick=()=>{const show=orders.style.display==='none';orders.style.display=show?'block':'none';btn.textContent=show?'◷ Fechar histórico de pedidos ▴':'◷ Abrir histórico de pedidos ▾'};
  // Existing admin confirmation: marking as NOT SENT keeps row, logs it and sends quantity zero, never deletes history.
@@ -1456,8 +1367,6 @@ async function loadUsers(){
 .gvg-tools-help .gvg-addon-message{font-size:10px!important;line-height:1.4;margin:5px 0 0!important}
 #gvgAdminAlerts .gvg-addon-message,#gvgAdminTools .gvg-addon-message{font-size:10px!important;margin:6px 0 0!important}
 #gvgAdminTools .gvg-addon-row{gap:8px!important}
-#gvgAdminTools #gvgUserAdminTools{margin-top:8px}
-#gvgAdminTools #gvgUserAdminTools h3{font-size:13px;margin-top:6px!important}
 @media(max-width:520px){
  #gvgAdminAlerts,#gvgAdminTools{padding:10px 11px!important}
  .gvg-alert-actions,.gvg-tools-actions{width:100%}
