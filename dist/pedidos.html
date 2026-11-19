@@ -45,7 +45,7 @@ function gvgIllustrationSvg(p){
 </script>
 <script>
 const DADOS_INICIAIS = null;
-const CONFERENCIA_LINK = {pedido: new URLSearchParams(location.search).get('conferir') || '', token: new URLSearchParams(location.search).get('token') || '', curta: new URLSearchParams(location.search).get('c') || ''};
+const CONFERENCIA_LINK = {pedido: new URLSearchParams(location.search).get('conferir') || '', token: new URLSearchParams(location.search).get('token') || '', curta: new URLSearchParams(location.search).get('c') || '', codigo: new URLSearchParams(location.search).get('k') || ''};
 let DATA={produtos:[],obras:[],whatsapp:''},cart={},cat='Todos',text='';try{cart=JSON.parse(localStorage.getItem('pedidosTeste:gvgCart')||'{}')||{}}catch(e){};
 const el=id=>document.getElementById(id);const safe=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function clearCatalog(){
@@ -1136,14 +1136,16 @@ body.gvg-access-locked{overflow:hidden}
   return conferenceData.itens.map(function(it,i){const inp=document.querySelector('[data-conf-qty="'+i+'"]'),note=document.querySelector('[data-conf-note="'+i+'"]'),q=Number(inp&&inp.value);if(!Number.isInteger(q)||q<0||q>Number(it.solicitado))throw new Error('Quantidade confirmada inválida para '+it.nome+'.');return {codigo:it.codigo,unidade:it.unidade,qtd:q,nota:note?note.value:''};});
  }
  async function abrirConferenciaLink(){
-  if(!CONFERENCIA_LINK||(!CONFERENCIA_LINK.curta&&(!CONFERENCIA_LINK.pedido||!CONFERENCIA_LINK.token))||conferenceLoading||conferenceData)return;
+  if(!CONFERENCIA_LINK||(!CONFERENCIA_LINK.codigo&&!CONFERENCIA_LINK.curta&&(!CONFERENCIA_LINK.pedido||!CONFERENCIA_LINK.token))||conferenceLoading||conferenceData)return;
   if(!account&&!adminAccess)return;
   conferenceLoading=true;
   try{
-   const d=CONFERENCIA_LINK.curta
-    ? await gsCall('getConferenciaCurta',adminToken||token,CONFERENCIA_LINK.curta)
-    : await gsCall('getConferenciaLink',adminToken||token,CONFERENCIA_LINK.pedido,CONFERENCIA_LINK.token);
-   if(CONFERENCIA_LINK.curta){
+   const d=CONFERENCIA_LINK.codigo
+    ? await gsCall('getConferenciaCodigo',adminToken||token,CONFERENCIA_LINK.codigo)
+    : CONFERENCIA_LINK.curta
+      ? await gsCall('getConferenciaCurta',adminToken||token,CONFERENCIA_LINK.curta)
+      : await gsCall('getConferenciaLink',adminToken||token,CONFERENCIA_LINK.pedido,CONFERENCIA_LINK.token);
+   if(CONFERENCIA_LINK.codigo||CONFERENCIA_LINK.curta){
     // Resolucao autorizada no servidor; a edicao continua vinculada ao pedido original.
     CONFERENCIA_LINK.pedido=d.pedido.id;
     CONFERENCIA_LINK.token=d.token;
