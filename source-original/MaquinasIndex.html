@@ -1580,8 +1580,8 @@ function updateChrome() {
   $('userName').textContent = state.user.nome || '—';
   $('userRole').textContent = roleLabel(state.user.perfil);
   $('userAvatar').textContent = initials(state.user.nome);
-  $('topbarName').textContent = state.user.nome || '—';
-  $('topbarAvatar').textContent = initials(state.user.nome);
+  if($('topbarName')) $('topbarName').textContent = state.user.nome || '—';
+  if($('topbarAvatar')) $('topbarAvatar').textContent = initials(state.user.nome);
   $('navEqBadge').textContent = String(state.data.stats ? state.data.stats.totalEquipamentos : '') || '';
   $('navManBadge').textContent = String((state.data.manutencoesAbertas || []).length || '') || '';
   const pendentes = (state.data.usuarios || []).filter((u) => u.status === 'PENDENTE').length;
