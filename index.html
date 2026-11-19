@@ -1538,7 +1538,8 @@
   </div>
 </div>
 <script>
-const PEDIDOS_URL = "./pedidos.html";
+// Versao unica por abertura do painel: evita reutilizar HTML antigo do iframe apos F5.
+const PEDIDOS_URL = "./pedidos.html?v=" + Date.now();
 const GASTOS_URL = "./gastos.html";
 const FORNECEDORES_URL = "./fornecedores.html";
 const MAQUINAS_URL = "./maquinas.html";
