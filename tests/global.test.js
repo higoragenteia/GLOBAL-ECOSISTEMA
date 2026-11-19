@@ -35,3 +35,12 @@ test('Máquinas: entrega, transferência e devolução mantêm saldo; excesso é
  assert.equal(returned.emprestimo.status,'ENCERRADO');
  assert.ok(a.ctx.changes().some(c=>c.nome==='MOVIMENTACOES'));
 });
+test('Cotações: m² aceita área fracionada, calcula desconto/frete e preserva a unidade ao editar',()=>{
+ const a=app('fornecedores');const d=a.call('getBootstrap').data;
+ const payload={produtoId:d.produtos[0].id,fornecedorId:d.fornecedores[0].id,quantidade:12.5,unidade:'m²',precoUnitario:80,desconto:10,frete:20,data:'2026-11-19',status:'Recebida'};
+ a.call('salvarCotacao',payload);const saved=a.call('getBootstrap').data.cotacoes.find(q=>q.unidade==='m²'&&q.quantidade===12.5);assert.ok(saved);assert.equal(saved.precoTotal,920);
+ a.call('salvarCotacao',{...payload,id:saved.id,quantidade:0.5});assert.equal(a.call('getBootstrap').data.cotacoes.find(q=>q.id===saved.id).precoTotal,56);
+ for(const quantidade of [0,-1])assert.throws(()=>a.call('salvarCotacao',{...payload,quantidade}),/área/);
+ assert.throws(()=>a.call('salvarCotacao',{...payload,unidade:'un'}),/inteiro/);
+ a.call('salvarCotacao',{...payload,quantidade:2,unidade:'un'});assert.ok(a.call('getBootstrap').data.cotacoes.some(q=>q.unidade==='un'&&q.quantidade===2&&q.precoTotal===164));
+});

@@ -1205,7 +1205,10 @@ function salvarCotacao(payload) {
   const unit = num_(p.precoUnitario);
   const disc = num_(p.desconto);
   const freight = num_(p.frete);
-  if (!Number.isInteger(qty) || qty < 1) throw new Error('Quantidade deve ser um número inteiro maior ou igual a 1.');
+  const quoteUnit = str_(p.unidade) || product.unidade;
+  if (quoteUnit === 'm²') {
+    if (!Number.isFinite(qty) || qty <= 0) throw new Error('Informe uma área em m² maior que zero.');
+  } else if (!Number.isInteger(qty) || qty < 1) throw new Error('Quantidade deve ser um número inteiro maior ou igual a 1.');
   if (unit < 0) throw new Error('Preço unitário inválido.');
   if (disc < 0 || disc > 100) throw new Error('Desconto deve ficar entre 0 e 100%.');
   if (freight < 0) throw new Error('Frete inválido.');
@@ -1226,7 +1229,7 @@ function salvarCotacao(payload) {
     'ID fornecedor': supplier.id,
     'Descrição': safeText_(p.descricao, 500) || (product.nome + (product.especificacao ? ' — ' + product.especificacao : '')),
     'Quantidade': qty,
-    'Unidade': safeText_(p.unidade, 30) || product.unidade,
+    'Unidade': safeText_(quoteUnit, 30),
     'Preço unitário (R$)': round2_(unit),
     'Desconto (%)': round2_(disc),
     'Frete (R$)': round2_(freight),

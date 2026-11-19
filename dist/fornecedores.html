@@ -859,7 +859,7 @@
       rows.sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')) || String(b.id).localeCompare(String(a.id)));
       const toolbar='<div class="toolbar"><div class="grow"><input style="width:100%;border:1px solid #d3e0e9;border-radius:10px;padding:10px 12px" placeholder="Pesquisar cotação..." value="'+escAttr(f.cotacoes)+'" onchange="app.setFilter(\'cotacoes\',this.value)"></div><select style="border:1px solid #d3e0e9;border-radius:10px;padding:10px" onchange="app.setFilter(\'cotacoesStatus\',this.value)"><option value="">Todos os status</option>'+['Em elaboração','Aguardando resposta','Recebida','Em análise','Aprovada','Rejeitada','Cancelada'].map(x=>'<option '+(f.cotacoesStatus===x?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select><select style="border:1px solid #d3e0e9;border-radius:10px;padding:10px" onchange="app.setFilter(\'cotacoesProduto\',this.value)"><option value="">Todos os produtos</option>'+prods.map(p=>'<option value="'+escAttr(p.id)+'" '+(f.cotacoesProduto===p.id?'selected':'')+'>'+esc(p.nome)+'</option>').join('')+'</select><select style="border:1px solid #d3e0e9;border-radius:10px;padding:10px" onchange="app.setFilter(\'cotacoesFornecedor\',this.value)"><option value="">Todos os fornecedores</option>'+forns.map(x=>'<option value="'+escAttr(x.id)+'" '+(f.cotacoesFornecedor===x.id?'selected':'')+'>'+esc(x.nome)+'</option>').join('')+'</select>'+(state.canEdit?(state.canEdit?'<button class="btn primary" onclick="app.openQuote()">+ Nova cotação</button>':''):'')+'</div>';
       const table=rows.length?'<div class="table-wrap"><table class="table"><thead><tr><th>Data / ID</th><th>Produto</th><th>Fornecedor</th><th class="num">Qtd</th><th class="num">Unitário</th><th class="num">Total</th><th>Status</th><th class="actions">Ações</th></tr></thead><tbody>'+rows.map(x=>
-        '<tr><td><div class="main-cell">'+esc(dateBR(x.data))+'</div><div class="small">'+esc(x.id)+'</div></td><td><div class="product-cell quote-product-cell">'+productThumbnail(productsById.get(String(x.produtoId)))+'<div class="pc-body"><div class="main-cell">'+esc(pm[x.produtoId]||x.produtoId)+'</div><div class="small">'+esc(short(x.descricao||'',65))+'</div></div></div></td><td>'+esc(fm[x.fornecedorId]||x.fornecedorId)+'</td><td class="num">'+esc(number(x.quantidade))+' '+esc(x.unidade||'')+'</td><td class="num">'+money(x.precoUnitario)+'</td><td class="num" style="font-weight:900">'+money(x.precoTotal)+'</td><td>'+badge(x.status)+(x.vencedor?' <span class="badge ok">Vencedora</span>':'')+'</td><td class="actions">'+(state.canEdit?'<button class="btn sm" onclick="app.openQuote(\''+jsq(x.id)+'\')">Editar</button> <button class="btn sm gold" onclick="app.openPrice(\''+jsq(x.id)+'\')">Alterar preço</button>':'<span class="muted">Consulta</span>')+(state.isAdmin?' <button class="btn sm danger" onclick="app.deleteQuote(\''+jsq(x.id)+'\')">Excluir</button>':'')+'</td></tr>'
+        '<tr><td><div class="main-cell">'+esc(dateBR(x.data))+'</div><div class="small">'+esc(x.id)+'</div></td><td><div class="product-cell quote-product-cell">'+productThumbnail(productsById.get(String(x.produtoId)))+'<div class="pc-body"><div class="main-cell">'+esc(pm[x.produtoId]||x.produtoId)+'</div><div class="small">'+esc(short(x.descricao||'',65))+'</div></div></div></td><td>'+esc(fm[x.fornecedorId]||x.fornecedorId)+'</td><td class="num">'+esc(number(x.quantidade))+' '+esc(x.unidade||'')+'</td><td class="num">'+money(x.precoUnitario)+(x.unidade==='m²'?' /m²':'')+'</td><td class="num" style="font-weight:900">'+money(x.precoTotal)+'</td><td>'+badge(x.status)+(x.vencedor?' <span class="badge ok">Vencedora</span>':'')+'</td><td class="actions">'+(state.canEdit?'<button class="btn sm" onclick="app.openQuote(\''+jsq(x.id)+'\')">Editar</button> <button class="btn sm gold" onclick="app.openPrice(\''+jsq(x.id)+'\')">Alterar preço</button>':'<span class="muted">Consulta</span>')+(state.isAdmin?' <button class="btn sm danger" onclick="app.deleteQuote(\''+jsq(x.id)+'\')">Excluir</button>':'')+'</td></tr>'
       ).join('')+'</tbody></table></div>':empty('📋','Nenhuma cotação encontrada','Registre propostas para comparar preços e escolher o melhor fornecedor.',state.canEdit?(state.canEdit?'<button class="btn primary" onclick="app.openQuote()">+ Nova cotação</button>':''):'');
       return pageHead('Cotações',rows.length+' registro(s)','<button class="btn" onclick="app.exportCotacoes()">Exportar CSV</button>')+toolbar+table;
     }
@@ -1066,13 +1066,15 @@
       if(!prods.length||!forns.length) return '<div class="empty"><div class="big">⚠</div><h3>Cadastre produto e fornecedor primeiro</h3><p>É necessário ter pelo menos um produto e um fornecedor ativo.</p></div>';
       const prod=q.produtoId||prods[0].id;
       const p=byId(prods,prod)||prods[0];
+      const quoteUnit=q.unidade||p.unidade||'un';
+      const quoteUnits=[...new Set(['un','m²',quoteUnit,p.unidade].filter(Boolean))];
       return '<form id="modalForm" onsubmit="app.submitQuote(event)"><input type="hidden" name="id" value="'+escAttr(q.id||'')+'">'+
         '<div class="form-grid">'+
         selectField('produtoId','Produto / serviço',prod,prods.map(x=>({value:x.id,label:x.nome})),{required:true,full:true,attrs:'onchange="app.fillQuoteProduct(this.value)"'})+
         field('descricao','Descrição na cotação',q.descricao||(p.nome+(p.especificacao?' — '+p.especificacao:'')),'text',{full:true})+
         selectField('fornecedorId','Fornecedor',q.fornecedorId||forns[0].id,forns.map(x=>({value:x.id,label:x.nome})),{required:true})+
-        field('quantidade','Quantidade',q.quantidade||1,'number',{required:true,attrs:'min="1" step="1" inputmode="numeric" oninput="app.integerOnly(this);app.calcQuoteTotal()"'})+
-        field('unidade','Unidade',q.unidade||p.unidade||'un')+
+        field('quantidade','Quantidade',q.quantidade||1,'number',{required:true,attrs:'min="1" step="1" inputmode="numeric" oninput="app.quoteQuantityInput(this)"'})+
+        selectField('unidade','Unidade de cálculo',quoteUnit,quoteUnits.map(u=>({value:u,label:u==='un'?'Unidade (un)':u==='m²'?'Metro quadrado (m²)':u})),{required:true,attrs:'onchange="app.updateQuoteUnit()"'})+
         field('precoUnitario','Preço unitário (R$)',q.precoUnitario||'','number',{required:true,attrs:'min="0" step="0.01" oninput="app.calcQuoteTotal()"'})+
         field('desconto','Desconto (%)',q.desconto||0,'number',{attrs:'min="0" max="100" step="0.01" oninput="app.calcQuoteTotal()"'})+
         field('frete','Frete (R$)',q.frete||0,'number',{attrs:'min="0" step="0.01" oninput="app.calcQuoteTotal()"'})+
@@ -1422,13 +1424,29 @@
           }
         }
         openModal(id?'Editar cotação':'Nova cotação',quoteForm(q),true);
+        app.updateQuoteUnit();
       },
       fillQuoteProduct(id){
         const p=byId(state.data.produtos,id); if(!p) return;
         const form=$('#modalForm'); if(!form) return;
         const d=form.querySelector('[name=descricao]'); const u=form.querySelector('[name=unidade]');
         if(d) d.value=p.nome+(p.especificacao?' — '+p.especificacao:'');
-        if(u) u.value=p.unidade||'un';
+        if(u){const unit=p.unidade||'un';if(!Array.from(u.options).some(o=>o.value===unit))u.add(new Option(unit,unit));u.value=unit;}
+        app.updateQuoteUnit();
+      },
+      updateQuoteUnit(){
+        const f=$('#modalForm'); if(!f) return;
+        const square=f.querySelector('[name=unidade]').value==='m²';
+        const qty=f.querySelector('[name=quantidade]'),price=f.querySelector('[name=precoUnitario]');
+        qty.min=square?'0.0001':'1';qty.step=square?'0.0001':'1';qty.inputMode=square?'decimal':'numeric';
+        if(!square){integerOnly(qty);if(parseNum(qty.value)<1)qty.value=1;}
+        qty.closest('.field').querySelector('label,span').textContent=square?'Área total (m²)':'Quantidade';
+        price.closest('.field').querySelector('label,span').textContent=square?'Preço por m² (R$)':'Preço unitário (R$)';
+        app.calcQuoteTotal();
+      },
+      quoteQuantityInput(el){
+        const f=el.closest('form');if(f.querySelector('[name=unidade]').value!=='m²')integerOnly(el);
+        app.calcQuoteTotal();
       },
       calcQuoteTotal(){
         const f=$('#modalForm'); if(!f) return;
@@ -1437,7 +1455,7 @@
         const d=parseNum(f.querySelector('[name=desconto]').value);
         const fr=parseNum(f.querySelector('[name=frete]').value);
         const total=round2(q*u*(1-Math.min(Math.max(d,0),100)/100)+fr);
-        const el=$('#quoteTotalPreview'); if(el) el.innerHTML='Custo total calculado: <b>'+money(total)+'</b> · quantidade '+number(q)+' × unitário '+money(u)+' − desconto '+number(d)+'% + frete '+money(fr);
+        const el=$('#quoteTotalPreview'); if(el) el.innerHTML='Custo total calculado: <b>'+money(total)+'</b> · quantidade '+number(q)+' '+(f.querySelector('[name=unidade]').value==='m²'?'m² × preço/m² ':'× unitário ')+money(u)+' − desconto '+number(d)+'% + frete '+money(fr);
       },
       async submitQuote(e){ e.preventDefault(); await saveAndRefresh('salvarCotacao',formObj(e.target),'Cotação salva.'); },
       openPrice(id){
