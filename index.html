@@ -1158,7 +1158,7 @@
       <button type="button" class="gvgp-nav-item" data-view="frotas">
         <span class="gvgp-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="url(#gvgpNavSide)" stroke-width="2.5" transform="translate(.6 1.1)" opacity=".92"><path d="M3 16V8h11l4 4h3v4"/><path d="M3 16h2"/><path d="M9 16h6"/><path d="M19 16h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></g><g stroke="url(#gvgpNavGold)" stroke-width="1.7"><path d="M3 16V8h11l4 4h3v4"/><path d="M3 16h2"/><path d="M9 16h6"/><path d="M19 16h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></g></svg></span>
         Frotas
-        <span class="gvgp-pill">Pendente</span>
+        <span class="gvgp-pill">Ativo</span>
       </button>
     </nav>
     <div class="gvgp-sidebar-bottom">
@@ -1274,7 +1274,7 @@
               </button>
               <button type="button" class="gvgp-cat-card" data-module="frotas" data-search="frotas veiculos manutencao documentos vencimentos" style="--accent:#2f7ed8">
                 <span class="gvgp-cat-icon"><img class="gvgp-cat-photo" alt="" loading="lazy" decoding="async" src="./assets/icone-frotas-384.webp" srcset="./assets/icone-frotas-256.webp 256w, ./assets/icone-frotas-384.webp 384w, ./assets/icone-frotas-layout8.webp 600w" sizes="(max-width:700px) 130px, 160px"></span>
-                <span class="gvgp-cat-status">Pendente</span>
+                <span class="gvgp-cat-status">Conectado</span>
                 <h3>Frotas</h3>
                 <p>Veículos e manutenção.</p>
                 <div class="gvgp-cat-metric"><strong id="gvgpCatFrotas">—</strong><span id="gvgpCatFrotasLabel">veículos na frota</span></div>
@@ -1453,16 +1453,18 @@
       </section>
 
       <section id="gvgpViewFrotas" class="gvgp-view gvgp-hidden">
-        <div class="gvgp-frame-head gvgp-frame-head-actions">
+        <div class="gvgp-frame-head gvgp-frame-head-actions" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <button type="button" class="gvgp-btn gvgp-btn-ghost" style="color:#0b4a5a;border-color:#c9dce2;background:#fff" data-go="overview">← Voltar à visão geral</button>
+          <a class="gvgp-btn" href="https://higoragenteia.github.io/gvg-frotas/" target="_blank" rel="noopener noreferrer" style="background:#10253a;color:#ffda7a;border:1px solid #c99a2e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:normal">🔔 Abrir Frotas original · Alertas</a>
+          <span style="font:600 11px/1.45 Inter,system-ui,sans-serif;color:#526d86;flex:1 1 190px">Os alertas e notificações do aplicativo original permanecem independentes do painel.</span>
         </div>
         <div class="gvgp-frame-wrap">
           <div id="gvgpFrotasLoading" class="gvgp-frame-loading">
             <span class="gvgp-frame-spinner" aria-hidden="true"></span>
             <strong>Carregando Controle de Frotas…</strong>
-            <span>Conectando à planilha da frota com a sessão do painel</span>
+            <span>Conectando ao sistema original da frota, sem alterar o Firebase</span>
           </div>
-          <iframe id="gvgpFrotasFrame" class="gvgp-frame" title="Módulo Controle de Frotas" src="about:blank" loading="eager"></iframe>
+          <iframe id="gvgpFrotasFrame" class="gvgp-frame" title="Módulo Controle de Frotas" src="about:blank" loading="eager" allow="clipboard-read; clipboard-write; fullscreen" referrerpolicy="strict-origin-when-cross-origin" onload="if(this.src!=='about:blank'){var l=document.getElementById('gvgpFrotasLoading');if(l)l.classList.add('gvgp-hidden')}"></iframe>
         </div>
       </section>
 
@@ -1544,7 +1546,7 @@ const GASTOS_URL = "./gastos.html";
 const FORNECEDORES_URL = "./fornecedores.html";
 const MAQUINAS_URL = "./maquinas.html";
 const MAQUINAS_API_URL = "./";
-const FROTAS_URL = "";
+const FROTAS_URL = "https://script.google.com/macros/s/AKfycby3W5KlwLYtX7j3_lvi6Zcf6d67k2fKnsg7K0MOmIK-b2X3xY7y57Al-uEPBdzxBaLB/exec";
 (function(){
   'use strict';
   const $ = id => document.getElementById(id);
@@ -1578,7 +1580,7 @@ const FROTAS_URL = "";
       unloadModule(loaded.splice(idx,1)[0]);
     }
   }
-  const DEEP_LINK={view:String(""||'').toLowerCase(),alerta:String(""||'')};
+  const DEEP_LINK={view:String(new URLSearchParams(location.search).get('view')||'').toLowerCase(),alerta:String(new URLSearchParams(location.search).get('alerta')||'')};
   let deepLinkPending=(DEEP_LINK.view==='frotas'||!!DEEP_LINK.alerta);
   const safe = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const store = {
@@ -1685,7 +1687,8 @@ const FROTAS_URL = "";
     {key:'pedidos',label:'Pedidos'},
     {key:'gastos',label:'Controle de Gastos'},
     {key:'fornecedores',label:'Fornecedores'},
-    {key:'maquinas',label:'Controle de Máquinas'}
+    {key:'maquinas',label:'Controle de Máquinas'},
+    {key:'frotas',label:'Controle de Frotas'}
   ];
   const GVG_LEVEL_LABEL={'':'Sem acesso',VISUAL:'Visualizar',OPERAR:'Operar',GERENCIAR:'Gerenciar'};
   const GVG_ROLE_LABEL={OPERADOR:'Operador',ADMIN:'Administrador',SUPERADMIN:'Superadministrador'};
@@ -2125,8 +2128,6 @@ const FROTAS_URL = "";
     return false;
   }
   function setView(view){
-    if(view==='frotas'){toast('Frotas aguarda suas orientações antes da migração.');return;}
-
     if(!canAccessView(view))return;
     state.view=view;
     const isModule=view==='pedidos'||view==='gastos'||view==='fornecedores'||view==='maquinas'||view==='frotas';
@@ -2252,7 +2253,9 @@ const FROTAS_URL = "";
   }
   function frotasFrameUrl(){
     if(!state.frotasAlert)return FROTAS_URL;
-    return FROTAS_URL+'&alerta='+encodeURIComponent(state.frotasAlert);
+    const url=new URL(FROTAS_URL);
+    url.searchParams.set('alerta',state.frotasAlert);
+    return url.href;
   }
   function loadFrotasFrame(){
     const f=$('gvgpFrotasFrame');
