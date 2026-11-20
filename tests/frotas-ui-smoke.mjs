@@ -103,6 +103,10 @@ try{
  assert.equal(await a.page.locator('#gvgImportFrotas').isVisible(),true,'importação visível para GERENCIAR');
  assert.match(await a.page.locator('#sessionUser').textContent(),/Gerenciamento/);
 
+ await a.page.locator('#fleetList button[data-vehicle]').first().click();
+ await a.page.waitForSelector('#page-vehicle.on');
+ assert.match(await a.page.locator('#vehicleDetail').innerText(),/A-1/,'card Seguro deve exibir o numero da apolice');
+
  await a.page.locator('button.navbtn[data-go="admin"]').click();
  await a.page.waitForSelector('#page-admin.on');
  await a.page.locator('#loadTablesBtn').click();

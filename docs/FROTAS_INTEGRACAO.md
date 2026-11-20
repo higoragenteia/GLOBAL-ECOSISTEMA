@@ -5,7 +5,9 @@ Atualizado em 20/11/2026.
 ## O que foi integrado
 
 O módulo **Frotas** deixou de ser uma página reduzida e passou a ser a interface
-original completa, executada dentro do GLOBAL ECOSISTEMA:
+original completa, executada dentro do GLOBAL ECOSISTEMA. A versão de origem é o
+commit `e844395` (v199) do repositório `gvg-artefal`; a análise completa está em
+`docs/ANALISE_FROTAS_VERSOES_2026-11-20.md`.
 
 - `source-original/FrotasIndex.html` preserva a tela original (layout, navegação,
   veículos, seguros, vencimentos, manutenções, documentos, KM, abastecimentos,
