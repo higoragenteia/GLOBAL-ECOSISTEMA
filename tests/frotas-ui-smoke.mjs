@@ -173,11 +173,11 @@ try{
  await d.page.locator('button.gvgp-nav-item[data-view="frotas"]').click();
  await d.page.waitForSelector('#gvgpViewFrotas:not(.gvgp-hidden)',{timeout:15000});
  const frame=d.page.frameLocator('#gvgpFrotasFrame');
- await frame.locator('#stats').waitFor({timeout:15000});
+ await frame.locator('#stats').waitFor({timeout:30000});
  assert.match(await frame.locator('#stats').innerText(),/2/);
- await d.page.waitForFunction(()=>document.querySelector('#gvgpFrotasLoading').classList.contains('gvgp-hidden'),null,{timeout:15000});
+ await d.page.waitForFunction(()=>document.querySelector('#gvgpFrotasLoading').classList.contains('gvgp-hidden'),null,{timeout:30000});
  await frame.locator('body').evaluate(()=>window.logout());
- await d.page.waitForFunction(()=>!document.querySelector('#gvgpLoginCard').classList.contains('gvgp-hidden'),null,{timeout:15000});
+ await d.page.waitForFunction(()=>!document.querySelector('#gvgpLoginCard').classList.contains('gvgp-hidden'),null,{timeout:30000});
  assert.match(await d.page.locator('#gvgpFrotasFrame').getAttribute('src'),/about:blank/);
  assert.deepEqual(d.errors,[],'sem erros de console/página no painel + iframe');
  console.log('UI painel + iframe + logout: ok');

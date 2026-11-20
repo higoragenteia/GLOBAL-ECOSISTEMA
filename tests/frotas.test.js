@@ -172,9 +172,10 @@ test('Frotas/entrega: página completa, sem Apps Script nem dados embutidos, int
  assert.match(frotas,/gvgImportFrotas/);
  assert.doesNotMatch(frotas,/google\.script\.run/);
  assert.doesNotMatch(frotas,/<\?!=/);
- assert.doesNotMatch(frotas,/FROTA_FOTOS_POR_PLACA[^\n]*\n\s*'[A-Z0-9]{7}'/);
+ assert.match(frotas,/const FROTA_FOTOS_POR_PLACA = Object\.freeze\(\{/);
+ assert.match(frotas,/data:image\//);
  assert.doesNotMatch(frotas,/service_role|private_key|SUPABASE_SERVICE_ROLE_KEY|AIza[0-9A-Za-z_-]{20,}/);
- assert.ok(frotas.length>100000);
+ assert.ok(frotas.length>3000000);
  assert.match(painel,/data-view="frotas"/);
  assert.match(painel,/const FROTAS_URL = new URL\("\.\/frotas\.html/);
  assert.match(painel,/sameOrigin=origin===location\.origin/);

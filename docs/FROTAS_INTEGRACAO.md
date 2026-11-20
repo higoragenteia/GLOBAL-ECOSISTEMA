@@ -12,9 +12,10 @@ commit `e844395` (v199) do repositório `gvg-artefal`; a análise completa está
 - `source-original/FrotasIndex.html` preserva a tela original (layout, navegação,
   veículos, seguros, vencimentos, manutenções, documentos, KM, abastecimentos,
   pagamentos, relatórios, central de notificações, configurações e auditoria).
-  As fotos reais que estavam embutidas por placa foram removidas do repositório
-  público; a coleção `Fotos Veículos` e a ilustração genérica continuam sendo
-  usadas pela interface.
+  As fotos oficiais de alta qualidade do pacote original foram restauradas no
+  GLOBAL em 20/11/2026, a pedido do usuário; são as mesmas imagens já públicas
+  no repositório `gvg-artefal` (v199). A coleção `Fotos Veículos` continua tendo
+  prioridade sobre a foto embutida.
 - `frotas.html` é gerado por `scripts/build-frotas.py` a partir dessa tela.
   O gerador troca somente a camada de transporte (`google.script.run` → adaptador
   Supabase), os deep links e os textos de operação.

@@ -68,9 +68,9 @@ veículo.
 
 ## Segurança
 
-- As fotos reais embutidas por placa não foram copiadas para o repositório
-  GLOBAL; a versão local usa a coleção `Fotos Veículos` e as ilustrações
-  genéricas.
+- As fotos oficiais de alta qualidade foram restauradas no repositório GLOBAL
+  em 20/11/2026, a pedido do usuário. Elas já eram públicas no repositório
+  `gvg-artefal`; a coleção `Fotos Veículos` continua tendo prioridade.
 - O repositório `gvg-artefal` é público e contém as fotos no arquivo original;
   isso é uma exposição preexistente, não criada por esta integração.
 - O repositório `GLOBAL-ECOSISTEMA` também está público e contém dados de outros
