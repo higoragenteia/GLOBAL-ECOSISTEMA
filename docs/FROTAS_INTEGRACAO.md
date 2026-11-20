@@ -44,6 +44,25 @@ GERENCIAR e `OPERADOR` → OPERAR. Contas e senhas são administradas no painel
 central; a tela de usuários do Frotas usa a API do painel e só aparece para
 Superadministrador.
 
+## Status da implantação
+
+Em 20/11/2026, no projeto `krjudhqlpgdnjzrdmtyf`:
+
+- `database/frotas.sql` aplicado com sucesso.
+- `frotas-api` e `global-api` deployadas e ativas (`verify_jwt=false`).
+- Segredo `FROTAS_SHEET_ID` configurado.
+- Importação concluída: **13 coleções, 87 registros**, backup
+  `c469174d-51cc-4753-98c1-fe5c59ea6472` e auditoria `IMPORTAR_FROTAS`.
+- CRUD, permissões VISUAL/OPERAR/GERENCIAR, auditoria e métrica do painel
+  validados com sessão real.
+- Interface Frotas e painel + iframe validados em Chromium contra o Supabase
+  real, sem erros de console.
+- Usuário temporário de teste removido; nenhum registro de teste permaneceu.
+
+A coleção pré-existente **`Notificações de Vencimentos`** (4 registros) foi
+preservada. Ela não é usada pela interface atual e não é alterada pela
+importação; uma limpeza futura pode ser avaliada separadamente.
+
 ## Banco e migração
 
 1. Em uma base nova, execute `database/global.sql`.
@@ -173,33 +192,35 @@ uma fixture sintética. Ele não acessa o Supabase nem a planilha real.
 - `python3 scripts/build-frontend.py` gerou painel e `dist/` com Frotas.
 - Verificação sintática com Node (`frotas-compat.js`) e esbuild
   (`frotas-api/index.ts` e `global-api/index.ts`).
-- Teste de fumaça em Chromium headless (`npm run test:ui`, Playwright), com a
-  Edge Function interceptada e dados sintéticos:
-  - GERENCIAR: sessão SSO, estatísticas, tabela administrativa, criação de
-    veículo com ID gerado, acionamento da importação com backup e ausência de
-    erros de console;
-  - VISUAL: importação/administração ocultas e gravação bloqueada;
-  - deep link `?alerta=...`: abre a ficha do veículo e mostra o aviso;
-  - sem sessão: mostra a tela de acesso pelo painel e o botão de retorno;
-  - painel + iframe: menu Frotas, carregamento do módulo com a mesma sessão,
-    remoção do overlay e logout propagado do iframe para o painel.
+- Teste de fumaça em Chromium headless (`npm run test:ui`, com `frotas-api` e
+  `global-api` interceptadas e dados sintéticos):
+  - GERENCIAR, VISUAL, deep link, sem sessão e painel + iframe + logout.
+- **Testes live no Supabase real:**
+  - migração aplicada;
+  - `frotas-api` e `global-api` ativas;
+  - importação 13/87 com backup e auditoria;
+  - bootstrap autenticado;
+  - criação e exclusão de registro de teste;
+  - bloqueio de escrita para VISUAL;
+  - bloqueio de exclusão para OPERAR;
+  - auditoria de SALVAR/EXCLUIR;
+  - métrica do painel retornando 6 veículos;
+  - interface Frotas live com 6 veículos e tabela administrativa;
+  - painel + iframe live com a mesma sessão, sem erros de console.
 
 **FALHOU**
 
-- Nenhuma falha nos testes locais executados.
+- Nenhuma falha nos testes executados.
 
 **NÃO EXECUTADO**
 
-- Aplicar `database/frotas.sql` no Supabase live.
-- Publicar `frotas-api`/`global-api` no Supabase.
-- Importar os dados para o Supabase e testar CRUD/RLS com sessão real.
-- Abrir a interface em navegador com dados reais.
+- Publicar o frontend no domínio de produção (o `dist/` está pronto, mas o
+  deploy estático não foi feito nesta revisão).
 - Validar entrega de push/FCM em dispositivo físico.
-- Publicar no domínio de produção.
-
-Esses itens dependem de credenciais/autorização e de um ambiente de
-homologação; declarar o módulo como "funcionando em produção" sem eles seria
-incorreto.
+- Revogar a implantação antiga do Apps Script e o compartilhamento público da
+  planilha (recomendado após a virada).
+- Revisar o histórico do repositório público e os dados preexistentes de outros
+  módulos em `database/importacao/`.
 
 ## Firebase/FCM
 

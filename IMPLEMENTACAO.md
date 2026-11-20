@@ -6,7 +6,7 @@ Repositório público `higoragenteia/GLOBAL-ECOSISTEMA`. O sistema original e se
 
 Painel original preservado com rotas estáticas para Pedidos, Gastos, Fornecedores, Máquinas e Frotas. Supabase Auth compartilhado e autorização por módulo no servidor. O Frotas usa a interface original completa (`FrotasIndex.html`), o adaptador `frotas-compat.js` e a Edge Function `frotas-api`; não há segundo login.
 
-Dados migrados das bases operacionais do projeto original, sem gravações na origem: Gastos (11 lançamentos), Fornecedores (24 fornecedores, 18 produtos e 17 cotações), Máquinas (50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções). O Pedidos mantém os 327 produtos, 17 obras e pedidos já existentes na réplica. O Frotas tem a estrutura e a importação prontas, mas **os dados ainda não foram gravados no Supabase live**.
+Dados migrados das bases operacionais do projeto original, sem gravações na origem: Gastos (11 lançamentos), Fornecedores (24 fornecedores, 18 produtos e 17 cotações), Máquinas (50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções). O Pedidos mantém os 327 produtos, 17 obras e pedidos já existentes na réplica. O Frotas foi aplicado no Supabase live em 20/11/2026 e importou 13 coleções/87 registros, com backup e auditoria.
 
 As contas antigas não foram convertidas: seus hashes não são credenciais Supabase Auth. Criar/aprovar contas no novo painel. Fotos antigas do Pedidos continuam dependendo do Drive.
 
@@ -24,25 +24,24 @@ As contas antigas não foram convertidas: seus hashes não são credenciais Supa
 **PASSOU**
 
 - `npm test`: 21 testes locais. Os 11 novos cobrem importação gviz, adaptador, permissões VISUAL/OPERAR/GERENCIAR, geração de IDs, seguro, datas/valores, exclusão, backup/importação, auditoria, contas pelo painel e integridade estática.
-- Parser executado contra a planilha real em modo somente leitura: 13 abas e 87 registros (6 veículos, 5 seguros, 4 vencimentos, 3 manutenções e históricos). Nenhum dado foi gravado.
+- Parser executado contra a planilha real em modo somente leitura: 13 abas e 87 registros (6 veículos, 5 seguros, 4 vencimentos, 3 manutenções e históricos). A gravação foi feita depois, pela importação administrativa.
 - `python3 scripts/build-frontend.py` gerou painel e `dist/` com Frotas.
 - Verificação sintática de `frotas-compat.js` e, com esbuild, de `frotas-api/index.ts` e `global-api/index.ts`.
-- Teste de fumaça em Chromium headless (`npm run test:ui`, Playwright, `frotas-api`/`global-api` interceptadas com dados sintéticos): GERENCIAR (SSO, estatísticas, tabela administrativa, criação de veículo e acionamento da importação), VISUAL (importação/administração ocultas e escrita bloqueada), deep link de alerta e painel + iframe (carregamento do módulo e logout propagado). Sem erros de console.
+- Teste de fumaça em Chromium headless (`npm run test:ui`, Playwright, `frotas-api`/`global-api` interceptadas com dados sintéticos): GERENCIAR (SSO, estatísticas, tabela administrativa, criação de veículo e acionamento da importação), VISUAL (importação/administração ocultas e escrita bloqueada), deep link de alerta, sem sessão e painel + iframe (carregamento do módulo e logout propagado). Sem erros de console.
+- **Live Supabase (20/11/2026):** `database/frotas.sql` aplicado; `frotas-api` (v3) e `global-api` (v8) ativas com `verify_jwt=false`; `FROTAS_SHEET_ID` configurado; importação 13/87 concluída, backup `c469174d-51cc-4753-98c1-fe5c59ea6472` e auditoria `IMPORTAR_FROTAS`; bootstrap autenticado; criação/exclusão de registro; bloqueio de escrita para VISUAL; bloqueio de exclusão para OPERAR; auditoria de SALVAR/EXCLUIR; métrica do painel com 6 veículos; interface Frotas e painel + iframe com dados reais, sem erros de console. Usuário temporário de teste removido.
 
 **FALHOU**
 
-- Nenhuma falha nos testes locais executados.
+- Nenhuma falha nos testes executados.
 
 **NÃO EXECUTADO**
 
-- Aplicar `database/frotas.sql` no Supabase live.
-- Publicar/deployar `frotas-api` e `global-api`.
-- Importar os dados para o Supabase e testar CRUD/RLS com sessão real.
-- Abrir a interface em navegador com dados reais.
+- Publicar o frontend no domínio de produção (o `dist/` está pronto, mas o deploy estático não foi feito).
 - Validar push/FCM em dispositivo físico.
-- Publicar no domínio de produção.
+- Revogar a implantação antiga do Apps Script e o compartilhamento público da planilha (recomendado após a virada).
+- Revisar o histórico do repositório público e os dados preexistentes de outros módulos em `database/importacao/`.
 
-Esses itens exigem credenciais e autorização. O módulo não deve ser declarado "em produção" antes disso.
+O backend Frotas está live no Supabase; a interface ainda não foi publicada no domínio. A coleção pré-existente `Notificações de Vencimentos` (4 registros) foi preservada e não é usada pela interface atual.
 
 ## Limites e próxima etapa
 

@@ -4,3 +4,5 @@ test-results/
 .env*
 
 __pycache__/
+
+supabase/.temp/
