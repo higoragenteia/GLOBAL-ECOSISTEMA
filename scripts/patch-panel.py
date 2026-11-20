@@ -63,6 +63,15 @@ def patch(text: str) -> str:
   const frotasFrameEl=$('gvgpFrotasFrame');
   if(frotasFrameEl)frotasFrameEl.addEventListener('load',hideFrotasLoading);"""
     text = replace_once(text, old_listener, new_listener, "message listener")
+    # Remove o cabecalho extra da view Frotas (Voltar / Abrir Controle de Frotas).
+    # O menu lateral continua oferecendo a navegacao de volta.
+    text = re.sub(
+        r'(<section id="gvgpViewFrotas"[^>]*>\s*)<div class="gvgp-frame-head[^"]*"[^>]*>.*?</div>\s*(?=<div class="gvgp-frame-wrap">)',
+        r'\1',
+        text,
+        count=1,
+        flags=re.S,
+    )
     return text
 
 

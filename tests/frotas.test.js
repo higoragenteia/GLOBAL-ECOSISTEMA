@@ -181,6 +181,11 @@ test('Frotas/entrega: página completa, sem Apps Script nem dados embutidos, int
  assert.match(painel,/sameOrigin=origin===location\.origin/);
  assert.match(painel,/new URL\(FROTAS_URL,location\.href\)/);
  assert.doesNotMatch(painel,/Frotas aguarda suas orientações/);
+ const inicio=painel.indexOf('<section id="gvgpViewFrotas"');
+ const fim=painel.indexOf('</section>',inicio);
+ const viewFrotas=painel.slice(inicio,fim);
+ assert.doesNotMatch(viewFrotas,/Voltar à visão geral|Abrir Controle de Frotas/,'cabeçalho extra do Frotas deve estar removido');
+ assert.match(viewFrotas,/gvgpFrotasFrame/,'iframe do Frotas deve permanecer');
 });
 test('Frotas/migração: módulo e coleções sem dados reais no SQL',()=>{
  const sql=readFileSync(new URL('../database/frotas.sql',import.meta.url),'utf8');
