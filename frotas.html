@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GVG&ARTEFAL — Controle de Frotas</title>
+<meta name="theme-color" content="#09182a">
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#eaf4ff;background:#06111d;--panel:#0d2034;--line:#254462;--muted:#9eb7cb;--accent:#e9be65;--blue:#5abfff;--danger:#ff8d89;--good:#69d9ae}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 82% -10%,#193c55 0,transparent 48%),#06111d;color:#eaf4ff}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{position:sticky;z-index:10;top:0;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px clamp(16px,3vw,38px);background:rgba(7,18,30,.96);border-bottom:1px solid #29405b;backdrop-filter:blur(16px)}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}.mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#163f5a,#122437);border:1px solid #326d91;font-size:25px;flex-shrink:0}
+.brand strong{font-size:17px;letter-spacing:-.3px}.brand small{display:block;color:#a4bed3;font-size:11px;margin-top:3px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.chip{border:1px solid #31536f;background:#10283e;border-radius:999px;padding:7px 11px;color:#d4ebfc;font-size:11px}
+.btn{border:1px solid #35566f;background:#142c42;border-radius:11px;color:#eaf7ff;padding:10px 14px;font-weight:750;font-size:12px}
+.btn:hover{border-color:#72bbdd;background:#193b56}.btn.primary{background:linear-gradient(145deg,#f6d68e,#d5a44d);color:#1a2430;border:0}.btn.danger{color:#ffabab;border-color:#924c4c;background:#351f26}
+.btn:disabled{cursor:not-allowed;opacity:.5}
+main{max-width:1600px;margin:auto;padding:26px clamp(14px,3vw,38px) 70px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:2px 0 24px}
+.hero .overline{letter-spacing:2px;color:var(--accent);text-transform:uppercase;font-size:10px;font-weight:800}
+.hero h1{margin:7px 0 4px;font-size:clamp(24px,3vw,38px);letter-spacing:-1px}
+.hero p{color:var(--muted);font-size:13px;margin:0;line-height:1.6}.hero img{display:none}
+.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;align-items:start}
+aside{background:#0b1d30;border:1px solid #1f3b53;padding:12px;border-radius:17px;position:sticky;top:86px}
+aside .nav-h{font-size:10px;letter-spacing:1px;color:var(--muted);padding:9px 12px}
+.nav{display:block;width:100%;border:0;text-align:left;padding:11px 13px;margin:2px 0;color:#c7d9e9;background:transparent;border-radius:9px;font-size:12px;font-weight:680}
+.nav:hover,.nav.active{background:#193a55;color:#fff}.nav.active{box-shadow:inset 3px 0 0 #f1c36b}
+.content{min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:17px}
+.kpi,.panel{background:linear-gradient(145deg,#10263b,#0b1c2e);border:1px solid var(--line);border-radius:17px;box-shadow:0 12px 30px #0002}
+.kpi{padding:19px 20px}.kpi small{color:#b0c6d7;font-size:11px}.kpi strong{display:block;font-size:29px;letter-spacing:-1px;margin-top:7px}.kpi .detail{font-size:10px;color:#86a3bc;margin-top:5px}
+.panel{padding:20px;margin-bottom:15px;min-width:0}.panel h2{font-size:17px;margin:0 0 5px}.panel p{color:var(--muted);line-height:1.55;font-size:12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.top .tools{display:flex;gap:9px;flex-wrap:wrap}
+input.search{background:#071827;border:1px solid #33516b;border-radius:10px;color:#fff;padding:11px 13px;max-width:100%;width:min(290px,70vw);outline:none}
+input.search:focus{border-color:#65c4fa}
+.tablewrap{width:100%;overflow:auto;border:1px solid #24435f;border-radius:11px}
+table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:12px 13px;border-bottom:1px solid #24415a;font-size:11px;white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis}
+th{background:#16324b;color:#bdd9ed;font-size:10px;letter-spacing:.3px;position:sticky;top:0}
+td{color:#dbeaf7}tbody tr:hover{background:#19344b}tbody tr:last-child td{border-bottom:0}
+td.actions{white-space:nowrap}.link-btn{border:1px solid #3c6078;border-radius:7px;background:#122f45;color:#c3e4ff;padding:6px 9px;font-size:11px;cursor:pointer}
+.empty{border:1px dashed #3a5c73;background:#0a1d2e;border-radius:13px;padding:28px;text-align:center;color:#acc8dc;font-size:12px}
+.notice{padding:13px 15px;background:#152a3c;border-left:3px solid var(--accent);border-radius:8px;font-size:11px;line-height:1.6;color:#d3e8f6;margin:14px 0}
+.notice.danger{border-left-color:var(--danger)}.notice.good{border-left-color:var(--good)}
+.alerts{display:grid;gap:10px}.alert{display:flex;align-items:start;justify-content:space-between;gap:12px;padding:13px;background:#102a3e;border:1px solid #35516b;border-radius:11px}
+.alert strong{display:block;font-size:12px}.alert span{display:block;color:#b4cddc;font-size:11px;margin-top:4px}.alert b{color:#f4bf66;font-size:11px;white-space:nowrap}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid #395a70;color:#b5d6ee;background:#143248;font-size:10px}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}
+.vehicle{border:1px solid #2e4a61;background:#10283a;border-radius:13px;padding:17px}
+.vehicle h3{font-size:15px;margin:10px 0 4px}.vehicle p{font-size:12px;margin:3px 0;color:#b9cddd}.vehicle .plate{display:inline-block;border-radius:6px;color:#112436;background:#edf3f6;padding:6px 9px;font-size:12px;font-weight:900;letter-spacing:1px}
+.vehicle .pill{margin-top:12px}
+.status{min-height:19px;color:#9ebbd0;font-size:12px;margin-top:10px}
+.overlay{position:fixed;inset:0;background:#020810c9;z-index:100;display:none;align-items:center;justify-content:center;padding:14px}
+.overlay.show{display:flex}.dialog{width:min(790px,98vw);max-height:92vh;overflow:auto;background:#0d2135;border:1px solid #3c6682;border-radius:20px;box-shadow:0 25px 90px #000b;padding:24px}
+.dialog-head{display:flex;justify-content:space-between;align-items:start;gap:10px;border-bottom:1px solid #30506a;padding-bottom:12px;margin-bottom:18px}.dialog h2{margin:0;font-size:19px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:grid;gap:6px}.field label{font-size:11px;color:#afcadd}.field input,.field textarea{background:#061625;border:1px solid #355b76;border-radius:9px;padding:10px;color:#f3faff;width:100%;outline:none;font-size:12px}
+.field textarea{resize:vertical;min-height:70px}.field input:focus,.field textarea:focus{border-color:#70d0fc}
+.dialog-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:18px}
+footer{color:#7993a7;font-size:11px;text-align:center;padding:20px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:static;display:flex;overflow:auto;gap:3px;white-space:nowrap}aside .nav-h{display:none}.nav{width:auto;flex-shrink:0}header{align-items:start}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:530px){header{padding:12px}.brand strong{font-size:14px}.brand small{font-size:10px}.mark{height:36px;width:36px}.chip{display:none}.hero{margin:4px 0 20px}.fields{grid-template-columns:1fr}.kpi{padding:14px}.kpi strong{font-size:24px}.panel{padding:14px}.dialog{padding:15px}.controls .btn{padding:8px 9px}}
+</style>
+</head>
+<body>
+<header>
+<div class="brand"><span class="mark">🚚</span><div><strong>GVG &amp; ARTEFAL</strong><small>Controle de Frotas · GLOBAL ECOSISTEMA</small></div></div>
+<div class="controls"><span class="chip" id="userName">Sessão do painel</span><button type="button" class="btn" id="refresh">↻ Atualizar</button><button type="button" class="btn" id="notifications">🔔 Alertas</button></div>
+</header>
+<main>
+<section class="hero"><div><div class="overline">Operação e logística</div><h1>Controle de Frotas</h1><p>Veículos, seguros, manutenção, quilometragem, abastecimentos, documentos e vencimentos em um só lugar.</p></div><span class="pill" id="sourceTag">Supabase · Conectando</span></section>
+<div class="layout"><aside id="nav"><span class="nav-h">FROTAS</span><button class="nav active" data-tab="_inicio">◈ Visão geral</button><button class="nav" data-tab="_alertas">🔔 Alertas</button></aside><div class="content" id="content"><div class="panel"><h2>Conectando...</h2><p>Recuperando sua sessão no GLOBAL ECOSISTEMA.</p></div></div></div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<footer>GVG &amp; ARTEFAL · Sessão, usuários e permissões administrados pelo GLOBAL ECOSISTEMA.</footer>
+</main>
+<div class="overlay" id="overlay" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog-head"><div><h2 id="dialogTitle">Editar registro</h2><p id="dialogSubtitle" style="margin:4px 0 0;color:#9fbad0;font-size:11px"></p></div><button class="btn" type="button" id="close">Fechar</button></div><form id="editForm"><div id="fields" class="fields"></div><div class="dialog-actions"><button type="button" class="btn" id="cancel">Cancelar</button><button type="submit" class="btn primary" id="save">Salvar registro</button></div></form></div></div>
+<script src="./pedidos-api.js"></script>
+<script>
+(function(){
+'use strict';
+var URL='https://krjudhqlpgdnjzrdmtyf.supabase.co/functions/v1/frotas-api';
+var KEY='sb_publishable_zcXz2wDyZKVAJvTVHA1bxw_yDKkFI9W';
+var app={colecoes:[],usuario:null,tab:'_inicio',search:'',loading:false,edit:null};
+var $=function(id){return document.getElementById(id);};
+var html=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var str=function(v){return String(v==null?'':v);};
+var writable=function(){return app.usuario&&['OPERAR','GERENCIAR'].includes(app.usuario.nivel);};
+var manager=function(){return app.usuario&&app.usuario.nivel==='GERENCIAR';};
+var setStatus=function(v){$('status').textContent=v;};
+var labels={'Base de Dados':'Veículos','Seguros':'Seguros','Vencimentos':'Vencimentos','Vencimentos Extras':'Vencimentos extras','Pagamentos':'Pagamentos','Registros de KM':'Quilometragem','Abastecimentos':'Abastecimentos','Manutenções':'Manutenções','Fotos Veículos':'Fotos dos veículos','Documentos Frota':'Documentos','Histórico de Alterações':'Histórico','Notificações de Vencimentos':'Histórico de vencimentos','Alertas Automáticos App':'Alertas automáticos','Histórico Push Frota':'Histórico de push'};
+var icons={'Base de Dados':'🚗','Seguros':'🛡','Vencimentos':'📅','Vencimentos Extras':'📆','Pagamentos':'💳','Registros de KM':'🛣','Abastecimentos':'⛽','Manutenções':'🔧','Fotos Veículos':'📷','Documentos Frota':'📑','Histórico de Alterações':'◷','Notificações de Vencimentos':'◷','Alertas Automáticos App':'🔔','Histórico Push Frota':'◷'};
+var readOnly=['Histórico de Alterações','Notificações de Vencimentos','Alertas Automáticos App','Histórico Push Frota'];
+var rows=function(name){var c=app.colecoes.find(function(x){return x.nome===name;});return c?c.registros:[];};
+var coll=function(name){return app.colecoes.find(function(x){return x.nome===name;});};
+function dateOf(v){
+ if(!v)return null;var s=str(v).trim(),m;
+ if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)))return new Date(+m[3],+m[2]-1,+m[1]);
+ if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(+m[1],+m[2]-1,+m[3]);
+ return null;
+}
+function daysUntil(v){var d=dateOf(v);if(!d)return null;var n=new Date(),day=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.ceil((d-day)/86400000);}
+function due(){
+ var list=[],seen=new Set();
+ function append(placa,tipo,dt,details,paid){
+  var d=daysUntil(dt);if(d===null||d>10||String(paid||'').toUpperCase()==='SIM'||String(paid||'').toUpperCase()==='PAGO')return;
+  var id=[str(placa).trim().toUpperCase(),str(tipo).trim().toUpperCase(),str(dt)].join('|');if(seen.has(id))return;seen.add(id);
+  list.push({placa:str(placa)||'Frota',tipo:str(tipo)||'Vencimento',data:str(dt),dias:d,detalhe:str(details)});
+ }
+ rows('Alertas Automáticos App').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d.Veículo+' · '+str(d.Observação).slice(0,120),d['Pago/Regularizado']);});
+ rows('Vencimentos Extras').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d.Descrição,d['Pago/Regularizado']);});
+ rows('Seguros').forEach(function(r){var d=r.dados;append(d.Placa,'Seguro',d['Vigência fim'],d.Seguradora,d.Situação==='VIGENTE'?'':d['Pago/Regularizado']);});
+ rows('Documentos Frota').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d['Documento URL'],d.Status==='PAGO'?'PAGO':'');});
+ return list.sort(function(a,b){return a.dias-b.dias;});
+}
+function notifyMsg(a){return a.dias<0?'Vencido há '+Math.abs(a.dias)+' dias':a.dias===0?'Vence hoje':a.dias===1?'Vence amanhã':'Vence em '+a.dias+' dias';}
+function alertMarkup(arr,emptyText){if(!arr.length)return '<div class="empty">'+html(emptyText||'Nenhum alerta vencido ou dentro dos próximos 10 dias.')+'</div>';return '<div class="alerts">'+arr.map(function(a){return '<div class="alert"><div><strong>'+html(a.placa)+' · '+html(a.tipo)+'</strong><span>'+html(a.data)+' · '+html(a.detalhe)+'</span></div><b>'+html(notifyMsg(a))+'</b></div>';}).join('')+'</div>';}
+function cards(){
+ var vehicles=rows('Base de Dados'),alerts=due(),insurances=rows('Seguros'),maint=rows('Manutenções');
+ return '<div class="kpis">'+[
+ ['Veículos cadastrados',vehicles.length,'Base de Dados'],
+ ['Seguros registrados',insurances.length,'Seguros'],
+ ['Manutenções',maint.length,'Registros'],
+ ['Vencimentos em atenção',alerts.length,'Vencidos ou até 10 dias']
+ ].map(function(a){return '<div class="kpi"><small>'+a[0]+'</small><strong>'+a[1]+'</strong><div class="detail">'+a[2]+'</div></div>';}).join('')+'</div>';
+}
+function startView(){
+ var vehicles=rows('Base de Dados');var content=cards();
+ content+='<div class="panel"><div class="top"><div><h2>Vencimentos e alertas</h2><p>Atenção para prazos próximos e atrasados.</p></div><button class="btn" data-goto="_alertas">Ver todos</button></div>'+alertMarkup(due())+'</div>';
+ content+='<div class="panel"><div class="top"><div><h2>Veículos da frota</h2><p>Dados migrados para o Supabase.</p></div><button class="btn" data-goto="Base de Dados">Gerenciar veículos</button></div><div class="card-grid">'+(vehicles.map(function(r){var d=r.dados;return '<div class="vehicle"><span class="plate">'+html(d.Placa||'Sem placa')+'</span><h3>'+html(d['Marca / Modelo']||d.Tipo||'Veículo')+'</h3><p>'+html(d['Condutor / Responsável']||'Responsável não informado')+'</p><span class="pill">'+html(d.Tipo||'Frota')+'</span></div>';}).join('')||'<div class="empty">Nenhum veículo cadastrado.</div>')+'</div></div>';
+ content+='<div class="notice">Os alertas desta tela são calculados pelos vencimentos armazenados no Supabase. <b>Notificações Firebase em segundo plano ainda não foram certificadas nesta versão.</b></div>';
+ return content;
+}
+function alertView(){
+ return '<div class="panel"><h2>Central de alertas</h2><p>Alertas de vencimento, até 10 dias antes da data ou em atraso.</p>'+alertMarkup(due())+'<div class="notice">Para notificações de push no celular com o aplicativo fechado, ainda é necessária a ligação e validação do Firebase Cloud Messaging. A central acima funciona dentro do painel.</div></div>';
+}
+function viewCollection(name){
+ var c=coll(name);if(!c)return '<div class="empty">Categoria não encontrada.</div>';
+ var filtered=c.registros.filter(function(r){if(!app.search)return true;return Object.values(r.dados).some(function(v){return str(v).toLocaleLowerCase('pt-BR').includes(app.search);});});
+ var cols=c.colunas||[],display=cols.slice(0,7),canWrite=writable()&&!readOnly.includes(name);
+ var out='<div class="panel"><div class="top"><div><h2>'+html(labels[name]||name)+'</h2><p>'+c.registros.length+' registro(s) · Armazenamento Supabase</p></div><div class="tools"><input id="search" class="search" type="search" placeholder="Pesquisar nesta categoria..." value="'+html(app.search)+'" aria-label="Pesquisar">'+(canWrite?'<button class="btn primary" id="add">+ Novo registro</button>':'')+'</div></div>';
+ if(!filtered.length){out+='<div class="empty">Nenhum registro encontrado.</div>';}else{
+ out+='<div class="tablewrap"><table><thead><tr>'+display.map(function(k){return '<th>'+html(k)+'</th>';}).join('')+(canWrite?'<th>Ação</th>':'')+'</tr></thead><tbody>';
+ filtered.forEach(function(r){out+='<tr>'+display.map(function(k){return '<td title="'+html(r.dados[k])+'">'+html(r.dados[k])+'</td>';}).join('')+(canWrite?'<td class="actions"><button type="button" class="link-btn" data-edit="'+r.ordem+'">Editar</button>'+(manager()&&name!=='Base de Dados'?'<button type="button" class="link-btn" data-del="'+r.ordem+'" style="margin-left:5px;color:#ffb1a8">Excluir</button>':'')+'</td>':'')+'</tr>';});
+ out+='</tbody></table></div>';
+ }
+ out+='</div>';return out;
+}
+function drawNav(){
+ var base='<span class="nav-h">CONTROLE</span><button class="nav" data-tab="_inicio">◈ Visão geral</button><button class="nav" data-tab="_alertas">🔔 Alertas</button><span class="nav-h">REGISTROS</span>';
+ app.colecoes.forEach(function(c){base+='<button class="nav" data-tab="'+html(c.nome)+'">'+(icons[c.nome]||'▣')+' '+html(labels[c.nome]||c.nome)+'</button>';});
+ $('nav').innerHTML=base;
+ Array.from($('nav').querySelectorAll('[data-tab]')).forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-tab')===app.tab);});
+}
+function draw(){
+ drawNav();
+ $('content').innerHTML=app.tab==='_inicio'?startView():app.tab==='_alertas'?alertView():viewCollection(app.tab);
+ $('sourceTag').textContent='PostgreSQL · '+(app.usuario?app.usuario.nivel:'');
+ $('userName').textContent=app.usuario?app.usuario.nome+' · '+app.usuario.perfil:'Sessão do painel';
+}
+async function call(fn,payload){
+ if(!window.GlobalSession||typeof window.GlobalSession.access!=='function')throw Error('Sessão do GLOBAL indisponível.');
+ var token=await window.GlobalSession.access();
+ if(!token)throw Error('Sessão expirada. Entre novamente pelo GLOBAL ECOSISTEMA.');
+ var response=await fetch(URL,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(Object.assign({fn:fn},payload||{}))});
+ var jsonData=await response.json();
+ if(!response.ok||jsonData.error)throw Error(jsonData.error||'Falha na comunicação.');
+ return jsonData.data;
+}
+async function load(keep){
+ if(app.loading)return;app.loading=true;$('refresh').disabled=true;setStatus('Atualizando dados da frota...');
+ try{
+  var result=await call('bootstrap');app.colecoes=result.colecoes||[];app.usuario=result.usuario;
+  if(!keep)app.tab='_inicio';draw();
+  setStatus('Atualizado em '+new Date(result.servidorEm).toLocaleString('pt-BR')+'.');
+ }catch(e){$('content').innerHTML='<div class="panel"><h2>Acesso ao Frotas</h2><p>'+html(e.message||e)+'</p><p>Entre pelo GLOBAL ECOSISTEMA e tenha o módulo Frotas liberado nas permissões.</p></div>';setStatus('Não foi possível carregar a frota.');}
+ finally{app.loading=false;$('refresh').disabled=false;}
+}
+function showModal(order){
+ var c=coll(app.tab);if(!c||!writable()||readOnly.includes(c.nome))return;
+ var r=order?c.registros.find(function(x){return x.ordem===order;}):null;
+ app.edit={colecao:c.nome,ordem:r?r.ordem:0};
+ $('dialogTitle').textContent=r?'Editar registro':'Novo registro';
+ $('dialogSubtitle').textContent=labels[c.nome]||c.nome;
+ $('fields').innerHTML=c.colunas.map(function(k,i){
+  var value=r?str(r.dados[k]):'',long=/Observa|Descrição|Endereço|Histórico|Comprovante|Documento URL|Foto URL|Serviço|Prestador|Proprietário|Seguradora/i.test(k);
+  return '<div class="field"><label for="field'+i+'">'+html(k)+'</label>'+(long?'<textarea id="field'+i+'" data-key="'+html(k)+'" rows="2">'+html(value)+'</textarea>':'<input type="text" id="field'+i+'" data-key="'+html(k)+'" value="'+html(value)+'" autocomplete="off">')+'</div>';
+ }).join('');
+ $('overlay').classList.add('show');$('overlay').setAttribute('aria-hidden','false');var first=$('fields').querySelector('input,textarea');if(first)first.focus();
+}
+function hideModal(){$('overlay').classList.remove('show');$('overlay').setAttribute('aria-hidden','true');app.edit=null;}
+async function save(e){
+ e.preventDefault();if(!app.edit)return;
+ var p=app.edit,data={};$('fields').querySelectorAll('[data-key]').forEach(function(input){data[input.dataset.key]=input.value;});
+ $('save').disabled=true;setStatus('Salvando registro...');
+ try{await call('salvar',{colecao:p.colecao,ordem:p.ordem,dados:data});hideModal();await load(true);setStatus('Registro salvo no Supabase.');}
+ catch(e){alert(e.message||'Não foi possível salvar.');setStatus('Falha ao salvar.');}
+ finally{$('save').disabled=false;}
+}
+async function remove(ord){
+ if(!manager()||!confirm('Excluir este registro? A alteração será registrada na auditoria.'))return;
+ try{await call('excluir',{colecao:app.tab,ordem:ord});await load(true);setStatus('Registro excluído.');}
+ catch(e){alert(e.message||'Não foi possível excluir.');}
+}
+$('nav').addEventListener('click',function(e){var b=e.target.closest('[data-tab]');if(!b)return;app.tab=b.getAttribute('data-tab');app.search='';draw();});
+$('content').addEventListener('click',function(e){
+ var b=e.target.closest('[data-goto]');if(b){app.tab=b.getAttribute('data-goto');app.search='';draw();return;}
+ if(e.target.closest('#add'))return showModal(0);
+ b=e.target.closest('[data-edit]');if(b)return showModal(Number(b.dataset.edit));
+ b=e.target.closest('[data-del]');if(b)return remove(Number(b.dataset.del));
+});
+$('content').addEventListener('input',function(e){if(e.target&&e.target.id==='search'){var start=e.target.selectionStart;app.search=e.target.value.toLocaleLowerCase('pt-BR');var tbl=viewCollection(app.tab);$('content').innerHTML=tbl;var t=$('search');if(t){t.focus();t.setSelectionRange(start,start);}}});
+$('refresh').addEventListener('click',function(){load(true);});
+$('notifications').addEventListener('click',function(){app.tab='_alertas';app.search='';draw();});
+$('close').addEventListener('click',hideModal);$('cancel').addEventListener('click',hideModal);
+$('overlay').addEventListener('click',function(e){if(e.target===$('overlay'))hideModal();});
+$('editForm').addEventListener('submit',save);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')hideModal();});
+window.addEventListener('storage',function(e){if(e.key==='pedidosTeste:auth'||e.key==='globalEco:gvgUsrToken')load(true);});
+load(false);
+})();
+</script>
+</body>
+</html>
