@@ -110,6 +110,8 @@ function due(){
  rows('Alertas Automáticos App').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d.Veículo+' · '+str(d.Observação).slice(0,120),d['Pago/Regularizado']);});
  rows('Vencimentos Extras').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d.Descrição,d['Pago/Regularizado']);});
  rows('Seguros').forEach(function(r){var d=r.dados;append(d.Placa,'Seguro',d['Vigência fim'],d.Seguradora,d.Situação==='VIGENTE'?'':d['Pago/Regularizado']);});
+ rows('Vencimentos').forEach(function(r){var d=r.dados;append(d.Placa,d.Categoria,d['Data de vencimento'],d.Descrição,d['Status pagamento']==='Pago'?'PAGO':'');});
+ rows('Manutenções').forEach(function(r){var d=r.dados;append(d.Placa,'Manutenção',d['Próxima revisão (data)'],d.Serviço,d.Status==='CONCLUÍDO'?'PAGO':'');});
  rows('Documentos Frota').forEach(function(r){var d=r.dados;append(d.Placa,d.Tipo,d.Vencimento,d['Documento URL'],d.Status==='PAGO'?'PAGO':'');});
  return list.sort(function(a,b){return a.dias-b.dias;});
 }
