@@ -5,7 +5,7 @@
 | Link | O que é | Resultado |
 |---|---|---|
 | `https://higoragenteia.github.io/gvg-artefal/` | Wrapper PWA de 8.132 bytes que carrega uma implantação do Apps Script em iframe | Aponta para a implantação v199 (`AKfy...`), a versão atual do Frotas no Apps Script |
-| `https://gvgartefalesquadrias.com.br/` | GitHub Pages do repositório `GLOBAL-ECOSISTEMA` com domínio próprio | Antes da publicação servia o painel GLOBAL com o `frotas.html` reduzido (23.319 bytes); após 20/11/2026 serve a interface completa (152.692 bytes) |
+| `https://gvgartefalesquadrias.com.br/` | GitHub Pages do repositório `GLOBAL-ECOSISTEMA` com domínio próprio | Antes da publicação servia o painel GLOBAL com o `frotas.html` reduzido (23.319 bytes); após 20/11/2026 serve a interface completa (3.329.149 bytes) |
 | `https://github.com/higoragenteia/gvg-artefal` | Repositório-fonte do painel/Apps Script | Commit `e844395` (v199, 17/11/2026). Contém `src/FrotasIndex.html` (3,3 MB com fotos embutidas) e `src/Frotas.gs` |
 
 ## Comparação das versões
@@ -55,13 +55,13 @@ veículo.
 - Banco: `database/frotas.sql` aplicado.
 - Funções: `frotas-api` v3 e `global-api` v8 ativas.
 - Importação: 13 coleções, 87 registros, backup e auditoria.
-- Frontend local (`frotas.html`): 152.692 bytes, interface original completa,
+- Frontend local (`frotas.html`): 3.329.149 bytes, interface original completa,
   já com a mudança v199.
 - **Frontend de produção:** publicado em 20/11/2026 pelo GitHub Pages do
   `GLOBAL-ECOSISTEMA`.
 - Publicação: branch `feat/frotas-integracao-completa` mergeada em `main`;
-  workflow `deploy-pages.yml` concluído com sucesso (run 44713873183).
-- Produção verificada: `index.html` 262.006 bytes, `frotas.html` 152.692 bytes e
+  workflow `deploy-pages.yml` concluído com sucesso (runs 44713873183 e 44717457484).
+- Produção verificada: `index.html` 262.006 bytes, `frotas.html` 3.329.149 bytes e
   `frotas-compat.js` 17.530 bytes, com hashes idênticos ao `dist/` local.
 - O link `https://higoragenteia.github.io/gvg-artefal/` continua sendo o wrapper
   do Apps Script v199; ele não é o frontend GLOBAL.

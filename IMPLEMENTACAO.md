@@ -28,7 +28,7 @@ As contas antigas não foram convertidas: seus hashes não são credenciais Supa
 - `python3 scripts/build-frontend.py` gerou painel e `dist/` com Frotas.
 - Verificação sintática de `frotas-compat.js` e, com esbuild, de `frotas-api/index.ts` e `global-api/index.ts`.
 - Teste de fumaça em Chromium headless (`npm run test:ui`, Playwright, `frotas-api`/`global-api` interceptadas com dados sintéticos): GERENCIAR (SSO, estatísticas, tabela administrativa, criação de veículo e acionamento da importação), VISUAL (importação/administração ocultas e escrita bloqueada), deep link de alerta, sem sessão e painel + iframe (carregamento do módulo e logout propagado). Sem erros de console.
-- **Publicação (20/11/2026):** frontend v199 publicado no GitHub Pages (workflow 44713873183). Produção verificada: `index.html` 262.006 bytes, `frotas.html` 152.692 bytes e `frotas-compat.js` 17.530 bytes, hashes idênticos ao `dist/` local.
+- **Publicação (20/11/2026):** frontend v199 publicado no GitHub Pages (workflow 44717457484). Produção verificada: `index.html` 262.006 bytes, `frotas.html` 3.329.149 bytes e `frotas-compat.js` 17.530 bytes, hashes idênticos ao `dist/` local.
 - **Live Supabase (20/11/2026):** `database/frotas.sql` aplicado; `frotas-api` (v3) e `global-api` (v8) ativas com `verify_jwt=false`; `FROTAS_SHEET_ID` configurado; importação 13/87 concluída, backup `c469174d-51cc-4753-98c1-fe5c59ea6472` e auditoria `IMPORTAR_FROTAS`; bootstrap autenticado; criação/exclusão de registro; bloqueio de escrita para VISUAL; bloqueio de exclusão para OPERAR; auditoria de SALVAR/EXCLUIR; métrica do painel com 6 veículos; interface Frotas e painel + iframe com dados reais, sem erros de console. Usuário temporário de teste removido.
 
 **FALHOU**
@@ -41,7 +41,7 @@ As contas antigas não foram convertidas: seus hashes não são credenciais Supa
 - Revogar a implantação antiga do Apps Script e o compartilhamento público da planilha (recomendado após a virada).
 - Revisar o histórico do repositório público e os dados preexistentes de outros módulos em `database/importacao/`.
 
-O backend Frotas está live no Supabase e a interface foi publicada no domínio em 20/11/2026 pelo workflow 44713873183; os arquivos de produção conferem com o `dist/` local. A coleção pré-existente `Notificações de Vencimentos` (4 registros) foi preservada e não é usada pela interface atual.
+O backend Frotas está live no Supabase e a interface foi publicada no domínio em 20/11/2026 pelo workflow 44717457484; os arquivos de produção conferem com o `dist/` local. A coleção pré-existente `Notificações de Vencimentos` (4 registros) foi preservada e não é usada pela interface atual.
 
 ## Limites e próxima etapa
 

@@ -61,8 +61,8 @@ Em 20/11/2026, no projeto `krjudhqlpgdnjzrdmtyf`:
 - Interface Frotas e painel + iframe validados em Chromium contra o Supabase
   real, sem erros de console.
 - Usuário temporário de teste removido; nenhum registro de teste permaneceu.
-- Frontend publicado no GitHub Pages em 20/11/2026 (workflow 44713873183).
-  Produção verificada: `index.html` 262.006 bytes, `frotas.html` 152.692 bytes
+- Frontend publicado no GitHub Pages em 20/11/2026 (workflow 44717457484).
+  Produção verificada: `index.html` 262.006 bytes, `frotas.html` 3.329.149 bytes
   e `frotas-compat.js` 17.530 bytes, com hashes iguais ao `dist/` local.
 
 A coleção pré-existente **`Notificações de Vencimentos`** (4 registros) foi
