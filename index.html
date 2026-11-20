@@ -1748,7 +1748,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const status=String(u.status||'').toUpperCase(),stLabel=cadStatusLabel[status]||status;
     const id=safe(u.id),nome=safe(u.nome||u.login||'Cadastro');
     const self=!!(state.user&&String(state.user.id)===String(u.id));
-    const protectedUser=String(u.email||'').toLowerCase()==='higorjose.gvgesquadrias@gmail.com';
+    const protectedUser=String(u.perfil||'').toUpperCase()==='SUPERADMIN';
     const role=String(u.perfil||'OPERADOR').toUpperCase();
     const disabled=self||protectedUser;
     let actions='';
@@ -2253,9 +2253,8 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const l=$('gvgpFrotasLoading');if(l)l.classList.add('gvgp-hidden');
   }
   function frotasFrameUrl(){
-    if(!state.frotasAlert)return FROTAS_URL;
-    const url=new URL(FROTAS_URL);
-    url.searchParams.set('alerta',state.frotasAlert);
+    const url=new URL(FROTAS_URL,location.href);
+    if(state.frotasAlert)url.searchParams.set('alerta',state.frotasAlert);
     return url.href;
   }
   function loadFrotasFrame(){
@@ -2274,12 +2273,17 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     if(!store.get('globalEco:gvgUsrToken')){ toast('Entre no painel para atualizar os indicadores.'); return; }
     loadDashboard(); toast('Indicadores atualizados.');
   }
-  // Eventos
+  // Eventos: o Frotas é servido na mesma origem do painel.
   window.addEventListener('message',function(ev){
     const origin=String(ev.origin||'');
-    if(!/^https:\/\/script\.google\.com$/.test(origin)&&!/^https:\/\/[^/]+\.googleusercontent\.com$/.test(origin))return;
-    if(ev.data&&ev.data.type==='gvg-frotas-logout')logout();
+    const sameOrigin=origin===location.origin;
+    if(!sameOrigin&&!/^https:\/\/script\.google\.com$/.test(origin)&&!/^https:\/\/[^/]+\.googleusercontent\.com$/.test(origin))return;
+    if(!ev.data)return;
+    if(ev.data.type==='gvg-frotas-ready'){hideFrotasLoading();return;}
+    if(ev.data.type==='gvg-frotas-logout')logout();
   });
+  const frotasFrameEl=$('gvgpFrotasFrame');
+  if(frotasFrameEl)frotasFrameEl.addEventListener('load',hideFrotasLoading);
   const catalogSearchInput=$('gvgpPanelSearch');
   if(catalogSearchInput){
     catalogSearchInput.addEventListener('input',filterCatalogCards);

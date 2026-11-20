@@ -1,27 +1,57 @@
-# Revisão da migração — 19/11/2026
+# Revisão da migração — 20/11/2026
 
-Repositório renomeado de `higorteste` para `GLOBAL-ECOSISTEMA`; continua privado.
+Repositório público `higoragenteia/GLOBAL-ECOSISTEMA`. O sistema original e seu domínio continuam intactos.
 
 ## Entrega para homologação
 
-Painel original preservado com rotas estáticas para Pedidos, Gastos, Fornecedores e Máquinas. Supabase Auth compartilhado e autorização por módulo no servidor. Frotas está pendente, sem tabelas, importação ou backend novo. Domínio atual não alterado.
+Painel original preservado com rotas estáticas para Pedidos, Gastos, Fornecedores, Máquinas e Frotas. Supabase Auth compartilhado e autorização por módulo no servidor. O Frotas usa a interface original completa (`FrotasIndex.html`), o adaptador `frotas-compat.js` e a Edge Function `frotas-api`; não há segundo login.
 
-Dados migrados das bases operacionais do projeto original, sem gravações na origem: Gastos (11 lançamentos), Fornecedores (24 fornecedores, 18 produtos e 17 cotações), Máquinas (50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções). O Pedidos mantém os 327 produtos, 17 obras e pedidos já existentes na réplica.
+Dados migrados das bases operacionais do projeto original, sem gravações na origem: Gastos (11 lançamentos), Fornecedores (24 fornecedores, 18 produtos e 17 cotações), Máquinas (50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções). O Pedidos mantém os 327 produtos, 17 obras e pedidos já existentes na réplica. O Frotas tem a estrutura e a importação prontas, mas **os dados ainda não foram gravados no Supabase live**.
 
 As contas antigas não foram convertidas: seus hashes não são credenciais Supabase Auth. Criar/aprovar contas no novo painel. Fotos antigas do Pedidos continuam dependendo do Drive.
 
+## Frotas — o que mudou
+
+- A página reduzida anterior foi substituída pela interface original completa, gerada por `scripts/build-frotas.py`.
+- `frotas-compat.js` implementa `getBootstrap`, `getData`, `getTables`, `saveRecord`, `deleteRecord`, `getAudit`, `importarSheets`, alteração de senha e gestão de contas pelo painel.
+- `supabase/functions/frotas-api/index.ts` valida sessão/permissão, grava, exclui, audita, importa e cria backup antes da importação.
+- `database/frotas.sql` define o módulo e as 13 coleções, sem dados reais.
+- O painel mantém o menu/cartão Frotas, o iframe same-origin, o deep link `?view=frotas&alerta=...` e o carregamento sem overlay preso.
+- O Firebase/FCM externo foi preservado; a entrega em dispositivo não foi revalidada.
+
 ## Validação realizada
 
-- Seis testes locais passaram: leitura de dados, CRUD e saldos, auditoria, bloqueio de escrita por consulta e ciclo de equipamento criado/entregue/transferido/devolvido, com rejeição de saldo insuficiente.
-- Testes SQL executados dentro de transação revertida: resultado idempotente, revisão obsoleta rejeitada, usuário inexistente rejeitado, acesso direto ao banco negado para anon/authenticated.
-- HTTP sem sessão na `global-api`: 401.
-- Verificação sintática dos arquivos de servidor e de todos os scripts inline das cinco páginas.
-- Navegador da publicação, usando a sessão existente de Higor: painel carregou 4 apps; Gastos exibiu orçamento de R$ 26.000,00, despesas de R$ 3.235,09 e saldo de R$ 22.764,91; Fornecedores exibiu 24/18/17; Máquinas exibiu os 50 equipamentos e 2 manutenções; Pedidos abriu os 327 produtos com a mesma sessão; gestão central listou a conta e suas permissões. Não apareceram erros de console nessas aberturas.
+**PASSOU**
 
-Não foram feitas gravações operacionais pelo navegador na base publicada. Os testes de escrita usaram cópias locais e transações revertidas. Usuários finais ainda devem homologar seus fluxos antes da virada do domínio. Não foi produzido benchmark numérico de velocidade.
+- `npm test`: 21 testes locais. Os 11 novos cobrem importação gviz, adaptador, permissões VISUAL/OPERAR/GERENCIAR, geração de IDs, seguro, datas/valores, exclusão, backup/importação, auditoria, contas pelo painel e integridade estática.
+- Parser executado contra a planilha real em modo somente leitura: 13 abas e 87 registros (6 veículos, 5 seguros, 4 vencimentos, 3 manutenções e históricos). Nenhum dado foi gravado.
+- `python3 scripts/build-frontend.py` gerou painel e `dist/` com Frotas.
+- Verificação sintática de `frotas-compat.js` e, com esbuild, de `frotas-api/index.ts` e `global-api/index.ts`.
+- Teste de fumaça em Chromium headless (`npm run test:ui`, Playwright, `frotas-api`/`global-api` interceptadas com dados sintéticos): GERENCIAR (SSO, estatísticas, tabela administrativa, criação de veículo e acionamento da importação), VISUAL (importação/administração ocultas e escrita bloqueada), deep link de alerta e painel + iframe (carregamento do módulo e logout propagado). Sem erros de console.
+
+**FALHOU**
+
+- Nenhuma falha nos testes locais executados.
+
+**NÃO EXECUTADO**
+
+- Aplicar `database/frotas.sql` no Supabase live.
+- Publicar/deployar `frotas-api` e `global-api`.
+- Importar os dados para o Supabase e testar CRUD/RLS com sessão real.
+- Abrir a interface em navegador com dados reais.
+- Validar push/FCM em dispositivo físico.
+- Publicar no domínio de produção.
+
+Esses itens exigem credenciais e autorização. O módulo não deve ser declarado "em produção" antes disso.
 
 ## Limites e próxima etapa
 
-As regras de negócio foram adaptadas sobre registros JSONB e transações PostgreSQL. A camada de compatibilidade ainda carrega as coleções do módulo e substitui coleções alteradas; crescimento significativo requer paginação e atualizações específicas por registro. A cópia não sincroniza alterações posteriores feitas na origem; conciliar dados antes da entrada em produção.
+A camada de compatibilidade carrega as coleções do módulo e substitui a coleção alterada; crescimento significativo exige paginação e atualizações específicas por registro. A importação do Frotas é administrativa e única; depois dela, o runtime lê somente o Supabase. A cópia não sincroniza alterações posteriores feitas na planilha.
 
-**Parar aqui e solicitar os pontos específicos de Frotas ao Higor.** O domínio próprio é suportado pela hospedagem e sua configuração fica para a conclusão e homologação.
+O repositório está público e já contém dados de outros módulos em `database/importacao/`. Antes de qualquer divulgação, revisar o histórico e tornar o repositório privado. O ID da planilha do Frotas não é versionado; a importação usa o segredo `FROTAS_SHEET_ID`.
+
+Consulte `docs/FROTAS_INTEGRACAO.md` para implantação, importação, rollback e detalhes de segurança. O domínio próprio é suportado pela hospedagem e sua configuração fica para a conclusão e homologação.
+
+## Histórico — 19/11/2026
+
+A revisão anterior entregou Pedidos, Gastos, Fornecedores e Máquinas, com testes locais e verificação sintática. O Frotas estava pendente. Os dados de Gastos/Fornecedores/Máquinas foram migrados sem gravações na origem; as contas antigas não foram convertidas. A limpeza dos objetos alheios ao Pedidos foi concluída antes desta implementação; os schemas expostos foram corrigidos para `public,graphql_public`.

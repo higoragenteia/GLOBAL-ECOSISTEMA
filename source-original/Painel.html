@@ -1682,7 +1682,7 @@ const FROTAS_URL = <?!= JSON.stringify(frotasUrl) ?>;
     const status=String(u.status||'').toUpperCase(),stLabel=cadStatusLabel[status]||status;
     const id=safe(u.id),nome=safe(u.nome||u.login||'Cadastro');
     const self=!!(state.user&&String(state.user.id)===String(u.id));
-    const protectedUser=String(u.email||'').toLowerCase()==='higorjose.gvgesquadrias@gmail.com';
+    const protectedUser=String(u.perfil||'').toUpperCase()==='SUPERADMIN';
     const role=String(u.perfil||'OPERADOR').toUpperCase();
     const disabled=self||protectedUser;
     let actions='';

@@ -1,5 +1,5 @@
 alter table public.pedidos_usuarios add column if not exists permissoes jsonb not null default '{"pedidos":"OPERAR"}'::jsonb;
-create table public.global_modulos(id text primary key check(id in ('gastos','fornecedores','maquinas')),revisao bigint not null default 0,atualizado_em timestamptz not null default now());
+create table public.global_modulos(id text primary key check(id in ('gastos','fornecedores','maquinas','frotas')),revisao bigint not null default 0,atualizado_em timestamptz not null default now());
 create table public.global_colecoes(modulo text not null references public.global_modulos(id),nome text not null,colunas jsonb not null check(jsonb_typeof(colunas)='array'),cabecalho int not null default 1 check(cabecalho>0),primary key(modulo,nome));
 create table public.global_registros(modulo text not null,colecao text not null,ordem int not null check(ordem>0),dados jsonb not null check(jsonb_typeof(dados)='object'),primary key(modulo,colecao,ordem),foreign key(modulo,colecao) references public.global_colecoes(modulo,nome));
 create index global_registros_dados_gin on public.global_registros using gin(dados);
@@ -44,4 +44,4 @@ begin
 end;$$;
 revoke all on function public.global_snapshot(text),public.global_aplicar(text,bigint,uuid,text,text,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function public.global_snapshot(text),public.global_aplicar(text,bigint,uuid,text,text,jsonb,jsonb) to service_role;
-insert into public.global_modulos(id) values('gastos'),('fornecedores'),('maquinas');
+insert into public.global_modulos(id) values('gastos'),('fornecedores'),('maquinas'),('frotas');

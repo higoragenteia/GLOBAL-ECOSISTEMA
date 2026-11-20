@@ -90,6 +90,7 @@ async function runModule(m,fn,args,u,requestId){
 async function panel(u){
  const apps={};const jobs=[];
  if(level(u,'pedidos'))jobs.push((async()=>{const q=db.from('pedidos_ordens').select('id',{count:'exact',head:true});if(!['SUPERADMIN','ADMIN'].includes(u.perfil)&&level(u,'pedidos')!=='GERENCIAR')q.eq('usuario_id',u.id);const r=await q;checked(r);apps.pedidos={valor:r.count||0,label:'pedidos registrados',ativo:true};})());
+ if(level(u,'frotas'))jobs.push((async()=>{try{const r=checked(await db.from('global_registros').select('dados').match({modulo:'frotas',colecao:'Base de Dados'}));apps.frotas={valor:r.filter(x=>str(x.dados?.Placa)).length,label:'veículos na frota',ativo:true};}catch(e){console.warn('frotas metric',e?.message||e);}})());
  for(const m of Object.keys(factories)){if(!level(u,m))continue;jobs.push((async()=>{
   if(m==='gastos'){const d=await runModule(m,'getDadosDashboard',[],u,'');apps.gastos={valor:new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(d.summary.spent),label:'gastos no mês',ativo:true};}
   if(m==='fornecedores'){const r=checked(await db.from('global_registros').select('dados').match({modulo:m,colecao:'FORNECEDORES'}));apps[m]={valor:r.filter(x=>x.dados.Status!=='Inativo').length,label:'fornecedores ativos',ativo:true};}
@@ -109,6 +110,7 @@ Deno.serve(async req=>{
   if(m==='painel'){
    if(fn==='getPainelInicial'||fn==='getPainelExternos')result=await panel(u);
    else if(fn==='perfil')result=publicUser(u);
+   else if(fn==='alterarMinhaSenha')result=await changeOwnPassword(args[0]||{},u,token);
    else result=await userAction(fn,args,u);
   }else{if(!factories[m])throw Error('Aplicativo indisponível.');result=fn==='alterarMinhaSenha'?await changeOwnPassword(args[0]||{},u,token):await runModule(m,fn,args,u,str(body.requestId,100));}
   return reply({data:result});
