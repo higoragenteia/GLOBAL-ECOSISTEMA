@@ -1455,14 +1455,14 @@
       <section id="gvgpViewFrotas" class="gvgp-view gvgp-hidden">
         <div class="gvgp-frame-head gvgp-frame-head-actions" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <button type="button" class="gvgp-btn gvgp-btn-ghost" style="color:#0b4a5a;border-color:#c9dce2;background:#fff" data-go="overview">← Voltar à visão geral</button>
-          <a class="gvgp-btn" href="https://higoragenteia.github.io/gvg-frotas/" target="_blank" rel="noopener noreferrer" style="background:#10253a;color:#ffda7a;border:1px solid #c99a2e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:normal">🔔 Abrir Frotas original · Alertas</a>
-          <span style="font:600 11px/1.45 Inter,system-ui,sans-serif;color:#526d86;flex:1 1 190px">Os alertas e notificações do aplicativo original permanecem independentes do painel.</span>
+          <a class="gvgp-btn" href="./frotas.html" target="_blank" rel="noopener noreferrer" style="background:#10253a;color:#ffda7a;border:1px solid #c99a2e;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:normal">🔔 Abrir Controle de Frotas</a>
+          <span style="font:600 11px/1.45 Inter,system-ui,sans-serif;color:#526d86;flex:1 1 190px">Vencimentos integrados ao Supabase. Notificações Firebase em segundo plano aguardam validação.</span>
         </div>
         <div class="gvgp-frame-wrap">
           <div id="gvgpFrotasLoading" class="gvgp-frame-loading">
             <span class="gvgp-frame-spinner" aria-hidden="true"></span>
             <strong>Carregando Controle de Frotas…</strong>
-            <span>Conectando ao sistema original da frota, sem alterar o Firebase</span>
+            <span>Acessando dados do Supabase com sua sessão do GLOBAL</span>
           </div>
           <iframe id="gvgpFrotasFrame" class="gvgp-frame" title="Módulo Controle de Frotas" src="about:blank" loading="eager" allow="clipboard-read; clipboard-write; fullscreen" referrerpolicy="strict-origin-when-cross-origin" onload="if(this.src!=='about:blank'){var l=document.getElementById('gvgpFrotasLoading');if(l)l.classList.add('gvgp-hidden')}"></iframe>
         </div>
@@ -1546,7 +1546,7 @@ const GASTOS_URL = "./gastos.html";
 const FORNECEDORES_URL = "./fornecedores.html";
 const MAQUINAS_URL = "./maquinas.html";
 const MAQUINAS_API_URL = "./";
-const FROTAS_URL = "https://script.google.com/macros/s/AKfycby3W5KlwLYtX7j3_lvi6Zcf6d67k2fKnsg7K0MOmIK-b2X3xY7y57Al-uEPBdzxBaLB/exec";
+const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
 (function(){
   'use strict';
   const $ = id => document.getElementById(id);
