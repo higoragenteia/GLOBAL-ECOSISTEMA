@@ -60,6 +60,9 @@ Em 20/11/2026, no projeto `krjudhqlpgdnjzrdmtyf`:
 - Interface Frotas e painel + iframe validados em Chromium contra o Supabase
   real, sem erros de console.
 - Usuário temporário de teste removido; nenhum registro de teste permaneceu.
+- Frontend publicado no GitHub Pages em 20/11/2026 (workflow 44713873183).
+  Produção verificada: `index.html` 262.006 bytes, `frotas.html` 152.692 bytes
+  e `frotas-compat.js` 17.530 bytes, com hashes iguais ao `dist/` local.
 
 A coleção pré-existente **`Notificações de Vencimentos`** (4 registros) foi
 preservada. Ela não é usada pela interface atual e não é alterada pela
@@ -216,8 +219,6 @@ uma fixture sintética. Ele não acessa o Supabase nem a planilha real.
 
 **NÃO EXECUTADO**
 
-- Publicar o frontend no domínio de produção (o `dist/` está pronto, mas o
-  deploy estático não foi feito nesta revisão).
 - Validar entrega de push/FCM em dispositivo físico.
 - Revogar a implantação antiga do Apps Script e o compartilhamento público da
   planilha (recomendado após a virada).
