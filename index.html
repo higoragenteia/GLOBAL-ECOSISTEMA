@@ -5,16 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GLOBAL ECOSISTEMA | GVG&ARTEFAL</title>
 <script>
-/* Compatibilidade com links de conferencia enviados antes da migracao.
-   As credenciais permanecem na URL original e chegam apenas ao modulo Pedidos. */
-(function () {
-  var query = new URLSearchParams(window.location.search);
-  if (query.has('k') || query.has('c') || (query.has('conferir') && query.has('token'))) {
-    window.location.replace('./pedidos.html' + window.location.search + window.location.hash);
-  }
-})();
-</script>
-<script>
 window.addEventListener('beforeinstallprompt', event => {
   if (window.top !== window.self) return;
   event.preventDefault();
@@ -1573,7 +1563,15 @@ window.addEventListener('beforeinstallprompt', event => {
 </div>
 <script>
 // Versao unica por abertura do painel: evita reutilizar HTML antigo do iframe apos F5.
-const PEDIDOS_URL = "./pedidos.html?v=" + Date.now();
+const pedidosParams=new URLSearchParams(location.search);
+const conferencia=pedidosParams.has('k')||pedidosParams.has('c')||(pedidosParams.has('conferir')&&pedidosParams.has('token'));
+const pedidosQuery=new URLSearchParams({v:String(Date.now())});
+if(conferencia){
+  for(const key of ['k','c','conferir','token']){
+    if(pedidosParams.has(key))pedidosQuery.set(key,pedidosParams.get(key));
+  }
+}
+const PEDIDOS_URL='./pedidos.html?'+pedidosQuery;
 const GASTOS_URL = "./gastos.html";
 const FORNECEDORES_URL = "./fornecedores.html";
 const MAQUINAS_URL = "./maquinas.html";
@@ -1613,6 +1611,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     }
   }
   const DEEP_LINK={view:String(new URLSearchParams(location.search).get('view')||'').toLowerCase(),alerta:String(new URLSearchParams(location.search).get('alerta')||'')};
+  let pedidosLinkPending=conferencia||pedidosParams.get('view')==='pedidos';
   let deepLinkPending=(DEEP_LINK.view==='frotas'||!!DEEP_LINK.alerta);
   const safe = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const store = {
@@ -1969,6 +1968,11 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     app.classList.toggle('gvgp-catalog-mode',state.view==='overview'&&state.layout===1&&!app.classList.contains('gvgp-locked')&&!!state.data);
   }
   function applyDeepLink(){
+    if(pedidosLinkPending){
+      pedidosLinkPending=false;
+      setView('pedidos');
+      return;
+    }
     if(!deepLinkPending)return;
     if(!state.user||!canViewProject(state.user,'frotas')){deepLinkPending=false;if(DEEP_LINK.view)toast('Seu perfil não tem acesso ao Controle de Frotas.');return;}
     deepLinkPending=false;
@@ -2057,20 +2061,8 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const emptyLoading=$('gvgpEmpty');if(emptyLoading)emptyLoading.classList.add('gvgp-hidden');
     if(!state.user){lastUserSignature='';$('gvgpTopUser').innerHTML='<span class="gvgp-user-chip"><span class="gvgp-user-avatar">…</span><span class="gvgp-user-meta"><strong>Carregando</strong><span>Validando sessão</span></span></span>';}
     run('getPainelInicial',token).then(d=>{
-      if(!d||d.ok!==true){
-        if(d&&d.error) console.warn(d.error);
-        const wasLogged=!!store.get('globalEco:gvgUsrToken');
-        const gastosToken=store.get('globalEco:gvgGastosToken');
-        if(gastosToken){try{run('logoutUsuario',{token:gastosToken})}catch(e){}}
-        const fornecedoresToken=store.get('globalEco:gvgSessionToken');
-        if(fornecedoresToken){try{run('fornecedoresApiCall','logoutUsuario',[],fornecedoresToken)}catch(e){}}
-        const maquinasToken=store.get('globalEco:gvgMaqTokenV1');
-        revogarSessaoMaquinas_(maquinasToken);
-        store.remove('globalEco:gvgUsrToken'); store.remove('globalEco:gvgAdminToken'); store.remove('globalEco:gvgGastosToken'); store.remove('globalEco:gvgSessionToken'); store.remove('globalEco:gvgMaqTokenV1');
-        renderLoggedOut();
-        if(wasLogged){const msg=$('gvgpLoginMsg');if(msg){msg.textContent='Sessão expirada ou acesso revogado. Entre novamente.';msg.style.color='#b42318';}}
-        return;
-      }
+      if(state.token!==token)return;
+      if(!d||d.ok!==true)throw new Error(d?.error||'Não foi possível validar a sessão.');
       if(['ADMIN','SUPERADMIN'].indexOf(String(d.usuario.perfil||'').toUpperCase())>=0){state.adminToken=token;}
       else {state.adminToken='';}
       store.remove('globalEco:gvgAdminToken');
@@ -2099,7 +2091,18 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     }).catch(err=>{
       console.warn(err);
       toast('Não foi possível carregar os indicadores agora. Tente novamente.');
-      if(!state.data){ $('gvgpLoginCard').classList.remove('gvgp-hidden'); $('gvgpDashboard').classList.add('gvgp-hidden'); }
+      if(state.token!==token||state.data)return;
+      if(err.status===401||err.status===403||err.sessionExpired){
+        renderLoggedOut();
+        $('gvgpLoginMsg').textContent=err.status===403?'Seu acesso ao painel está indisponível.':'Sua sessão precisa ser renovada. Entre novamente.';
+        return;
+      }
+      $('gvgpTopUser').querySelector('.gvgp-user-meta span').textContent='Conexão indisponível. Sessão mantida.';
+      $('gvgpTopUser').appendChild(Object.assign(document.createElement('button'),{
+        className:'gvgp-logout',type:'button',textContent:'Tentar novamente',onclick:()=>loadDashboard(token)
+      }),Object.assign(document.createElement('button'),{
+        className:'gvgp-logout',type:'button',textContent:'Sair',onclick:logout
+      }));
     });
   }
   function login(ev){
@@ -2596,6 +2599,9 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
   });
   $('gvgpLoginForm').addEventListener('submit',login);
+  window.addEventListener('online',()=>{
+    if(state.token&&!state.data)loadDashboard();
+  });
   $('gvgpRefreshBtn') && $('gvgpRefreshBtn').addEventListener('click',refresh);
   $('gvgpRotateBtn').addEventListener('click',toggleRotation);
   const pedidosFrame=$('gvgpPedidosFrame');

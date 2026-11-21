@@ -10,15 +10,41 @@
  async function auth(path, body) {
   const response = await fetch(URL + '/auth/v1/' + path, { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const result = await response.json();
-  if (!response.ok) throw new Error(response.status === 400 ? 'Usuário ou senha inválidos.' : result.msg || result.error_description || 'Não foi possível entrar.');
+  if (!response.ok) {
+   const e = new Error(path.endsWith('=password') && response.status === 400 ? 'Usuário ou senha inválidos.' : result.msg || result.error_description || 'Não foi possível validar a sessão.');
+   e.status = response.status;
+   e.code = result.error_code || result.code;
+   throw e;
+  }
   return result;
  }
  async function access() {
-  if (!session?.access_token) return '';
+  let parentSession;
+  try { if (window.parent !== window) parentSession = window.parent.GlobalSession; } catch (_) {}
+  if (parentSession) return parentSession.access();
+  if (!session?.access_token) {
+   const e = new Error('Entre no painel para continuar.');
+   e.sessionExpired = true;
+   throw e;
+  }
   if (session.expires_at * 1000 > Date.now() + 60000) return session.access_token;
-  if (!refreshing) refreshing = auth('token?grant_type=refresh_token', { refresh_token: session.refresh_token })
-   .then(result => { save({ ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + result.expires_in }); return result.access_token; })
-   .catch(e => { save(null); throw e; }).finally(() => refreshing = null);
+  if (!refreshing) {
+   const current = session;
+   refreshing = auth('token?grant_type=refresh_token', { refresh_token: current.refresh_token })
+    .then(result => {
+     if (session !== current) return session?.access_token || '';
+     save({ ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + result.expires_in });
+     return result.access_token;
+    })
+    .catch(e => {
+     if (session !== current) return session?.access_token || '';
+     if (['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired'].includes(e.code)) {
+      save(null);
+      e.sessionExpired = true;
+     }
+     throw e;
+    }).finally(() => refreshing = null);
+  }
   return refreshing;
  }
  async function call(fn, args) {
@@ -45,7 +71,7 @@
   }
   if (['estadoSessaoFuncionarioGVG', 'validarSessaoAdminGVG'].includes(fn) && !session?.access_token) return { ok: false };
   try { return await call(fn, args); }
-  catch (e) { if (['estadoSessaoFuncionarioGVG', 'validarSessaoAdminGVG'].includes(fn) && [400,401].includes(e.status)) { save(null); return { ok: false }; } throw e; }
+  catch (e) { if (['estadoSessaoFuncionarioGVG', 'validarSessaoAdminGVG'].includes(fn) && [400,401,403].includes(e.status)) return { ok: false }; throw e; }
  };
  window.GlobalSession = { access, logout: () => window.pedidosCall('sairFuncionario') };
  window.addEventListener('storage', event => { if (event.key === STORAGE) { try { session = JSON.parse(event.newValue || 'null'); } catch (_) { session = null; } } });

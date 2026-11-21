@@ -19,7 +19,7 @@
    const token=await window.GlobalSession.access();
    if(!token)throw Error('Entre pelo painel principal para continuar.');
    const response=await fetch(URL+'/functions/v1/global-api',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({modulo,fn,args,requestId:rid})});
-   const result=await response.json();if(!response.ok||result.error){const e=Error(result.error||'Falha na operação.');e.code=result.code||'ERRO';throw e;}
+   const result=await response.json();if(!response.ok||result.error){const e=Error(result.error||'Falha na operação.');e.code=result.code||'ERRO';e.status=response.status;throw e;}
    const data=result.data;
    if(fn==='criarBackup'&&data.backup){data.url=window.URL.createObjectURL(new Blob([JSON.stringify(data.backup,null,2)],{type:'application/json'}));delete data.backup;}
    return data;
