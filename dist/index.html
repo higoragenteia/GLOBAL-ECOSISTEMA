@@ -351,6 +351,8 @@ window.addEventListener('beforeinstallprompt', event => {
   .gvgp-install-action-primary{background:#22312d;border-color:#22312d;color:#fff}
   #gvgpLoginInstall{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:7px 12px;background:#fcf8f1}
   #gvgpLoginInstall img{width:30px;height:30px;border-radius:7px}
+  .gvgp-install-label{display:grid;gap:2px;text-align:left}
+  #gvgpLoginInstallNotice{color:#315c49;font-size:11px;font-weight:600}
   #gvgpSignupInstall{margin:0 0 14px;align-self:flex-start}
   @keyframes gvgpSignupIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @media(min-width:821px) and (max-height:740px){
@@ -1183,7 +1185,7 @@ window.addEventListener('beforeinstallprompt', event => {
     <div class="gvgp-sidebar-bottom">
       <button type="button" class="gvgp-install-btn" id="gvgpInstallBtn" title="Instalar o GVG&ARTEFAL na tela inicial">
         <img src="./assets/icone-instalar-app-maquinas.webp" alt="">
-        <span><strong id="gvgpInstallLabel">Instalar app</strong><small>Atalho na tela inicial</small></span>
+        <span><strong id="gvgpInstallLabel">Instalar app</strong><small id="gvgpInstallSubtitle">Atalho na tela inicial</small></span>
       </button>
       <div class="gvgp-sidebar-footer">
         <span class="gvgp-status-dot"></span>
@@ -1363,7 +1365,10 @@ window.addEventListener('beforeinstallprompt', event => {
             </div>
             <button type="button" class="gvgp-install-action gvgp-hidden" id="gvgpLoginInstall">
               <img src="./assets/icone-192.png" width="30" height="30" alt="">
-              <span id="gvgpLoginInstallLabel">Instalar app</span>
+              <span class="gvgp-install-label">
+                <span id="gvgpLoginInstallLabel">Instalar app</span>
+                <small id="gvgpLoginInstallNotice" hidden>App já instalado neste dispositivo</small>
+              </span>
             </button>
           </form>
         </div>
@@ -2436,7 +2441,9 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const label=alreadyInstalled?'Abrir app':'Instalar app';
     $('gvgpInstallLabel').textContent=label;
     $('gvgpLoginInstallLabel').textContent=label;
-    $('gvgpSignupInstall').textContent=label;
+    $('gvgpLoginInstallNotice').hidden=!alreadyInstalled;
+    $('gvgpInstallSubtitle').textContent=alreadyInstalled?'App já instalado':'Atalho na tela inicial';
+    $('gvgpSignupInstall').textContent=alreadyInstalled?'Abrir app · Já instalado':label;
     $('gvgpConfirmInstall').textContent=label;
     $('gvgpInstallTitle').textContent=alreadyInstalled?'GVG&ARTEFAL já instalado':'Instalar GVG&ARTEFAL';
     $('gvgpInstallBtn').title=label;
