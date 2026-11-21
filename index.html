@@ -2424,28 +2424,31 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   const installedDisplay=window.matchMedia('(display-mode: standalone)');
   const installDialog=$('gvgpInstallDialog');
   let installAccepted=false;
+  let installInProgress=false;
   function isInstalledMode(){
     return installedDisplay.matches||navigator.standalone===true;
   }
-  function updateInstallControls(){
+  function updateInstallControls(manualFallback){
     const installed=isInstalledMode()||installAccepted;
+    const canPrompt=!manualFallback&&(window.gvgInstallPrompt||typeof navigator.install==='function');
     $('gvgpInstallBtn').classList.toggle('gvgp-hidden',installed);
     $('gvgpLoginInstall').classList.toggle('gvgp-hidden',installed);
     $('gvgpSignupInstall').classList.toggle('gvgp-hidden',installed||!installInvite);
-    $('gvgpConfirmInstall').classList.toggle('gvgp-hidden',installed||!window.gvgInstallPrompt);
+    $('gvgpConfirmInstall').classList.toggle('gvgp-hidden',installed||!canPrompt);
     const device=navigator.userAgent;
-    let help='No Chrome ou Edge, use a opção de instalação na barra de endereços ou no menu do navegador.';
+    let help='No Chrome, clique no ícone de instalação na barra de endereços ou use ⋮ → Transmitir, salvar e compartilhar → Instalar esta página como um app.';
+    if(/Edg\//.test(device))help='No Edge, use ⋯ → Aplicativos → Instalar este site como um aplicativo.';
     if(/iPad|iPhone|iPod/.test(device)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){
       help='Abra no Safari. Toque em Compartilhar (em algumas versões, fica no menu ⋯), escolha Adicionar à Tela de Início, ative Abrir como App da Web se aparecer e toque em Adicionar.';
     }else if(/Android/.test(device)){
       help='Abra este link no Chrome. No menu ⋮, toque em Instalar app ou Adicionar à tela inicial.';
     }
     if(installed)help='Abra o GVG&ARTEFAL pelo ícone do aplicativo.';
-    else if(window.gvgInstallPrompt)help='Confirme a instalação no navegador. Ao abrir o app pela primeira vez, você pode solicitar seu acesso.';
+    else if(canPrompt)help='Confirme a instalação no navegador. Ao abrir o app pela primeira vez, você pode solicitar seu acesso.';
     $('gvgpInstallHelp').textContent=help;
   }
-  function showInstallHelp(){
-    updateInstallControls();
+  function showInstallHelp(manualFallback=false){
+    updateInstallControls(manualFallback);
     if(!installDialog.open)installDialog.showModal();
   }
   async function requestInstall(){
@@ -2453,29 +2456,39 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       window.open(new URL('./?instalar=1',location.href),'_blank','noopener');
       return;
     }
+    if(installInProgress||isInstalledMode()||installAccepted)return;
     const promptEvent=window.gvgInstallPrompt;
-    if(!promptEvent){showInstallHelp();return;}
-    window.gvgInstallPrompt=null;
+    if(!promptEvent&&typeof navigator.install!=='function'){showInstallHelp();return;}
+    installInProgress=true;
     try{
-      const {outcome}=await promptEvent.prompt();
-      if(outcome==='accepted'){
-        installAccepted=true;
-        if(installDialog.open)installDialog.close();
+      if(promptEvent){
+        window.gvgInstallPrompt=null;
+        const {outcome}=await promptEvent.prompt();
+        if(outcome!=='accepted'){updateInstallControls();return;}
+      }else{
+        const manifest=document.querySelector('link[rel="manifest"]').href;
+        // Sem id explícito, a identidade do app é o start_url (./ no manifesto).
+        const manifestId=new URL('./',manifest).href;
+        await navigator.install({manifest,manifestId});
       }
+      installAccepted=true;
+      if(installDialog.open)installDialog.close();
       updateInstallControls();
     }catch(error){
-      showInstallHelp();
+      showInstallHelp(true);
+    }finally{
+      installInProgress=false;
     }
   }
   ['gvgpInstallBtn','gvgpLoginInstall','gvgpSignupInstall','gvgpConfirmInstall'].forEach(id=>$(id).addEventListener('click',requestInstall));
-  window.addEventListener('gvg-install-ready',updateInstallControls);
+  window.addEventListener('gvg-install-ready',()=>updateInstallControls());
   window.addEventListener('appinstalled',()=>{
     installAccepted=true;
     window.gvgInstallPrompt=null;
     if(installDialog.open)installDialog.close();
     updateInstallControls();
   });
-  installedDisplay.addEventListener('change',updateInstallControls);
+  installedDisplay.addEventListener('change',()=>updateInstallControls());
   updateInstallControls();
   $('gvgpTopUser').addEventListener('click',e=>{if(e.target.closest('#gvgpPendingBtn'))openPending();});
   $('gvgpPendingClose').addEventListener('click',closePending);
