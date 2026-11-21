@@ -25,7 +25,7 @@ window.addEventListener('beforeinstallprompt', event => {
 <link rel="manifest" href="./manifest.webmanifest?v=instalacao-1">
 <meta name="theme-color" content="#101216">
 <link rel="icon" href="./assets/logo-gvg-artefal-icone.webp" type="image/webp">
-<link rel="apple-touch-icon" href="./assets/logo-gvg-artefal-icone.webp">
+<link rel="apple-touch-icon" sizes="192x192" href="./assets/icone-192.png">
 
 <style>
   :root{
@@ -349,6 +349,8 @@ window.addEventListener('beforeinstallprompt', event => {
   .gvgp-install-actions form{margin:0}
   .gvgp-install-action{padding:9px 14px;border:1px solid #b59866;border-radius:9px;background:transparent;color:#42321e;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
   .gvgp-install-action-primary{background:#22312d;border-color:#22312d;color:#fff}
+  #gvgpLoginInstall{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:7px 12px;background:#fcf8f1}
+  #gvgpLoginInstall img{width:30px;height:30px;border-radius:7px}
   #gvgpSignupInstall{margin:0 0 14px;align-self:flex-start}
   @keyframes gvgpSignupIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @media(min-width:821px) and (max-height:740px){
@@ -1359,6 +1361,10 @@ window.addEventListener('beforeinstallprompt', event => {
             <div class="gvgp-signup">
               <button type="button" class="gvgp-signup-toggle" id="gvgpSignupToggle" aria-expanded="false" aria-controls="gvgpSignupBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20c.7-3.8 3.2-5.8 6.2-5.8 1.6 0 3 .6 4 1.7"/><path d="M18 14v6M15 17h6"/></svg><span>Criar cadastro</span></button>
             </div>
+            <button type="button" class="gvgp-install-action gvgp-hidden" id="gvgpLoginInstall">
+              <img src="./assets/icone-192.png" width="30" height="30" alt="">
+              Instalar app
+            </button>
           </form>
         </div>
         </div>
@@ -2424,12 +2430,13 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   function updateInstallControls(){
     const installed=isInstalledMode()||installAccepted;
     $('gvgpInstallBtn').classList.toggle('gvgp-hidden',installed);
+    $('gvgpLoginInstall').classList.toggle('gvgp-hidden',installed);
     $('gvgpSignupInstall').classList.toggle('gvgp-hidden',installed||!installInvite);
     $('gvgpConfirmInstall').classList.toggle('gvgp-hidden',installed||!window.gvgInstallPrompt);
     const device=navigator.userAgent;
     let help='No Chrome ou Edge, use a opção de instalação na barra de endereços ou no menu do navegador.';
     if(/iPad|iPhone|iPod/.test(device)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){
-      help='Abra este link no Safari. Toque em Compartilhar, depois em Adicionar à Tela de Início e confirme.';
+      help='Abra no Safari. Toque em Compartilhar (em algumas versões, fica no menu ⋯), escolha Adicionar à Tela de Início, ative Abrir como App da Web se aparecer e toque em Adicionar.';
     }else if(/Android/.test(device)){
       help='Abra este link no Chrome. No menu ⋮, toque em Instalar app ou Adicionar à tela inicial.';
     }
@@ -2460,7 +2467,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       showInstallHelp();
     }
   }
-  ['gvgpInstallBtn','gvgpSignupInstall','gvgpConfirmInstall'].forEach(id=>$(id).addEventListener('click',requestInstall));
+  ['gvgpInstallBtn','gvgpLoginInstall','gvgpSignupInstall','gvgpConfirmInstall'].forEach(id=>$(id).addEventListener('click',requestInstall));
   window.addEventListener('gvg-install-ready',updateInstallControls);
   window.addEventListener('appinstalled',()=>{
     installAccepted=true;
