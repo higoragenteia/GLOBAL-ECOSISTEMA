@@ -2714,7 +2714,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   const photo=stage.querySelector('img');
   const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
   if(!photo||motion.matches)return;
-  const windSpeed=new URLSearchParams(location.search).get('animacao')==='2x'?2.8:1.4;
+  const windSpeed=1.4*2.2;
   let gl,program,texture,ready=false,failed=false,inView=true,raf=0;
   let previous=0,elapsed=0,lastDraw=0,source='',pendingSource='';
   let timeLocation,coverLocation,vertexCount=0,stageWidth=0,stageHeight=0;
