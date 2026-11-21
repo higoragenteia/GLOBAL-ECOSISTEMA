@@ -66,7 +66,8 @@ async function signup(req: Request, d: any) {
  if (!checked(await db.rpc('pedidos_limitar', { p_chave: 'signup:' + hash }))) fail('Limite de cadastros atingido. Tente novamente em uma hora.');
  const login = val(d.login || d.email, 120).toLowerCase(), senha = String(d.senha || '');
  if (!/^[a-z0-9._-]{2,40}$/.test(login) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(login)) fail('Informe um usuário ou e-mail válido.');
- if (senha.length < 8 || senha.length > 128) fail('Use uma senha entre 8 e 128 caracteres.');
+ if (!senha) fail('Informe uma senha.');
+ if (senha.length > 128) fail('A senha deve ter no máximo 128 caracteres.');
  const email = login.includes('@') ? login : `${login}@pedidos.gvg.invalid`;
  const auth = checked(await db.auth.admin.createUser({ email, password: senha, email_confirm: true }));
  if (!auth.user) fail('Não foi possível criar o cadastro.');

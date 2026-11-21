@@ -1183,7 +1183,7 @@ window.addEventListener('beforeinstallprompt', event => {
     <div class="gvgp-sidebar-bottom">
       <button type="button" class="gvgp-install-btn" id="gvgpInstallBtn" title="Instalar o GVG&ARTEFAL na tela inicial">
         <img src="./assets/icone-instalar-app-maquinas.webp" alt="">
-        <span><strong>Instalar app</strong><small>Atalho na tela inicial</small></span>
+        <span><strong id="gvgpInstallLabel">Instalar app</strong><small>Atalho na tela inicial</small></span>
       </button>
       <div class="gvgp-sidebar-footer">
         <span class="gvgp-status-dot"></span>
@@ -1363,7 +1363,7 @@ window.addEventListener('beforeinstallprompt', event => {
             </div>
             <button type="button" class="gvgp-install-action gvgp-hidden" id="gvgpLoginInstall">
               <img src="./assets/icone-192.png" width="30" height="30" alt="">
-              Instalar app
+              <span id="gvgpLoginInstallLabel">Instalar app</span>
             </button>
           </form>
         </div>
@@ -2424,13 +2424,22 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   const installedDisplay=window.matchMedia('(display-mode: standalone)');
   const installDialog=$('gvgpInstallDialog');
   let installAccepted=false;
+  let installDetected=false;
   let installInProgress=false;
   function isInstalledMode(){
     return installedDisplay.matches||navigator.standalone===true;
   }
   function updateInstallControls(manualFallback){
     const installed=isInstalledMode()||installAccepted;
-    const canPrompt=!manualFallback&&(window.gvgInstallPrompt||typeof navigator.install==='function');
+    const canPrompt=!manualFallback&&((!installDetected&&window.gvgInstallPrompt)||typeof navigator.install==='function');
+    const alreadyInstalled=installed||installDetected;
+    const label=alreadyInstalled?'Abrir app':'Instalar app';
+    $('gvgpInstallLabel').textContent=label;
+    $('gvgpLoginInstallLabel').textContent=label;
+    $('gvgpSignupInstall').textContent=label;
+    $('gvgpConfirmInstall').textContent=label;
+    $('gvgpInstallTitle').textContent=alreadyInstalled?'GVG&ARTEFAL já instalado':'Instalar GVG&ARTEFAL';
+    $('gvgpInstallBtn').title=label;
     $('gvgpInstallBtn').classList.toggle('gvgp-hidden',installed);
     $('gvgpLoginInstall').classList.toggle('gvgp-hidden',installed);
     $('gvgpSignupInstall').classList.toggle('gvgp-hidden',installed||!installInvite);
@@ -2443,9 +2452,23 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     }else if(/Android/.test(device)){
       help='Abra este link no Chrome. No menu ⋮, toque em Instalar app ou Adicionar à tela inicial.';
     }
-    if(installed)help='Abra o GVG&ARTEFAL pelo ícone do aplicativo.';
+    if(alreadyInstalled){
+      help=/Android/.test(device)
+        ?'Abra o GVG&ARTEFAL pelo ícone na tela inicial do celular.'
+        :'Clique em “Abrir no app” na barra de endereços ou abra o GVG&ARTEFAL pelo ícone do aplicativo.';
+    }
     else if(canPrompt)help='Confirme a instalação no navegador. Ao abrir o app pela primeira vez, você pode solicitar seu acesso.';
     $('gvgpInstallHelp').textContent=help;
+  }
+  async function checkInstalledApp(){
+    if(typeof navigator.getInstalledRelatedApps!=='function'||isInstalledMode())return;
+    try{
+      const apps=await navigator.getInstalledRelatedApps();
+      installDetected=apps.some(app=>app.platform==='webapp');
+      updateInstallControls();
+    }catch(error){
+      // A instalação continua disponível mesmo em navegadores que não permitem a consulta.
+    }
   }
   function showInstallHelp(manualFallback=false){
     updateInstallControls(manualFallback);
@@ -2457,7 +2480,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       return;
     }
     if(installInProgress||isInstalledMode()||installAccepted)return;
-    const promptEvent=window.gvgInstallPrompt;
+    const promptEvent=installDetected?null:window.gvgInstallPrompt;
     if(!promptEvent&&typeof navigator.install!=='function'){showInstallHelp();return;}
     installInProgress=true;
     try{
@@ -2489,7 +2512,9 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     updateInstallControls();
   });
   installedDisplay.addEventListener('change',()=>updateInstallControls());
+  window.addEventListener('focus',checkInstalledApp);
   updateInstallControls();
+  checkInstalledApp();
   $('gvgpTopUser').addEventListener('click',e=>{if(e.target.closest('#gvgpPendingBtn'))openPending();});
   $('gvgpPendingClose').addEventListener('click',closePending);
   $('gvgpPendingModal').addEventListener('click',e=>{if(e.target===$('gvgpPendingModal'))closePending();});
