@@ -69,7 +69,10 @@ async function signup(req: Request, d: any) {
  if (!senha) fail('Informe uma senha.');
  if (senha.length > 128) fail('A senha deve ter no máximo 128 caracteres.');
  const email = login.includes('@') ? login : `${login}@pedidos.gvg.invalid`;
- const auth = checked(await db.auth.admin.createUser({ email, password: senha, email_confirm: true }));
+ const created = await db.auth.admin.createUser({ email, password: senha, email_confirm: true });
+ const minimum = created.error?.message.match(/^Password should be at least (\d+) characters\.?$/i)?.[1];
+ if (minimum) fail(`Use uma senha com pelo menos ${minimum} caracteres.`);
+ const auth = checked(created);
  if (!auth.user) fail('Não foi possível criar o cadastro.');
  const saved = await db.from('pedidos_usuarios').insert({ id: auth.user!.id, nome: val(d.nome || login, 120), login, email, status: 'PENDENTE', perfil: 'OPERADOR' });
  if (saved.error) { await db.auth.admin.deleteUser(auth.user!.id); fail('Este usuário já está cadastrado.'); }
