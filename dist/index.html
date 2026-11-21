@@ -14,7 +14,15 @@
   }
 })();
 </script>
-<link rel="manifest" href="./manifest.webmanifest">
+<script>
+window.addEventListener('beforeinstallprompt', event => {
+  if (window.top !== window.self) return;
+  event.preventDefault();
+  window.gvgInstallPrompt = event;
+  window.dispatchEvent(new Event('gvg-install-ready'));
+});
+</script>
+<link rel="manifest" href="./manifest.webmanifest?v=instalacao-1">
 <meta name="theme-color" content="#101216">
 <link rel="icon" href="./assets/logo-gvg-artefal-icone.webp" type="image/webp">
 <link rel="apple-touch-icon" href="./assets/logo-gvg-artefal-icone.webp">
@@ -333,6 +341,15 @@
   .gvgp-sg-back{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin-top:20px;padding:0;border:0;background:none;color:#85725a;font-size:11px;line-height:1.6;cursor:pointer;text-decoration:none}
   .gvgp-sg-back:hover{color:#3b2b19;text-decoration:underline;text-underline-offset:4px}
   .gvgp-sg-back svg{width:14px;height:14px}
+  .gvgp-install-dialog{width:min(440px,calc(100% - 32px));box-sizing:border-box;padding:24px;border-radius:20px;border:1px solid #d6ba87;background:#fcf8f1;color:#32271f;box-shadow:0 24px 80px #18141066}
+  .gvgp-install-dialog::backdrop{background:#151922a8}
+  .gvgp-install-dialog h2{margin:0 0 10px;font-size:21px}
+  .gvgp-install-dialog p{margin:0 0 20px;font-size:14px;line-height:1.6}
+  .gvgp-install-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+  .gvgp-install-actions form{margin:0}
+  .gvgp-install-action{padding:9px 14px;border:1px solid #b59866;border-radius:9px;background:transparent;color:#42321e;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .gvgp-install-action-primary{background:#22312d;border-color:#22312d;color:#fff}
+  #gvgpSignupInstall{margin:0 0 14px;align-self:flex-start}
   @keyframes gvgpSignupIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @media(min-width:821px) and (max-height:740px){
     .gvgp-sg-panel{padding:30px 34px 24px}
@@ -1274,7 +1291,7 @@
               </button>
               <button type="button" class="gvgp-cat-card" data-module="frotas" data-search="frotas veiculos manutencao documentos vencimentos" style="--accent:#2f7ed8">
                 <span class="gvgp-cat-icon"><img class="gvgp-cat-photo" alt="" loading="lazy" decoding="async" src="./assets/icone-frotas-384.webp" srcset="./assets/icone-frotas-256.webp 256w, ./assets/icone-frotas-384.webp 384w, ./assets/icone-frotas-layout8.webp 600w" sizes="(max-width:700px) 130px, 160px"></span>
-                <span class="gvgp-cat-status">Conectado</span>
+                <span class="gvgp-cat-status">Ativo</span>
                 <h3>Frotas</h3>
                 <p>Veículos e manutenção.</p>
                 <div class="gvgp-cat-metric"><strong id="gvgpCatFrotas">—</strong><span id="gvgpCatFrotasLabel">veículos na frota</span></div>
@@ -1496,6 +1513,7 @@
         <span class="gvgp-sg-kicker">Faça parte da equipe</span>
         <h2 id="gvgpSignupTitle">Solicite seu <b>acesso</b></h2>
         <p id="gvgpSignupIntro" class="gvgp-sg-sub">Crie seu usuário e senha para acessar o painel da GVG&amp;ARTEFAL.</p>
+        <button type="button" class="gvgp-install-action gvgp-hidden" id="gvgpSignupInstall">Instalar app</button>
         <div class="gvgp-sg-form">
           <div class="gvgp-sg-field">
             <label for="gvgpSignupUser">Usuário</label>
@@ -1514,6 +1532,14 @@
     </div>
   </div>
 </div>
+<dialog id="gvgpInstallDialog" class="gvgp-install-dialog" aria-labelledby="gvgpInstallTitle" aria-describedby="gvgpInstallHelp">
+  <h2 id="gvgpInstallTitle">Instalar GVG&amp;ARTEFAL</h2>
+  <p id="gvgpInstallHelp" role="status"></p>
+  <div class="gvgp-install-actions">
+    <form method="dialog"><button type="submit" class="gvgp-install-action">Fechar</button></form>
+    <button type="button" class="gvgp-install-action gvgp-install-action-primary gvgp-hidden" id="gvgpConfirmInstall">Instalar app</button>
+  </div>
+</dialog>
 <div id="gvgpToast" class="gvgp-toast" role="status" aria-live="polite"></div>
 <div id="gvgpPendingModal" class="gvgp-pending-modal gvgp-hidden" role="dialog" aria-modal="true" aria-labelledby="gvgpPendingTitle">
   <div class="gvgp-pending-card">
@@ -2076,6 +2102,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     run('entrarFuncionario',user,pass).then(d=>{
       if(!d||!d.token) throw new Error('O servidor não confirmou a sessão.');
       store.set('globalEco:gvgUsrToken',d.token);
+      store.set('globalEco:cadastroVisto','1');
       if(['ADMIN','SUPERADMIN'].indexOf(String(d.perfil||'').toUpperCase())>=0){state.adminToken=d.token;}
       else {state.adminToken='';}
       store.remove('globalEco:gvgAdminToken');
@@ -2326,7 +2353,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   $('gvgpSignupSlidePause').addEventListener('click',()=>{signupSlidePaused=!signupSlidePaused;startSignupSlides(false);});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSignupSlides();else if(!$('gvgpSignupBox').classList.contains('gvgp-hidden'))startSignupSlides(false);});
   let signupReturnFocus=null;
-  function openSignup(){
+  function openSignup(focusUser=true){
     const box=$('gvgpSignupBox'),btn=$('gvgpSignupToggle');
     if(!box)return;
     signupReturnFocus=document.activeElement;
@@ -2337,11 +2364,16 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const pass=$('gvgpSignupPass'),eye=$('gvgpSignupEye');
     if(pass)pass.type='password';
     if(eye){eye.setAttribute('aria-pressed','false');eye.setAttribute('aria-label','Mostrar senha');}
-    setTimeout(()=>{const u=$('gvgpSignupUser');if(u&&!box.classList.contains('gvgp-hidden'))u.focus();},180);
+    setTimeout(()=>{
+      if(box.classList.contains('gvgp-hidden'))return;
+      const target=focusUser?'gvgpSignupUser':'gvgpSignupClose';
+      $(target).focus();
+    },180);
   }
   function closeSignup(){
     const box=$('gvgpSignupBox'),btn=$('gvgpSignupToggle');
     if(!box||box.classList.contains('gvgp-hidden'))return;
+    if(isInstalledMode())store.set('globalEco:cadastroVisto','1');
     box.classList.add('gvgp-hidden');
     if(btn)btn.setAttribute('aria-expanded','false');
     document.body.classList.remove('gvgp-signup-open');
@@ -2382,16 +2414,66 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     }catch(err){msg.textContent=err.message||String(err);}
     finally{btn.disabled=false;btn.textContent='Solicitar cadastro →';}
   });
-  $('gvgpInstallBtn').addEventListener('click',()=>{
-    const origins=location.ancestorOrigins?Array.from(location.ancestorOrigins):[];
-    const inPages=origins.some(o=>String(o).includes('higoragenteia.github.io')||String(o).includes('gvgartefalesquadrias.com.br'))||String(document.referrer||'').includes('higoragenteia.github.io')||String(document.referrer||'').includes('gvgartefalesquadrias.com.br');
-    if(inPages){try{window.top.postMessage({type:'gvg-install-app'},'*');}catch(e){}}
-    else{alert('Para instalar o GVG&ARTEFAL:\n\nAndroid/Chrome: abra o menu ⋮ e toque em “Instalar app”.\niPhone/Safari: toque em Compartilhar e depois em “Adicionar à Tela de Início”.');}
+  const installInvite=new URLSearchParams(location.search).get('instalar')==='1';
+  const installedDisplay=window.matchMedia('(display-mode: standalone)');
+  const installDialog=$('gvgpInstallDialog');
+  let installAccepted=false;
+  function isInstalledMode(){
+    return installedDisplay.matches||navigator.standalone===true;
+  }
+  function updateInstallControls(){
+    const installed=isInstalledMode()||installAccepted;
+    $('gvgpInstallBtn').classList.toggle('gvgp-hidden',installed);
+    $('gvgpSignupInstall').classList.toggle('gvgp-hidden',installed||!installInvite);
+    $('gvgpConfirmInstall').classList.toggle('gvgp-hidden',installed||!window.gvgInstallPrompt);
+    const device=navigator.userAgent;
+    let help='No Chrome ou Edge, use a opção de instalação na barra de endereços ou no menu do navegador.';
+    if(/iPad|iPhone|iPod/.test(device)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){
+      help='Abra este link no Safari. Toque em Compartilhar, depois em Adicionar à Tela de Início e confirme.';
+    }else if(/Android/.test(device)){
+      help='Abra este link no Chrome. No menu ⋮, toque em Instalar app ou Adicionar à tela inicial.';
+    }
+    if(installed)help='Abra o GVG&ARTEFAL pelo ícone do aplicativo.';
+    else if(window.gvgInstallPrompt)help='Confirme a instalação no navegador. Ao abrir o app pela primeira vez, você pode solicitar seu acesso.';
+    $('gvgpInstallHelp').textContent=help;
+  }
+  function showInstallHelp(){
+    updateInstallControls();
+    if(!installDialog.open)installDialog.showModal();
+  }
+  async function requestInstall(){
+    if(window.top!==window.self){
+      window.open(new URL('./?instalar=1',location.href),'_blank','noopener');
+      return;
+    }
+    const promptEvent=window.gvgInstallPrompt;
+    if(!promptEvent){showInstallHelp();return;}
+    window.gvgInstallPrompt=null;
+    try{
+      const {outcome}=await promptEvent.prompt();
+      if(outcome==='accepted'){
+        installAccepted=true;
+        if(installDialog.open)installDialog.close();
+      }
+      updateInstallControls();
+    }catch(error){
+      showInstallHelp();
+    }
+  }
+  ['gvgpInstallBtn','gvgpSignupInstall','gvgpConfirmInstall'].forEach(id=>$(id).addEventListener('click',requestInstall));
+  window.addEventListener('gvg-install-ready',updateInstallControls);
+  window.addEventListener('appinstalled',()=>{
+    installAccepted=true;
+    window.gvgInstallPrompt=null;
+    if(installDialog.open)installDialog.close();
+    updateInstallControls();
   });
+  installedDisplay.addEventListener('change',updateInstallControls);
+  updateInstallControls();
   $('gvgpTopUser').addEventListener('click',e=>{if(e.target.closest('#gvgpPendingBtn'))openPending();});
   $('gvgpPendingClose').addEventListener('click',closePending);
   $('gvgpPendingModal').addEventListener('click',e=>{if(e.target===$('gvgpPendingModal'))closePending();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePending();closeSignup();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!installDialog.open){closePending();closeSignup();}});
   document.querySelectorAll('[data-cad-filter]').forEach(b=>b.addEventListener('click',()=>{cadastroFilter=b.getAttribute('data-cad-filter')||'TODOS';renderCadastros();}));
   $('gvgpCadSearch').addEventListener('input',e=>{cadastroSearch=e.target.value;renderCadastros();});
   $('gvgpCadRefresh').addEventListener('click',()=>loadCadastros(true));
@@ -2526,7 +2608,12 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   tickClock();
   setInterval(tickClock,1000);
   renderLoggedOut();
-  if(store.get('globalEco:gvgUsrToken')) loadDashboard(); else renderLoggedOut();
+  if(store.get('globalEco:gvgUsrToken')){
+    loadDashboard();
+    if(installInvite&&!isInstalledMode())showInstallHelp();
+  }else if(installInvite||(isInstalledMode()&&!store.get('globalEco:cadastroVisto'))){
+    openSignup(false);
+  }
 })();
 </script>
 <script>
