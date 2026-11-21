@@ -2113,7 +2113,6 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     run('entrarFuncionario',user,pass).then(d=>{
       if(!d||!d.token) throw new Error('O servidor não confirmou a sessão.');
       store.set('globalEco:gvgUsrToken',d.token);
-      store.set('globalEco:cadastroVisto','1');
       if(['ADMIN','SUPERADMIN'].indexOf(String(d.perfil||'').toUpperCase())>=0){state.adminToken=d.token;}
       else {state.adminToken='';}
       store.remove('globalEco:gvgAdminToken');
@@ -2384,7 +2383,6 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   function closeSignup(){
     const box=$('gvgpSignupBox'),btn=$('gvgpSignupToggle');
     if(!box||box.classList.contains('gvgp-hidden'))return;
-    if(isInstalledMode())store.set('globalEco:cadastroVisto','1');
     box.classList.add('gvgp-hidden');
     if(btn)btn.setAttribute('aria-expanded','false');
     document.body.classList.remove('gvgp-signup-open');
@@ -2663,7 +2661,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   if(store.get('globalEco:gvgUsrToken')){
     loadDashboard();
     if(installInvite&&!isInstalledMode())showInstallHelp();
-  }else if(installInvite||(isInstalledMode()&&!store.get('globalEco:cadastroVisto'))){
+  }else if(installInvite&&!isInstalledMode()){
     openSignup(false);
   }
 })();
