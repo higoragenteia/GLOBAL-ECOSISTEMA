@@ -2714,6 +2714,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   const photo=stage.querySelector('img');
   const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
   if(!photo||motion.matches)return;
+  const windSpeed=new URLSearchParams(location.search).get('animacao')==='2x'?2.8:1.4;
   let gl,program,texture,ready=false,failed=false,inView=true,raf=0;
   let previous=0,elapsed=0,lastDraw=0,source='',pendingSource='';
   let timeLocation,coverLocation,vertexCount=0,stageWidth=0,stageHeight=0;
@@ -2806,7 +2807,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     if(!ready||!visible()){stop();return;}
     raf=requestAnimationFrame(frame);
     if(lastDraw&&stamp-lastDraw<16)return;
-    if(previous)elapsed+=Math.min(stamp-previous,64)*1.4/1000;
+    if(previous)elapsed+=Math.min(stamp-previous,64)*windSpeed/1000;
     previous=stamp;lastDraw=stamp;
     const viewRatio=stageWidth/stageHeight,imageRatio=textureWidth/textureHeight;
     gl.uniform2f(coverLocation,Math.min(1,viewRatio/imageRatio),Math.min(1,imageRatio/viewRatio));
