@@ -979,6 +979,8 @@ body.sidebar-open .toast-root { display: none; }
         <button type="button" class="nav-item" data-view="manutencoes"><span class="nav-ico" data-icon="wrench"></span><span>Manutenções</span><span class="nav-badge danger" id="navManBadge"></span></button>
         <button type="button" class="nav-item" data-view="colaboradores"><span class="nav-ico" data-icon="users"></span><span>Colaboradores</span></button>
         <button type="button" class="nav-item" data-view="categorias"><span class="nav-ico" data-icon="tag"></span><span>Categorias</span></button>
+        <button type="button" class="nav-item" data-view="obras"><span class="nav-ico" data-icon="mapPin"></span><span>Obras</span></button>
+        <button type="button" class="nav-item" data-view="precos"><span class="nav-ico" data-icon="money"></span><span>Preços</span></button>
         <div class="nav-sep admin-only" id="adminNavSep"></div>
         <button type="button" class="nav-item admin-only" data-view="usuarios"><span class="nav-ico" data-icon="shield"></span><span>Usuários</span><span class="nav-badge gold" id="navUsersBadge"></span></button>
         <button type="button" class="nav-item admin-only" data-view="auditoria"><span class="nav-ico" data-icon="history"></span><span>Auditoria</span></button>
@@ -1061,7 +1063,8 @@ const state = {
   detailLoading: false,
   detailId: '',
   detailTab: 'resumo',
-  eqFilters: { q: '', categoria: '', status: '', conservacao: '', revisar: false },
+  eqFilters: { q: '', categoria: '', obra: '', status: '', conservacao: '', revisar: false },
+  pricesCategoria: '',
   eqPage: 1,
   eqPageSize: 15,
   movFilters: { tipo: '', busca: '', dataInicio: '', dataFim: '' },
@@ -1098,6 +1101,8 @@ const VIEW_META = {
   manutencoes: { title: 'Manutenções', subtitle: 'Equipamentos enviados para conserto e retorno' },
   colaboradores: { title: 'Colaboradores', subtitle: 'Pessoas, grupos e locais que recebem equipamentos' },
   categorias: { title: 'Categorias', subtitle: 'Tipos de máquinas e ferramentas controladas' },
+  obras: { title: 'Obras', subtitle: 'Obras e locais onde os equipamentos estão alocados' },
+  precos: { title: 'Preços', subtitle: 'Valor de compra dos equipamentos e total investido' },
   usuarios: { title: 'Usuários', subtitle: 'Contas de acesso e permissões do sistema' },
   auditoria: { title: 'Auditoria', subtitle: 'Registro das ações administrativas' },
 };
@@ -1152,6 +1157,7 @@ const ICON_PATHS = {
   chevronRight: '<path d="m9 18 6-6-6-6"/>',
   calendar: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
   mapPin: '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+  money: '<circle cx="12" cy="12" r="9"/><path d="M15.2 9.2c-.5-1.2-1.6-1.8-3.2-1.8-1.9 0-3.1.9-3.1 2.1 0 1.3 1.4 1.7 3.1 2 1.7.3 3.1.8 3.1 2.1 0 1.2-1.2 2-3.1 2-1.6 0-2.7-.6-3.2-1.8"/><path d="M12 6v12"/>',
   phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/>',
   mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
   arrowRight: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
@@ -1574,6 +1580,8 @@ function renderCurrentView() {
   else if (state.view === 'manutencoes') renderMaintenanceView();
   else if (state.view === 'colaboradores') renderCollaboratorsView();
   else if (state.view === 'categorias') renderCategoriesView();
+  else if (state.view === 'obras') renderObrasView();
+  else if (state.view === 'precos') renderPricesView();
   else if (state.view === 'usuarios') renderUsersView();
   else if (state.view === 'auditoria') renderAuditView();
   hydrateIcons(main);
@@ -1739,6 +1747,7 @@ function renderDashboard() {
   const cats = (d.porCategoria || []).filter((c) => c.total > 0 || c.revisar > 0);
   const movs = (d.movimentacoesRecentes || []).slice(0, 8);
   const alertCount = (d.avisos || []).length;
+  const patrimonio = (d.equipamentos || []).filter((e) => e.status !== 'INATIVO').reduce((s, e) => s + (Number(e.preco) || 0) * (Number(e.quantidadeTotal) || 0), 0);
 
   main.innerHTML = `
     <div class="page-head">
@@ -1763,6 +1772,7 @@ function renderDashboard() {
         ${quickAction('new-maintenance', 'Enviar para manutenção', 'Indisponibiliza o item', 'wrench')}
         ${quickAction('new-collaborator', 'Novo colaborador', 'Quem recebe equipamentos', 'userPlus')}
         ${quickAction('new-category', 'Nova categoria', 'Cria uma categoria', 'tag')}
+        ${quickAction('new-obra', 'Nova obra', 'Obra/local dos equipamentos', 'mapPin')}
       </div>
     </section>` : ''}
 
@@ -1779,6 +1789,7 @@ function renderDashboard() {
       <span class="badge ${s.revisar ? 'gold' : 'green'}">${fmtQty(s.revisar || 0)} para revisar</span>
       <span class="badge ${s.inativos ? 'gray' : 'green'}">${fmtQty(s.inativos || 0)} inativos</span>
       <span class="badge blue">Atualizado ${esc(fmtDateTime(d.atualizadoEm))}</span>
+      <span class="badge blue">Patrimônio ${fmtMoney(patrimonio)}</span>
     </div>
 
     ${alertCount ? `<div class="alert alert-warn mt-16">${icon('alert')}<div><strong>${alertCount} aviso(s) de importação/revisão.</strong> A origem tem divergências que não foram inventadas. <button type="button" class="link-btn" data-action="show-import-notes">Conferir agora</button></div></div>` : ''}
@@ -1914,6 +1925,7 @@ function bindDashboardEvents() {
 function renderEquipmentView() {
   const main = $('main');
   const cats = (state.data.categorias || []).filter((c) => c.ativo || c.quantidadeEquipamentos > 0);
+  const obrasFiltro = (state.data.obras || []).filter((o) => o.ativo || (state.data.equipamentos || []).some((e) => e.obraId === o.id));
   const f = state.eqFilters;
   main.innerHTML = `
     <div class="page-head">
@@ -1925,6 +1937,10 @@ function renderEquipmentView() {
       <select class="select" id="eqCategoria" aria-label="Categoria">
         <option value="">Todas as categorias</option>
         ${cats.map((c) => `<option value="${esc(c.id)}" ${f.categoria === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}
+      </select>
+      <select class="select" id="eqObra" aria-label="Obra">
+        <option value="">Todas as obras</option>
+        ${obrasFiltro.map((o) => `<option value="${esc(o.id)}" ${f.obra === o.id ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}
       </select>
       <select class="select" id="eqStatus" aria-label="Situação">
         <option value="">Todas as situações</option>
@@ -1949,11 +1965,12 @@ function filteredEquipment() {
   const q = norm(f.q);
   return (state.data.equipamentos || []).filter((e) => {
     if (f.categoria && e.categoriaId !== f.categoria) return false;
+    if (f.obra && e.obraId !== f.obra) return false;
     if (f.status && e.status !== f.status) return false;
     if (f.conservacao && e.estadoConservacao !== f.conservacao) return false;
     if (f.revisar && !e.revisar) return false;
     if (q) {
-      const hay = norm([e.codigo, e.nome, e.categoria, e.marca, e.modelo, e.codigoModelo, e.numeroSerie, e.colaboradorAtual, e.observacoes, e.origemNumero].join(' '));
+      const hay = norm([e.codigo, e.nome, e.categoria, e.obra, e.marca, e.modelo, e.codigoModelo, e.numeroSerie, e.colaboradorAtual, e.observacoes, e.origemNumero].join(' '));
       if (hay.indexOf(q) < 0) return false;
     }
     return true;
@@ -1980,7 +1997,7 @@ function renderEquipmentList() {
     <tr class="clickable" data-action="open-equipment" data-id="${esc(e.id)}">
       <td><span class="cell-code">${esc(e.codigo)}</span>${e.revisar ? '<span class="badge gold review-badge" style="margin-left:6px;font-size:9px;padding:2px 5px">revisar</span>' : ''}<span class="cell-sub">${esc(e.origemNumero ? 'Nº origem ' + e.origemNumero : '')}</span></td>
       <td><span class="cell-main">${esc(e.nome)}</span><span class="cell-sub">${esc([e.marca, e.modelo || e.codigoModelo, e.numeroSerie].filter(Boolean).join(' · ') || 'Sem marca/modelo informado')}</span></td>
-      <td>${esc(e.categoria)}</td>
+      <td>${esc(e.categoria)}</td><td>${esc(e.obra || '—')}</td>
       <td>${statusPill(e.status)}<span class="cell-sub">${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)} disp.</span></td>
       <td><span class="badge ${e.estadoConservacao === 'NOVO' ? 'green' : e.estadoConservacao === 'NAO_INFORMADO' ? 'gray' : ''}">${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</span>${e.estadoOrigem && e.estadoOrigem !== e.estadoConservacao ? `<span class="cell-sub">origem: ${esc(e.estadoOrigem)}</span>` : ''}</td>
       <td>${e.colaboradorAtual ? `<span class="cell-main">${esc(e.colaboradorAtual)}</span><span class="cell-sub">${e.dataEntregaAtual ? 'desde ' + esc(fmtDate(e.dataEntregaAtual)) : 'data não informada'}</span>` : '<span class="muted">—</span>'}</td>
@@ -1996,6 +2013,7 @@ function renderEquipmentList() {
       <dl class="eq-card-grid">
         <div><dt>Disponível</dt><dd>${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)}</dd></div>
         <div><dt>Conservação</dt><dd>${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</dd></div>
+        <div><dt>Obra</dt><dd>${esc(e.obra || '—')}</dd></div>
         <div><dt>Responsável</dt><dd>${esc(e.colaboradorAtual || '—')}</dd></div>
         <div><dt>Entrega</dt><dd>${esc(fmtDate(e.dataEntregaAtual))}</dd></div>
       </dl>
@@ -2008,7 +2026,7 @@ function renderEquipmentList() {
   el.innerHTML = `
     <div class="table-wrap desktop-only">
       <table class="data-table">
-        <thead><tr><th>Código</th><th>Equipamento</th><th>Categoria</th><th>Situação</th><th>Conservação</th><th>Responsável</th><th style="text-align:right">Ações</th></tr></thead>
+        <thead><tr><th>Código</th><th>Equipamento</th><th>Categoria</th><th>Obra</th><th>Situação</th><th>Conservação</th><th>Responsável</th><th style="text-align:right">Ações</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -2046,6 +2064,7 @@ function bindEquipmentFilterEvents() {
     if (el) el.addEventListener('change', () => { state.eqFilters[key] = el.value; state.eqPage = 1; renderEquipmentList(); });
   };
   bindSelect('eqCategoria', 'categoria');
+  bindSelect('eqObra', 'obra');
   bindSelect('eqStatus', 'status');
   bindSelect('eqConservacao', 'conservacao');
   const rev = $('eqRevisar');
@@ -2279,6 +2298,101 @@ function catCard(c) {
   </article>`;
 }
 
+/* ---------- Obras ---------- */
+function renderObrasView() {
+  const main = $('main');
+  const list = state.data.obras || [];
+  main.innerHTML = `
+    <div class="page-head"><div><div class="eyebrow">Localização</div><h2>Obras e locais</h2><p>Onde os equipamentos ficam alocados. Selecione a obra ao preencher a ficha do equipamento.</p></div><div class="page-actions">${isAdmin() ? `<button type="button" class="btn btn-primary" data-action="new-obra">${icon('plus')} Nova obra</button>` : ''}</div></div>
+    ${list.length ? `<div class="entity-grid">${list.map(obraCard).join('')}</div>` : `<div class="card">${emptyState('mapPin', 'Nenhuma obra', 'Cadastre a primeira obra ou local.')}</div>`}
+  `;
+  hydrateIcons(main);
+}
+
+function obraCard(o) {
+  const admin = isAdmin();
+  const total = (state.data.equipamentos || []).filter((e) => e.obraId === o.id).length;
+  return `<article class="entity-card" style="${o.ativo ? '' : 'opacity:.72;'}">
+    <div class="entity-head"><div><div class="entity-title">${esc(o.nome)}</div><div class="entity-sub">Local de alocação dos equipamentos</div></div><span class="badge ${o.ativo ? 'green' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span></div>
+    <div class="entity-metrics"><div class="entity-metric"><strong>${fmtQty(total)}</strong>equipamento(s)</div></div>
+    <div class="entity-actions">
+      <button type="button" class="btn btn-sm btn-secondary" data-action="filter-obra" data-id="${esc(o.id)}">Ver equipamentos</button>
+      ${admin ? `<button type="button" class="btn btn-sm btn-ghost" data-action="edit-obra" data-id="${esc(o.id)}">Editar</button>
+      ${o.ativo ? `<button type="button" class="btn btn-sm btn-ghost" data-action="inactivate-obra" data-id="${esc(o.id)}">Inativar</button>` : `<button type="button" class="btn btn-sm btn-ghost" data-action="reactivate-obra" data-id="${esc(o.id)}">Reativar</button>`}
+      <button type="button" class="btn btn-sm btn-ghost" data-action="delete-obra" data-id="${esc(o.id)}">Excluir</button>` : ''}
+    </div>
+  </article>`;
+}
+
+function openObraForm(o) {
+  if (!isAdmin()) return;
+  const editing = !!o;
+  const e = o || {};
+  openModal({
+    title: editing ? 'Editar obra' : 'Nova obra',
+    subtitle: 'Nome da obra ou do local onde os equipamentos ficam.',
+    size: 'sm',
+    body: `<form id="obraForm" class="form-stack" novalidate>
+      <label class="field"><span>Nome da obra / local <b class="required"></b></span><input name="nome" value="${esc(e.nome || '')}" placeholder="Ex.: Obra Mirage" required></label>
+      <div class="form-help">O nome aparece na ficha do equipamento para indicar onde o material está.</div>
+    </form>`,
+    foot: `<button type="button" class="btn btn-ghost" data-action="close-modal">Cancelar</button><button type="submit" form="obraForm" class="btn btn-primary">${editing ? 'Salvar' : 'Criar obra'}</button>`,
+    onMount: () => {
+      $('obraForm').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const form = ev.currentTarget;
+        if (!validateRequired(form, ['nome'])) return;
+        const payload = { nome: formVal(form, 'nome') };
+        if (editing) payload.id = o.id;
+        submitModalForm(form, editing ? 'editarObra' : 'criarObra', () => payload, { successMsg: editing ? 'Obra atualizada.' : 'Obra criada.' });
+      });
+    },
+  });
+}
+
+/* ---------- Preços ---------- */
+function renderPricesView() {
+  const main = $('main');
+  const cats = (state.data.categorias || []).filter((c) => c.ativo || c.quantidadeEquipamentos > 0);
+  const catId = state.pricesCategoria || '';
+  const eqs = (state.data.equipamentos || []).filter((e) => e.status !== 'INATIVO' && (!catId || e.categoriaId === catId));
+  const geral = (state.data.equipamentos || []).filter((e) => e.status !== 'INATIVO');
+  const total = eqs.reduce((s, e) => s + (Number(e.preco) || 0) * (Number(e.quantidadeTotal) || 0), 0);
+  const totalGeral = geral.reduce((s, e) => s + (Number(e.preco) || 0) * (Number(e.quantidadeTotal) || 0), 0);
+  const comPreco = eqs.filter((e) => (Number(e.preco) || 0) > 0).length;
+  main.innerHTML = `
+    <div class="page-head"><div><div class="eyebrow">Levantamento de valores</div><h2>Preços dos equipamentos</h2><p>Informe o preço de compra de cada material. O subtotal é preço × quantidade e o total mostra quanto em dinheiro de maquinários está registrado.</p></div></div>
+    <div class="filter-bar">
+      <label class="filter-search">${icon('money')}<span class="muted" style="font-weight:800">Total geral: ${fmtMoney(totalGeral)}</span></label>
+      <select class="select" id="priceCategory" aria-label="Categoria">
+        <option value="">Todas as categorias</option>
+        ${cats.map((c) => `<option value="${esc(c.id)}" ${catId === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}
+      </select>
+      <span class="result-count"><strong>${fmtMoney(total)}</strong> no filtro · ${fmtQty(comPreco)}/${fmtQty(eqs.length)} com preço</span>
+    </div>
+    <div class="card mt-16">
+      <div class="card-body">
+        ${eqs.length ? `<div class="table-wrap"><table class="data-table">
+          <thead><tr><th>Código</th><th>Equipamento</th><th>Categoria</th><th>Obra</th><th>Qtd.</th><th>Preço (R$)</th><th>Subtotal</th><th style="text-align:right">Ações</th></tr></thead>
+          <tbody>${eqs.map((e) => `<tr>
+            <td><span class="cell-code">${esc(e.codigo)}</span></td>
+            <td><span class="cell-main">${esc(e.nome)}</span></td>
+            <td>${esc(e.categoria)}</td>
+            <td>${esc(e.obra || '—')}</td>
+            <td>${fmtQty(e.quantidadeTotal)}</td>
+            <td>${isAdmin() ? `<input id="priceInput-${esc(e.id)}" class="price-input" type="number" min="0" step="0.01" value="${esc(e.preco || '')}" placeholder="0,00">` : esc(e.preco ? fmtMoney(e.preco) : '—')}</td>
+            <td>${fmtMoney((Number(e.preco) || 0) * (Number(e.quantidadeTotal) || 0))}</td>
+            <td style="text-align:right">${isAdmin() ? `<button type="button" class="btn btn-sm btn-secondary" data-action="save-price" data-id="${esc(e.id)}">Salvar</button>` : ''}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>` : `<div class="card">${emptyState('package', 'Nenhum equipamento', 'Cadastre equipamentos para informar os preços.')}</div>`}
+      </div>
+    </div>
+  `;
+  hydrateIcons(main);
+  const sel = $('priceCategory');
+  if (sel) sel.addEventListener('change', () => { state.pricesCategoria = sel.value; renderPricesView(); });
+}
+
 /* ---------- Usuários ---------- */
 function renderUsersView() {
   if (!isAdmin()) { setView('dashboard'); return; }
@@ -2467,6 +2581,8 @@ function drawDetailBody(eq, d, tab, admin) {
       ${eq.revisar ? `<div class="alert alert-warn mb-12">${icon('alert')}<div><strong>Revisar informação importada.</strong><br>${esc(eq.motivoRevisao || 'A origem tem dados ambíguos.')} ${admin ? `<button type="button" class="link-btn" data-action="review-equipment" data-id="${esc(eq.id)}">Marcar como revisado</button>` : ''}</div></div>` : ''}
       <div class="detail-grid">
         <div class="detail-item"><dt>Categoria</dt><dd>${esc(eq.categoria)}</dd></div>
+        <div class="detail-item"><dt>Obra / local</dt><dd>${esc(eq.obra || '—')}</dd></div>
+        <div class="detail-item"><dt>Preço de compra</dt><dd>${eq.preco ? fmtMoney(eq.preco) : '—'}</dd></div>
         <div class="detail-item"><dt>Código do modelo</dt><dd>${esc(eq.codigoModelo || '—')}</dd></div>
         <div class="detail-item"><dt>Marca</dt><dd>${esc(eq.marca || '—')}</dd></div>
         <div class="detail-item"><dt>Modelo</dt><dd>${esc(eq.modelo || '—')}</dd></div>
@@ -2716,7 +2832,8 @@ function openEquipmentForm(eq) {
   if (!isAdmin()) return;
   const editing = !!eq;
   const cats = (state.data.categorias || []).filter((c) => c.ativo || (eq && c.id === eq.categoriaId));
-  const e = eq || { categoriaId: (cats[0] || {}).id || '', quantidadeTotal: 1, estadoConservacao: 'NAO_INFORMADO', carregador: {}, bateria: {} };
+  const obras = (state.data.obras || []).filter((o) => o.ativo || (eq && o.id === eq.obraId));
+  const e = eq || { categoriaId: (cats[0] || {}).id || '', obraId: '', quantidadeTotal: 1, estadoConservacao: 'NAO_INFORMADO', carregador: {}, bateria: {} };
   openModal({
     title: editing ? 'Editar equipamento' : 'Novo equipamento',
     subtitle: editing ? 'Alterações preservam o histórico de movimentações.' : 'Cadastre a máquina ou ferramenta. O código pode ser gerado automaticamente.',
@@ -2727,6 +2844,9 @@ function openEquipmentForm(eq) {
         <div class="form-row">
           <label class="field"><span>Categoria <b class="required"></b></span><select name="categoriaId" required>${cats.map((c) => `<option value="${esc(c.id)}" ${e.categoriaId === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></label>
           <label class="field"><span>Código do equipamento <span class="hint">${editing ? 'obrigatório' : 'opcional'}</span></span><input name="codigo" value="${esc(e.codigo || '')}" placeholder="${editing ? 'Ex.: PAR-001' : 'Gerado automaticamente'}" ${editing ? 'required' : ''}></label>
+        </div>
+        <div class="form-row">
+          <label class="field"><span>Obra / local</span><select name="obraId"><option value="">Sem obra definida</option>${obras.map((o) => `<option value="${esc(o.id)}" ${e.obraId === o.id ? 'selected' : ''}>${esc(o.nome)}</option>`).join('')}</select><span class="form-help">Onde este material está localizado. Cadastre as obras no menu Obras.</span></label>
         </div>
         <div class="form-row">
           <label class="field"><span>Código / modelo de origem</span><input name="codigoModelo" value="${esc(e.codigoModelo || '')}" placeholder="Ex.: DCD7781"></label>
@@ -2741,6 +2861,9 @@ function openEquipmentForm(eq) {
           <label class="field"><span>Quantidade total <b class="required"></b></span><input name="quantidadeTotal" type="number" min="1" max="9999" step="1" value="${esc(e.quantidadeTotal || 1)}" required></label>
         </div>
         <label class="field"><span>Estado de conservação</span><select name="estadoConservacao">${Object.keys(CONSERVACAO_LABEL).map((k) => `<option value="${k}" ${e.estadoConservacao === k ? 'selected' : ''}>${esc(CONSERVACAO_LABEL[k])}</option>`).join('')}</select><span class="form-help">Disponibilidade e conservação são campos separados. Um item disponível não é automaticamente novo.</span></label>
+        <div class="form-row">
+          <label class="field"><span>Preço de compra (R$)</span><input name="preco" type="number" min="0" step="0.01" value="${esc(e.preco || '')}" placeholder="Ex.: 1250.00"><span class="form-help">Usado no levantamento de valores da aba Preços.</span></label>
+        </div>
       </div>
       <div class="form-section">
         <div class="form-section-title">${icon('battery')} Acessórios do conjunto</div>
@@ -2765,6 +2888,8 @@ function openEquipmentForm(eq) {
         if (editing && !validateRequired(form, ['codigo'])) return;
         const payload = {
           categoriaId: formVal(form, 'categoriaId'),
+          obraId: formVal(form, 'obraId'),
+          preco: formNum(form, 'preco'),
           codigo: formVal(form, 'codigo'),
           codigoModelo: formVal(form, 'codigoModelo'),
           descricao: formVal(form, 'descricao'),
@@ -3398,6 +3523,27 @@ document.addEventListener('click', async (ev) => {
       openConfirm({ title: 'Excluir categoria', message: 'A exclusão definitiva só é permitida se a categoria não tiver equipamentos vinculados.', confirmLabel: 'Excluir', danger: true, action: 'excluirCategoria', payload: { id }, successMsg: 'Categoria excluída.' });
       return;
     }
+    if (action === 'new-obra') { openObraForm(); return; }
+    if (action === 'edit-obra') { const o = (state.data.obras || []).find((x) => x.id === id); if (o) openObraForm(o); return; }
+    if (action === 'filter-obra') { state.eqFilters.obra = id; state.eqPage = 1; setView('equipamentos'); return; }
+    if (action === 'inactivate-obra') {
+      openConfirm({ title: 'Inativar obra', message: 'A obra deixará de aparecer para novas fichas. Os equipamentos existentes mantêm o vínculo.', confirmLabel: 'Inativar', action: 'inativarObra', payload: { id }, successMsg: 'Obra inativada.' });
+      return;
+    }
+    if (action === 'reactivate-obra') { await runAction(actionEl, 'reativarObra', { id }, { successMsg: 'Obra reativada.' }); return; }
+    if (action === 'delete-obra') {
+      openConfirm({ title: 'Excluir obra', message: 'A exclusão só é permitida se nenhum equipamento estiver vinculado.', confirmLabel: 'Excluir', danger: true, action: 'excluirObra', payload: { id }, successMsg: 'Obra excluída.' });
+      return;
+    }
+    if (action === 'save-price') {
+      const input = $('priceInput-' + id);
+      if (!input) return;
+      const raw = String(input.value || '').replace(',', '.');
+      const n = Number(raw);
+      if (raw === '' || !isFinite(n) || n < 0) { showToast('Informe um preço válido.', 'error'); return; }
+      await runAction(actionEl, 'editarEquipamento', { id, preco: n }, { successMsg: 'Preço atualizado.' });
+      return;
+    }
     if (action === 'inactivate-equipment') {
       openConfirm({ title: 'Inativar equipamento', message: 'O equipamento deixará de aparecer como disponível. O histórico é preservado. Só é permitido sem empréstimos ou manutenção abertos.', confirmLabel: 'Inativar', danger: true, action: 'inativarEquipamento', payload: { id }, successMsg: 'Equipamento inativado.', detailId: id });
       return;
@@ -3429,7 +3575,7 @@ document.addEventListener('click', async (ev) => {
     if (action === 'stat-go-man') { setView('manutencoes'); return; }
     if (action === 'filter-category') { state.eqFilters.categoria = id; state.eqFilters.q = ''; state.eqPage = 1; setView('equipamentos'); return; }
     if (action === 'filter-colaborador') { state.eqFilters.q = actionEl.getAttribute('data-name') || ''; state.eqFilters.categoria = ''; state.eqPage = 1; setView('equipamentos'); return; }
-    if (action === 'eq-clear') { state.eqFilters = { q: '', categoria: '', status: '', conservacao: '', revisar: false }; state.eqPage = 1; renderEquipmentView(); return; }
+    if (action === 'eq-clear') { state.eqFilters = { q: '', categoria: '', obra: '', status: '', conservacao: '', revisar: false }; state.eqPage = 1; renderEquipmentView(); return; }
     if (action === 'eq-page') { state.eqPage = Number(actionEl.getAttribute('data-page')) || 1; renderEquipmentList(); scrollTop(); return; }
     if (action === 'mov-page') { loadMovements(Number(actionEl.getAttribute('data-page')) || 1); scrollTop(); return; }
     if (action === 'audit-page') { loadAudit(Number(actionEl.getAttribute('data-page')) || 1); scrollTop(); return; }
@@ -3520,7 +3666,7 @@ function bindStaticEvents() {
   if (gs) gs.addEventListener('input', debounce(() => {
     const q = gs.value.trim();
     if (!q) return;
-    state.eqFilters = { q, categoria: '', status: '', conservacao: '', revisar: false };
+    state.eqFilters = { q, categoria: '', obra: '', status: '', conservacao: '', revisar: false };
     state.eqPage = 1;
     if (state.view !== 'equipamentos') setView('equipamentos');
     else renderEquipmentList();

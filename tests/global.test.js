@@ -7,8 +7,9 @@ import {createModule as fornecedores} from '../supabase/functions/global-api/for
 import {createModule as maquinas} from '../supabase/functions/global-api/maquinas.js';
 const user={id:'qa-user',nome:'Responsável QA',email:'qa@example.invalid'};
 const fixture=m=>JSON.parse(readFileSync(new URL('../database/importacao/'+m+'-records.json',import.meta.url)));
+function maqFixture(){const f=fixture('maquinas');const eq=f.find(c=>c.nome==='EQUIPAMENTOS');if(eq){if(!eq.colunas.includes('OBRA_ID'))eq.colunas.push('OBRA_ID');if(!eq.colunas.includes('PRECO_UNITARIO'))eq.colunas.push('PRECO_UNITARIO');}if(!f.some(c=>c.nome==='OBRAS'))f.push({nome:'OBRAS',cabecalho:1,colunas:['ID','NOME','ATIVO','CRIADO_EM','ATUALIZADO_EM'],registros:[]});return f;}
 const factories={gastos,fornecedores,maquinas};
-function app(m,level='GERENCIAR'){const ctx=makeRuntime(fixture(m));ctx.book.USUARIOS=[m==='maquinas'?['ID','NOME','EMAIL','PERFIL','STATUS']:['E-mail','Nome','Perfil','Status']];ctx.book.SESSOES=[[]];return {ctx,call:(fn,...args)=>factories[m](ctx.runtime,user,level).run(fn,args,'REQ-QA-12345678')};}
+function app(m,level='GERENCIAR'){const ctx=makeRuntime(m==='maquinas'?maqFixture():fixture(m));ctx.book.USUARIOS=[m==='maquinas'?['ID','NOME','EMAIL','PERFIL','STATUS']:['E-mail','Nome','Perfil','Status']];ctx.book.SESSOES=[[]];return {ctx,call:(fn,...args)=>factories[m](ctx.runtime,user,level).run(fn,args,'REQ-QA-12345678')};}
 test('Gastos: importação mantém lançamentos, datas e orçamento; CRUD recalcula saldo',()=>{
  const a=app('gastos');const d=a.call('getDadosDashboard','2026-11');assert.equal(d.expenses.length,11);assert.ok(d.summary.spent>0);assert.ok(d.expenses.every(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.date)));
  const n={date:'2026-11-19',description:'Teste QA',person:d.people[0],category:d.categories[0],company:'GVG',payment:'Pix',value:12.34,notes:''};
@@ -20,6 +21,49 @@ test('Gastos: consulta bloqueia gravação',()=>{const a=app('gastos','VISUAL');
 test('Fornecedores: bootstrap mantém produtos, cotações e imagens',()=>{const a=app('fornecedores');const d=a.call('getBootstrap');assert.equal(d.ok,true);assert.equal(d.data.fornecedores.length,24);assert.equal(d.data.produtos.length,18);assert.equal(d.data.cotacoes.length,17);assert.ok(d.data.produtos.some(p=>p.imagem));});
 test('Fornecedores: criação gera ID e auditoria, consulta bloqueia escrita',()=>{const a=app('fornecedores');a.call('salvarProduto',{nome:'Produto QA',categoria:'QA',unidade:'UN',status:'Ativo'});assert.equal(a.call('getBootstrap').data.produtos.length,19);assert.ok(a.ctx.changes().some(c=>c.nome==='HISTORICO_ACOES'));assert.throws(()=>app('fornecedores','VISUAL').call('salvarProduto',{}),/permite/);});
 test('Máquinas: bootstrap e detalhamento preservam equipamentos, vínculos e alertas',()=>{const a=app('maquinas');const d=a.call('bootstrap',{});assert.equal(d.equipamentos.length,50);assert.equal(d.categorias.length,12);assert.equal(d.colaboradores.length,19);const eq=d.equipamentos[0];assert.ok(a.call('detalheEquipamento',{id:eq.id}));});
+test('Máquinas: obras podem ser criadas, renomeadas e vinculadas ao equipamento',()=>{
+ const a=app('maquinas');let counter=0;
+ const invoke=(fn,p)=>maquinas(a.ctx.runtime,user,'GERENCIAR').run(fn,[p],'REQ-OBRA-'+(++counter));
+ const b=a.call('bootstrap',{});assert.ok(Array.isArray(b.obras));
+ const created=invoke('criarObra',{nome:'Obra QA'});assert.equal(created.obra.nome,'Obra QA');
+ assert.throws(()=>invoke('criarObra',{nome:'Obra QA'}),/Já existe uma obra/);
+ const renamed=invoke('editarObra',{id:created.obra.id,nome:'Obra QA Norte'});assert.equal(renamed.obra.nome,'Obra QA Norte');
+ const eqSel=b.equipamentos.find(e=>(e.acessoriosPendentes||[]).length===0)||b.equipamentos[0];
+ const eqId=eqSel.id;
+ const acessorios=(eqSel.bateria.qtd===0||eqSel.bateria.codigo)&&(eqSel.carregador.qtd===0||eqSel.carregador.codigo)?{}:{bateriaQtd:0,carregadorQtd:0};
+ const upd=invoke('editarEquipamento',{id:eqId,obraId:created.obra.id,...acessorios});
+ assert.equal(upd.equipamento.obra,'Obra QA Norte');assert.equal(upd.equipamento.obraId,created.obra.id);
+ assert.throws(()=>invoke('excluirObra',{id:created.obra.id}),/vinculados/);
+ const cleared=invoke('editarEquipamento',{id:eqId,obraId:'',...acessorios});assert.equal(cleared.equipamento.obraId,'');
+ assert.equal(invoke('excluirObra',{id:created.obra.id}).ok,true);
+ assert.equal(a.call('bootstrap',{}).obras.length,0);
+});
+test('Máquinas: preço do equipamento é gravado, limitado a zero e exposto no bootstrap',()=>{
+ const a=app('maquinas');let counter=0;
+ const invoke=(fn,p)=>maquinas(a.ctx.runtime,user,'GERENCIAR').run(fn,[p],'REQ-PRECO-'+(++counter));
+ const b=a.call('bootstrap',{});
+ const eqSel=b.equipamentos.find(e=>(e.acessoriosPendentes||[]).length===0)||b.equipamentos[0];
+ const eq=eqSel;
+ const acessorios=(eq.bateria.qtd===0||eq.bateria.codigo)&&(eq.carregador.qtd===0||eq.carregador.codigo)?{}:{bateriaQtd:0,carregadorQtd:0};
+ assert.equal(invoke('editarEquipamento',{id:eq.id,preco:1250,...acessorios}).equipamento.preco,1250);
+ assert.equal(invoke('editarEquipamento',{id:eq.id,preco:-5,...acessorios}).equipamento.preco,0);
+ const cat=b.categorias.find(c=>c.ativo);
+ const created=invoke('criarEquipamento',{categoriaId:cat.id,quantidadeTotal:2,preco:300});
+ assert.equal(created.equipamento.preco,300);
+ const after=a.call('bootstrap',{});
+ assert.ok(after.equipamentos.some(e=>e.preco===300));
+});
+test('Máquinas: consulta não cria obras nem altera preços',()=>{
+ const a=app('maquinas','VISUAL');
+ assert.throws(()=>a.call('criarObra',{nome:'X'}),/exclusiva/);
+ assert.throws(()=>a.call('editarEquipamento',{id:'x',preco:1}),/exclusiva/);
+});
+test('Máquinas: interface inclui Obras, Preços e a seleção na ficha',()=>{
+ const html=readFileSync(new URL('../dist/maquinas.html',import.meta.url),'utf8');
+ assert.match(html,/data-view="obras"/);assert.match(html,/data-view="precos"/);
+ assert.match(html,/Nova obra/);assert.match(html,/name="obraId"/);assert.match(html,/name="preco"/);
+ assert.match(html,/Patrimônio/);assert.match(html,/Total geral/);
+});
 test('Máquinas: entrega, transferência e devolução mantêm saldo; excesso é rejeitado',()=>{
  const a=app('maquinas');let counter=0;
  const invoke=(fn,p)=>{const engine=maquinas(a.ctx.runtime,user,'GERENCIAR');return engine.run(fn,[p],'REQ-CICLO-'+(++counter));};

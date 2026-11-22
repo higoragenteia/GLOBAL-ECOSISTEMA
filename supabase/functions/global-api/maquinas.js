@@ -28,6 +28,7 @@ const MAX_TENTATIVAS_SETUP = 10;
 
 const SHEET = {
   CATEGORIAS: 'CATEGORIAS',
+  OBRAS: 'OBRAS',
   COLABORADORES: 'COLABORADORES',
   EQUIPAMENTOS: 'EQUIPAMENTOS',
   EMPRESTIMOS: 'EMPRESTIMOS',
@@ -41,8 +42,9 @@ const SHEET = {
 
 const HEADERS = {
   CATEGORIAS: ['ID','NOME','NOME_ABA','CAMPO_ITEM','PREFIXO','ORDEM','ATIVO','OBSERVACAO_ORIGEM','OBSERVACAO_IMPORTACAO','CRIADO_EM','ATUALIZADO_EM'],
+  OBRAS: ['ID','NOME','ATIVO','CRIADO_EM','ATUALIZADO_EM'],
   COLABORADORES: ['ID','NOME','TIPO','FUNCAO','TELEFONE','EMAIL','LOCAL_OBRA','ATIVO','OBSERVACOES','ORIGEM','CRIADO_EM','ATUALIZADO_EM','SETOR'],
-  EQUIPAMENTOS: ['ID','CODIGO','CATEGORIA_ID','CATEGORIA_NOME','CODIGO_MODELO','DESCRICAO','MARCA','MODELO','NUMERO_SERIE','QUANTIDADE_TOTAL','QUANTIDADE_DISPONIVEL','ESTADO_CONSERVACAO','ESTADO_ORIGEM','STATUS','COLABORADOR_ATUAL_ID','COLABORADOR_ATUAL_NOME','CARREGADOR_CODIGO','CARREGADOR_QTD','BATERIA_CODIGO','BATERIA_QTD','DATA_ENTREGA_ATUAL','ACESSORIOS_PENDENTES','OBSERVACOES','ORIGEM_ABA','ORIGEM_LINHA','ORIGEM_NUMERO','REVISAR','MOTIVO_REVISAO','CRIADO_EM','ATUALIZADO_EM','CRIADO_POR','ATUALIZADO_POR'],
+  EQUIPAMENTOS: ['ID','CODIGO','CATEGORIA_ID','CATEGORIA_NOME','CODIGO_MODELO','DESCRICAO','MARCA','MODELO','NUMERO_SERIE','QUANTIDADE_TOTAL','QUANTIDADE_DISPONIVEL','ESTADO_CONSERVACAO','ESTADO_ORIGEM','STATUS','COLABORADOR_ATUAL_ID','COLABORADOR_ATUAL_NOME','CARREGADOR_CODIGO','CARREGADOR_QTD','BATERIA_CODIGO','BATERIA_QTD','DATA_ENTREGA_ATUAL','ACESSORIOS_PENDENTES','OBSERVACOES','ORIGEM_ABA','ORIGEM_LINHA','ORIGEM_NUMERO','REVISAR','MOTIVO_REVISAO','CRIADO_EM','ATUALIZADO_EM','CRIADO_POR','ATUALIZADO_POR','OBRA_ID','PRECO_UNITARIO'],
   EMPRESTIMOS: ['ID','EQUIPAMENTO_ID','EQUIPAMENTO_CODIGO','EQUIPAMENTO_NOME','COLABORADOR_ID','COLABORADOR_NOME','DATA_ENTREGA','QUANTIDADE','ESTADO_ENTREGA','ACESSORIOS_ENTREGUES','ACESSORIOS_PENDENTES','EQUIPAMENTO_DEVOLVIDO','DATA_DEVOLUCAO_EQUIPAMENTO','STATUS','MOVIMENTO_ENTREGA_ID','MOVIMENTO_ENCERRAMENTO_ID','OBSERVACOES','ORIGEM','CRIADO_EM','ATUALIZADO_EM','USUARIO'],
   MOVIMENTACOES: ['ID','DATA','TIPO','EQUIPAMENTO_ID','EQUIPAMENTO_CODIGO','CATEGORIA_NOME','QUANTIDADE','COLABORADOR_ORIGEM_ID','COLABORADOR_ORIGEM_NOME','COLABORADOR_DESTINO_ID','COLABORADOR_DESTINO_NOME','ESTADO_CONSERVACAO','ACESSORIOS_ENTREGUES','ACESSORIOS_DEVOLVIDOS','ACESSORIOS_PENDENTES','OBSERVACOES','EMPRESTIMO_ID','MANUTENCAO_ID','USUARIO_ID','USUARIO_EMAIL','ORIGEM','REQUEST_ID','CRIADO_EM'],
   MANUTENCOES: ['ID','EQUIPAMENTO_ID','EQUIPAMENTO_CODIGO','CATEGORIA_NOME','DATA_ENVIO','DEFEITO','RESPONSAVEL','STATUS','SERVICO','CUSTO','PREVISAO_RETORNO','DATA_RETORNO','ESTADO_RETORNO','OBSERVACOES','ORIGEM','USUARIO','CRIADO_EM','ATUALIZADO_EM','REVISAR','MOTIVO_REVISAO','CELULAR_RESPONSAVEL'],
@@ -385,6 +387,7 @@ function exigirAutenticado(session) {
 function lerTodosEquipamentos() { return readObjects(SHEET.EQUIPAMENTOS); }
 function lerTodosColaboradores() { return readObjects(SHEET.COLABORADORES); }
 function lerTodasCategorias() { return readObjects(SHEET.CATEGORIAS); }
+function lerTodasObras() { return readObjects(SHEET.OBRAS); }
 function lerTodosEmprestimos() { return readObjects(SHEET.EMPRESTIMOS); }
 function lerTodasManutencoes() { return readObjects(SHEET.MANUTENCOES); }
 function lerTodosMovimentos() { return readObjects(SHEET.MOVIMENTACOES); }
@@ -1046,17 +1049,20 @@ function indexarPorId(arr) {
 
 function contexto() {
   const cats = lerTodasCategorias();
+  const obras = lerTodasObras();
   const cols = lerTodosColaboradores();
   const eqs = lerTodosEquipamentos();
   const loans = lerTodosEmprestimos();
   const mans = lerTodasManutencoes();
   return {
     cats: cats,
+    obras: obras,
     cols: cols,
     eqs: eqs,
     loans: loans,
     mans: mans,
     catMap: indexarPorId(cats),
+    obraMap: indexarPorId(obras),
     colMap: indexarPorId(cols),
     eqMap: indexarPorId(eqs)
   };
@@ -1150,6 +1156,9 @@ function equipamentoView(eq, ctx) {
     codigo: eq.CODIGO,
     categoriaId: eq.CATEGORIA_ID,
     categoria: cat ? cat.NOME : eq.CATEGORIA_NOME,
+    obraId: eq.OBRA_ID || '',
+    preco: toNumber(eq.PRECO_UNITARIO),
+    obra: (ctx.obraMap && ctx.obraMap[eq.OBRA_ID]) ? ctx.obraMap[eq.OBRA_ID].NOME : '',
     nome: nomeEquipamento(eq, cat),
     codigoModelo: eq.CODIGO_MODELO || '',
     descricao: eq.DESCRICAO || '',
@@ -1274,6 +1283,17 @@ function movimentoView(m) {
   };
 }
 
+function obraView(o) {
+  return { id: o.ID, nome: o.NOME, ativo: String(o.ATIVO) !== 'NAO', criadoEm: o.CRIADO_EM || '', atualizadoEm: o.ATUALIZADO_EM || '' };
+}
+
+function obraAtiva(id) {
+  const o = porId(lerTodasObras(), id);
+  if (!o) fail('OBRA_NAO_ENCONTRADA', 'Obra não encontrada.');
+  if (String(o.ATIVO) !== 'SIM') fail('OBRA_INATIVA', 'A obra está inativa.');
+  return o;
+}
+
 function categoriaView(c, ctx) {
   const eqs = ctx.eqs.filter(function (e) { return String(e.CATEGORIA_ID) === String(c.ID) && String(e.STATUS) !== STATUS_EQ.INATIVO; });
   const total = eqs.reduce(function (s, e) { return s + toNumber(e.QUANTIDADE_TOTAL); }, 0);
@@ -1357,6 +1377,7 @@ function dashboardData(session) {
   }, 0);
   const revisar = ativos.filter(function (e) { return String(e.REVISAR) === 'SIM'; }).length;
   const categorias = ctx.cats.map(function (c) { return categoriaView(c, ctx); }).sort(function (a, b) { return (a.ordem || 99) - (b.ordem || 99); });
+  const obras = ctx.obras.map(function (o) { return obraView(o); }).sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome), 'pt-BR'); });
   const colaboradores = ctx.cols.map(function (c) { return colaboradorView(c, ctx); }).sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome), 'pt-BR'); });
   const equipamentos = ctx.eqs.map(function (e) { return equipamentoView(e, ctx); }).sort(function (a, b) {
     const ca = (ctx.catMap[a.categoriaId] && toInt(ctx.catMap[a.categoriaId].ORDEM)) || 99;
@@ -1396,6 +1417,7 @@ function dashboardData(session) {
       categoriasComObservacao: categorias.filter(function (c) { return !!c.observacaoImportacao; }).length
     },
     categorias: categorias,
+    obras: obras,
     colaboradores: colaboradores,
     equipamentos: equipamentos,
     emprestimosAbertos: emprestimosAbertos,
@@ -1527,6 +1549,9 @@ function criarEquipamento(payload, session, requestId) {
   requireRequestId(requestId);
   payload = payload || {};
   const cat = categoriaAtiva(payload.categoriaId);
+  const obraId = limparTexto(payload.obraId, 60);
+  if (obraId) obraAtiva(obraId);
+  const preco = Math.max(0, Math.min(999999999, toNumber(payload.preco)));
   const total = Math.max(1, Math.min(9999, toInt(payload.quantidadeTotal) || 1));
   const conservacao = validarConservacao(payload.estadoConservacao, 'NAO_INFORMADO');
   const codigoInformado = limparTexto(payload.codigo, 40).toUpperCase();
@@ -1546,6 +1571,8 @@ function criarEquipamento(payload, session, requestId) {
         CODIGO: codigo,
         CATEGORIA_ID: cat.ID,
         CATEGORIA_NOME: cat.NOME,
+        OBRA_ID: obraId,
+        PRECO_UNITARIO: preco,
         CODIGO_MODELO: limparTexto(payload.codigoModelo, 160),
         DESCRICAO: limparTexto(payload.descricao, 300),
         MARCA: limparTexto(payload.marca, 80),
@@ -1605,6 +1632,9 @@ function editarEquipamento(payload, session, requestId) {
         cat = categoriaAtiva(payload.categoriaId);
       }
       if (!cat) fail('CATEGORIA_NAO_ENCONTRADA', 'Categoria do equipamento não encontrada.');
+      const obraId = payload.obraId === undefined ? String(eq.OBRA_ID || '') : limparTexto(payload.obraId, 60);
+      if (obraId) obraAtiva(obraId);
+      const preco = payload.preco === undefined ? toNumber(eq.PRECO_UNITARIO) : Math.max(0, Math.min(999999999, toNumber(payload.preco)));
       const codigo = payload.codigo === undefined ? String(eq.CODIGO) : limparTexto(payload.codigo, 40).toUpperCase();
       assert(codigo, 'CODIGO_OBRIGATORIO', 'Informe o código do equipamento.');
       assert(codigoUnico(codigo, eq.ID), 'CODIGO_EM_USO', 'Já existe um equipamento com esse código.');
@@ -1633,6 +1663,8 @@ function editarEquipamento(payload, session, requestId) {
       eq.CODIGO = codigo;
       eq.CATEGORIA_ID = cat.ID;
       eq.CATEGORIA_NOME = cat.NOME;
+      eq.OBRA_ID = obraId;
+      eq.PRECO_UNITARIO = preco;
       eq.CODIGO_MODELO = payload.codigoModelo === undefined ? eq.CODIGO_MODELO : limparTexto(payload.codigoModelo, 160);
       eq.DESCRICAO = payload.descricao === undefined ? eq.DESCRICAO : limparTexto(payload.descricao, 300);
       eq.MARCA = payload.marca === undefined ? eq.MARCA : limparTexto(payload.marca, 80);
@@ -1922,6 +1954,104 @@ function excluirColaborador(payload, session, requestId) {
       if (temEq || temLoan || temMov) fail('COLABORADOR_COM_HISTORICO', 'Este colaborador possui histórico. Use a inativação.');
       deleteObject(SHEET.COLABORADORES, c._row);
       audit(session, 'EXCLUIR_COLABORADOR', 'COLABORADOR', c.ID, { nome: c.NOME }, requestId);
+      return { ok: true };
+    });
+  });
+}
+
+function criarObra(payload, session, requestId) {
+  exigirAdmin(session);
+  requireRequestId(requestId);
+  payload = payload || {};
+  const nome = limparTexto(payload.nome, 120);
+  assert(nome.length >= 2, 'NOME_INVALIDO', 'Informe o nome da obra.');
+  return withIdempotencia(requestId, function () {
+    return withLock(function () {
+      const obras = lerTodasObras();
+      obras.forEach(function (o) {
+        if (normalizarKey(o.NOME) === normalizarKey(nome)) fail('NOME_EM_USO', 'Já existe uma obra com esse nome.');
+      });
+      const agora = nowStamp();
+      const o = { ID: newId('OBR'), NOME: nome, ATIVO: 'SIM', CRIADO_EM: agora, ATUALIZADO_EM: agora };
+      appendObject(SHEET.OBRAS, o);
+      audit(session, 'CRIAR_OBRA', 'OBRA', o.ID, { nome: nome }, requestId);
+      const ctx = contexto();
+      return { obra: obraView(porId(ctx.obras, o.ID)) };
+    });
+  });
+}
+
+function editarObra(payload, session, requestId) {
+  exigirAdmin(session);
+  requireRequestId(requestId);
+  payload = payload || {};
+  const id = String(payload.id || '').trim();
+  return withIdempotencia(requestId, function () {
+    return withLock(function () {
+      const ctx = contexto();
+      const o = exigirRegistro(porId(ctx.obras, id), 'OBRA_NAO_ENCONTRADA', 'Obra não encontrada.');
+      const nome = payload.nome === undefined ? o.NOME : limparTexto(payload.nome, 120);
+      assert(nome.length >= 2, 'NOME_INVALIDO', 'Informe o nome da obra.');
+      ctx.obras.forEach(function (x) {
+        if (x.ID !== o.ID && normalizarKey(x.NOME) === normalizarKey(nome)) fail('NOME_EM_USO', 'Já existe uma obra com esse nome.');
+      });
+      const antes = o.NOME;
+      o.NOME = nome;
+      o.ATUALIZADO_EM = nowStamp();
+      updateObject(SHEET.OBRAS, o._row, o);
+      audit(session, 'EDITAR_OBRA', 'OBRA', o.ID, { antes: antes, depois: nome }, requestId);
+      const ctx2 = contexto();
+      return { obra: obraView(porId(ctx2.obras, o.ID)) };
+    });
+  });
+}
+
+function inativarObra(payload, session, requestId) {
+  exigirAdmin(session);
+  requireRequestId(requestId);
+  const id = String((payload || {}).id || '').trim();
+  return withIdempotencia(requestId, function () {
+    return withLock(function () {
+      const ctx = contexto();
+      const o = exigirRegistro(porId(ctx.obras, id), 'OBRA_NAO_ENCONTRADA', 'Obra não encontrada.');
+      o.ATIVO = 'NAO'; o.ATUALIZADO_EM = nowStamp();
+      updateObject(SHEET.OBRAS, o._row, o);
+      audit(session, 'INATIVAR_OBRA', 'OBRA', o.ID, null, requestId);
+      const ctx2 = contexto();
+      return { obra: obraView(porId(ctx2.obras, o.ID)) };
+    });
+  });
+}
+
+function reativarObra(payload, session, requestId) {
+  exigirAdmin(session);
+  requireRequestId(requestId);
+  const id = String((payload || {}).id || '').trim();
+  return withIdempotencia(requestId, function () {
+    return withLock(function () {
+      const ctx = contexto();
+      const o = exigirRegistro(porId(ctx.obras, id), 'OBRA_NAO_ENCONTRADA', 'Obra não encontrada.');
+      o.ATIVO = 'SIM'; o.ATUALIZADO_EM = nowStamp();
+      updateObject(SHEET.OBRAS, o._row, o);
+      audit(session, 'REATIVAR_OBRA', 'OBRA', o.ID, null, requestId);
+      const ctx2 = contexto();
+      return { obra: obraView(porId(ctx2.obras, o.ID)) };
+    });
+  });
+}
+
+function excluirObra(payload, session, requestId) {
+  exigirAdmin(session);
+  requireRequestId(requestId);
+  const id = String((payload || {}).id || '').trim();
+  return withIdempotencia(requestId, function () {
+    return withLock(function () {
+      const ctx = contexto();
+      const o = exigirRegistro(porId(ctx.obras, id), 'OBRA_NAO_ENCONTRADA', 'Obra não encontrada.');
+      const temEq = ctx.eqs.some(function (e) { return String(e.OBRA_ID) === String(o.ID); });
+      if (temEq) fail('OBRA_COM_EQUIPAMENTOS', 'Esta obra possui equipamentos vinculados. Mova os equipamentos antes de excluir.');
+      deleteObject(SHEET.OBRAS, o._row);
+      audit(session, 'EXCLUIR_OBRA', 'OBRA', o.ID, { nome: o.NOME }, requestId);
       return { ok: true };
     });
   });
@@ -3195,6 +3325,11 @@ const ADMIN_WRITE = {
   reativarColaborador: reativarColaborador,
   excluirColaborador: excluirColaborador,
   criarCategoria: criarCategoria,
+  criarObra: criarObra,
+  editarObra: editarObra,
+  inativarObra: inativarObra,
+  reativarObra: reativarObra,
+  excluirObra: excluirObra,
   editarCategoria: editarCategoria,
   inativarCategoria: inativarCategoria,
   reativarCategoria: reativarCategoria,

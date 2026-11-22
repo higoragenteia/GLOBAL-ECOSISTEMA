@@ -1,0 +1,63 @@
+# Máquinas — Obras e Preços
+
+Adicionado em 21/11/2026 ao Controle de Máquinas do GLOBAL ECOSISTEMA.
+
+## O que foi adicionado
+
+### Obras (onde o material está)
+
+- Novo menu **Obras** na visão geral, ao lado dos menus existentes.
+- Cadastro de obras/locais: criar, editar, inativar, reativar e excluir.
+- A ficha do equipamento ganhou o campo **Obra / local** com seleção das obras
+  cadastradas.
+- A tabela, os cartões, a busca e a ficha exibem a obra do equipamento.
+- Filtro por obra na tela de equipamentos.
+- Regras: nomes duplicados são bloqueados; excluir obra só é permitido quando
+  nenhum equipamento está vinculado; inativar mantém o vínculo dos
+  equipamentos existentes.
+
+### Preços (quanto em dinheiro de maquinários)
+
+- Novo menu **Preços** com um preço por equipamento.
+- Subtotal por equipamento = preço × quantidade total.
+- **Total geral** de todos os equipamentos ativos e total do filtro.
+- Filtro por categoria na tela de Preços.
+- A ficha do equipamento também aceita o **Preço de compra (R$)**.
+- O painel da visão geral mostra o **Patrimônio** total.
+
+## Arquivos alterados
+
+| Arquivo | Alteração |
+|---|---|
+| `source-original/Maquinas.gs` | coleção `OBRAS`, colunas `OBRA_ID` e `PRECO_UNITARIO` em `EQUIPAMENTOS`, funções criar/editar/inativar/reativar/excluir obra, validação e gravação de obra/preço no equipamento |
+| `supabase/functions/global-api/maquinas.js` | regenerado a partir do `.gs` |
+| `supabase/functions/global-api/index.ts` | ações `criarObra`, `editarObra`, `inativarObra`, `reativarObra`, `excluirObra` no `writeNames.maquinas` |
+| `dist/maquinas.html` | menus Obras e Preços, cadastro de obras, select de obra e preço na ficha, filtros e total |
+| `database/maquinas-obras.sql` | migração idempotente da estrutura |
+| `tests/global.test.js` | testes de obras, preços, permissões e integridade da interface |
+
+## Banco (Supabase)
+
+Execute `database/maquinas-obras.sql` e publique a Edge Function `global-api`:
+
+```bash
+# SQL Editor do Supabase: database/maquinas-obras.sql
+supabase functions deploy global-api --no-verify-jwt --yes
+```
+
+A migração:
+
+1. cria a coleção `OBRAS` (`ID`, `NOME`, `ATIVO`, `CRIADO_EM`, `ATUALIZADO_EM`);
+2. adiciona `OBRA_ID` e `PRECO_UNITARIO` em `EQUIPAMENTOS` (registros existentes
+   ficam sem obra e com preço zero; podem ser editados depois).
+
+Nenhum dado real é incluído na migração.
+
+## Testes
+
+- `npm test`: 25 testes, incluindo criação/renomeação/exclusão de obra,
+  vínculo de obra ao equipamento, bloqueio de duplicidade/exclusão com
+  vínculos, gravação de preço e bloqueio para perfil de consulta.
+- Teste de interface em Chromium com backend simulado: menu Obras, criação de
+  obra, menu Preços, total geral e filtro por categoria, select de obra e campo
+  de preço na ficha — sem erros de console.

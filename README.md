@@ -11,7 +11,7 @@ Painel integrado em migração de Google Sheets/Apps Script para PostgreSQL e Su
 - Pedidos: catálogo, carrinho, histórico, conferência e gestão da réplica Supabase existente.
 - Gastos: 11 lançamentos, orçamentos por mês/pessoa, ajustes, cadastros, auditoria e relatórios da interface original.
 - Fornecedores: 24 fornecedores, 18 produtos, 17 cotações, históricos de preços/ações; compras, relatórios e backup JSON pelo novo backend.
-- Máquinas: 50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções. Regras de estoque, entrega, devolução, transferência e manutenção preservadas.
+- Máquinas: 50 equipamentos, 12 categorias, 19 colaboradores, 23 empréstimos, 27 movimentos e 2 manutenções. Regras de estoque, entrega, devolução, transferência e manutenção preservadas. Novos menus **Obras** (local de cada equipamento) e **Preços** (valor por material, subtotais, total geral e filtro por categoria); ver `docs/MAQUINAS_OBRAS_PRECOS.md`.
 - **Frotas: interface original completa integrada ao painel**, com SSO Supabase, backend próprio e importação única da planilha histórica. Interface atualizada para a v199 do repositório `gvg-artefal` (commit `e844395`), com as fotos oficiais de alta qualidade restauradas para os veículos cadastrados. Migração, funções e importação aplicadas no Supabase e frontend completo publicado no domínio em 20/11/2026. Ver `docs/FROTAS_INTEGRACAO.md` e `docs/ANALISE_FROTAS_VERSOES_2026-11-20.md`.
 
 Publicação oficial: https://global-ecosistema.higoragenteia.chatgpt.site . O endereço foi atualizado para a identificação oficial GLOBAL ECOSISTEMA. A hospedagem oferece domínio próprio; o domínio atual só deve ser transferido depois da conclusão e homologação.
