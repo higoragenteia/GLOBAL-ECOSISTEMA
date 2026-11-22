@@ -928,7 +928,7 @@ body.sidebar-open .toast-root { display: none; }
 #connectionBox .form-message:empty { display: none; }
 
   </style>
-<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js"></script><script src="./global-api.js"></script></head>
+<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>
 <body>
   <div id="boot" class="boot-screen" role="status" aria-live="polite">
     <div class="boot-mark" aria-hidden="true">GVG</div>
@@ -980,11 +980,6 @@ body.sidebar-open .toast-root { display: none; }
             <strong id="userName">—</strong>
             <span id="userRole">—</span>
           </div>
-          <button type="button" class="icon-btn" id="userMenuBtn" aria-label="Menu da conta">⋯</button>
-        </div>
-        <div id="userMenu" class="user-menu hidden">
-          <button type="button" id="changePasswordBtn">Alterar minha senha</button>
-          <button type="button" id="logoutBtn" class="danger-text">Sair do sistema</button>
         </div>
       </div>
     </aside>
@@ -3241,42 +3236,6 @@ function openCategoryForm(c) {
   });
 }
 
-function openChangePassword() {
-  openModal({
-    title: 'Alterar minha senha',
-    subtitle: 'Sua sessão atual será renovada após a alteração.',
-    size: 'sm',
-    body: `<form id="changePasswordForm" class="form-stack" novalidate>
-      <label class="field"><span>Senha atual <b class="required"></b></span><input name="senhaAtual" type="password" autocomplete="current-password" required></label>
-      <label class="field"><span>Nova senha <b class="required"></b></span><input name="novaSenha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required></label>
-      <label class="field"><span>Confirmar nova senha <b class="required"></b></span><input name="novaSenha2" type="password" autocomplete="new-password" required></label>
-    </form>`,
-    foot: `<button type="button" class="btn btn-ghost" data-action="close-modal">Cancelar</button><button type="submit" form="changePasswordForm" class="btn btn-primary">Alterar senha</button>`,
-    onMount: () => {
-      $('changePasswordForm').addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const form = ev.currentTarget;
-        if (!validateRequired(form, ['senhaAtual', 'novaSenha', 'novaSenha2'])) return;
-        if (formVal(form, 'novaSenha').length < 8) { fieldError(form, 'novaSenha', 'A senha deve ter pelo menos 8 caracteres.'); return; }
-        if (formVal(form, 'novaSenha') !== formVal(form, 'novaSenha2')) { fieldError(form, 'novaSenha2', 'As senhas não conferem.'); return; }
-        let btn = form.querySelector('[type=submit]');
-        if (!btn) btn = document.querySelector('button[form="changePasswordForm"]');
-        let rid = form.dataset.requestId;
-        if (!rid) { rid = genId(); form.dataset.requestId = rid; }
-        setButtonBusy(btn, true);
-        try {
-          const data = await api('alterarMinhaSenha', { senhaAtual: formVal(form, 'senhaAtual'), novaSenha: formVal(form, 'novaSenha'), userAgent: navigator.userAgent }, { requestId: rid });
-          form.dataset.requestId = '';
-          saveToken(data.token);
-          closeModal();
-          showToast('Senha alterada. A sessão foi renovada.', 'success');
-        } catch (e) { showModalError(e.message); showToast(e.message, 'error'); }
-        finally { setButtonBusy(btn, false); }
-      });
-    },
-  });
-}
-
 /* ---------- Ajuda / observações ---------- */
 function openHelp() {
   openModal({
@@ -3416,8 +3375,6 @@ document.addEventListener('click', async (ev) => {
     if (action === 'audit-page') { loadAudit(Number(actionEl.getAttribute('data-page')) || 1); scrollTop(); return; }
     if (action === 'mov-clear') { state.movFilters = { tipo: '', busca: '', dataInicio: '', dataFim: '' }; state.movPage = 1; renderMovementsView(); return; }
     if (action === 'man-clear') { state.manFilters = { status: '', busca: '' }; renderMaintenanceView(); return; }
-    if (action === 'change-password') { closeUserMenu(); openChangePassword(); return; }
-    if (action === 'logout') { await doLogout(); return; }
     return;
   }
   if (ev.target.matches && ev.target.matches('[data-modal-backdrop]')) { closeModal(); return; }
@@ -3440,25 +3397,6 @@ document.addEventListener('keydown', (ev) => {
   }
 });
 
-/* ---------- Logout / menu ---------- */
-async function doLogout() {
-  closeUserMenu();
-  closeSidebar();
-  try { await api('logout', {}, { requestId: genId() }); } catch (e) {}
-  saveToken('');
-  resetListCaches();
-  state.data = null;
-  state.user = null;
-  state.syncRunning = false;
-  state.postLoadScheduled = false;
-  state.prefetchPromise = null;
-  closeDetail();
-  closeModal();
-  hideApp();
-  showAuth('login', 'Sessão encerrada.', 'success');
-}
-function closeUserMenu() { const m = $('userMenu'); if (m) m.classList.add('hidden'); }
-
 /* ---------- Eventos estáticos / inicialização ---------- */
 function bindStaticEvents() {
   $('loginForm')?.addEventListener('submit', doLogin);
@@ -3475,11 +3413,6 @@ function bindStaticEvents() {
   $('sidebarClose').addEventListener('click', closeSidebar);
   $('sidebarBackdrop').addEventListener('click', closeSidebar);
   $('refreshBtn').addEventListener('click', async () => { try { await refreshData(); showToast('Dados atualizados.', 'success'); } catch (e) {} });
-  $('userMenuBtn').addEventListener('click', (e) => { e.stopPropagation(); $('userMenu').classList.toggle('hidden'); });
-  $('topbarUser').addEventListener('click', (e) => { e.stopPropagation(); if (window.innerWidth <= 1020) openSidebar(); $('userMenu').classList.toggle('hidden'); });
-  document.addEventListener('click', (e) => { if (!e.target.closest('#userMenu') && !e.target.closest('#userMenuBtn') && !e.target.closest('#topbarUser')) closeUserMenu(); });
-  $('changePasswordBtn').addEventListener('click', openChangePassword);
-  $('logoutBtn').addEventListener('click', doLogout);
   document.querySelectorAll('.nav-item').forEach((b) => b.addEventListener('click', () => setView(b.getAttribute('data-view'))));
   document.querySelectorAll('[data-toggle-password]').forEach((b) => b.addEventListener('click', () => {
     const input = $(b.getAttribute('data-toggle-password'));
