@@ -63,6 +63,10 @@ test('Máquinas: interface inclui Obras, Preços e a seleção na ficha',()=>{
  assert.match(html,/data-view="obras"/);assert.match(html,/data-view="precos"/);
  assert.match(html,/Nova obra/);assert.match(html,/name="obraId"/);assert.match(html,/name="preco"/);
  assert.match(html,/Patrimônio/);assert.match(html,/Total geral/);
+ assert.doesNotMatch(html,/data-view="usuarios"/,'usuários ficam no painel central');
+ assert.doesNotMatch(html,/id="installAppBtn"/,'instalação removida do menu lateral');
+ assert.doesNotMatch(html,/Ajuda e instalação/,'ajuda sem conteúdo de instalação');
+ assert.doesNotMatch(html,/Instalar aplicativo/,'sem textos de instalação');
 });
 test('Máquinas: entrega, transferência e devolução mantêm saldo; excesso é rejeitado',()=>{
  const a=app('maquinas');let counter=0;

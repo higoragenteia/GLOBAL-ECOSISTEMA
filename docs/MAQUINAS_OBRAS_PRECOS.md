@@ -53,6 +53,15 @@ A migração:
 
 Nenhum dado real é incluído na migração.
 
+## Limpeza da interface (21/11/2026)
+
+- Removido o menu **Usuários** do Controle de Máquinas: contas e permissões são
+  administradas no painel central do GLOBAL ECOSISTEMA.
+- Removido o botão **Instalar aplicativo** do menu lateral e todo o fluxo de
+  instalação PWA do app.
+- Ajuda reescrita sem as instruções de instalação; permanecem atualização de
+  dados, permissões, histórico/exclusão e recuperação de senha.
+
 ## Status live (21/11/2026)
 
 - `database/maquinas-obras.sql` aplicado no Supabase (coleção `OBRAS` criada e

@@ -700,19 +700,6 @@ svg { display: block; width: 18px; height: 18px; flex-shrink: 0; }
 .entity-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
 .entity-note { font-size: 10.5px; color: #6b551d; background: var(--gold-3); border: 1px solid #efdfb6; border-radius: 9px; padding: 8px 9px; line-height: 1.45; }
 
-/* ---------- Usuários ---------- */
-.users-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.user-list { display: grid; gap: 8px; }
-.user-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
-.user-row .avatar { width: 40px; height: 40px; border-radius: 12px; }
-.user-row-info { flex: 1; min-width: 0; }
-.user-row-info strong { display: block; font-size: 12.5px; color: var(--text-2); }
-.user-row-info span { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-row-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
-.users-collapsed .user-list { display: none; }
-.users-collapsed .users-empty-hint { display: block; }
-.users-empty-hint { display: none; padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: 12px; color: var(--muted); font-size: 11.5px; }
-
 /* ---------- Auditoria ---------- */
 .audit-detail { font-size: 10.5px; color: var(--muted); max-width: 420px; word-break: break-word; line-height: 1.45; max-height: 62px; overflow: auto; }
 
@@ -982,13 +969,11 @@ body.sidebar-open .toast-root { display: none; }
         <button type="button" class="nav-item" data-view="obras"><span class="nav-ico" data-icon="mapPin"></span><span>Obras</span></button>
         <button type="button" class="nav-item" data-view="precos"><span class="nav-ico" data-icon="money"></span><span>Preços</span></button>
         <div class="nav-sep admin-only" id="adminNavSep"></div>
-        <button type="button" class="nav-item admin-only" data-view="usuarios"><span class="nav-ico" data-icon="shield"></span><span>Usuários</span><span class="nav-badge gold" id="navUsersBadge"></span></button>
         <button type="button" class="nav-item admin-only" data-view="auditoria"><span class="nav-ico" data-icon="history"></span><span>Auditoria</span></button>
       </nav>
 
       <div class="sidebar-foot">
-        <button type="button" class="sidebar-action" id="installAppBtn" hidden><span data-icon="download"></span> Instalar aplicativo</button>
-        <button type="button" class="sidebar-action" id="helpBtn"><span data-icon="help"></span> Ajuda e instalação</button>
+        <button type="button" class="sidebar-action" id="helpBtn"><span data-icon="help"></span> Ajuda</button>
         <div class="sidebar-user">
           <div class="avatar" id="userAvatar">A</div>
           <div class="sidebar-user-info">
@@ -1050,7 +1035,6 @@ body.sidebar-open .toast-root { display: none; }
 const CONFIG = window.GVG_CONFIG || {};
 const API_URL = String(CONFIG.apiUrl || '').trim();
 const TOKEN_KEY = 'globalEco:gvgMaqTokenV1';
-const USERS_COLLAPSED_KEY = 'gvgMaqUsersCollapsedV1';
 
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || '',
@@ -1089,8 +1073,6 @@ const state = {
   postLoadScheduled: false,
   prefetchPromise: null,
   colabSearch: '',
-  usersCollapsed: localStorage.getItem(USERS_COLLAPSED_KEY) === '1',
-  deferredPrompt: null,
   pendingRequestIds: {},
 };
 
@@ -1103,7 +1085,6 @@ const VIEW_META = {
   categorias: { title: 'Categorias', subtitle: 'Tipos de máquinas e ferramentas controladas' },
   obras: { title: 'Obras', subtitle: 'Obras e locais onde os equipamentos estão alocados' },
   precos: { title: 'Preços', subtitle: 'Valor de compra dos equipamentos e total investido' },
-  usuarios: { title: 'Usuários', subtitle: 'Contas de acesso e permissões do sistema' },
   auditoria: { title: 'Auditoria', subtitle: 'Registro das ações administrativas' },
 };
 
@@ -1546,14 +1527,11 @@ function updateChrome() {
   if($('topbarAvatar')) $('topbarAvatar').textContent = initials(state.user.nome);
   $('navEqBadge').textContent = String(state.data.stats ? state.data.stats.totalEquipamentos : '') || '';
   $('navManBadge').textContent = String((state.data.manutencoesAbertas || []).length || '') || '';
-  const pendentes = (state.data.usuarios || []).filter((u) => u.status === 'PENDENTE').length;
-  $('navUsersBadge').textContent = pendentes ? String(pendentes) : '';
   const meta = VIEW_META[state.view] || VIEW_META.dashboard;
   $('pageTitle').textContent = meta.title;
   $('pageSubtitle').textContent = meta.subtitle;
   document.title = `${meta.title} · GVG Máquinas`;
   document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.getAttribute('data-view') === state.view));
-  $('installAppBtn').hidden = !state.deferredPrompt;
 }
 
 function setView(view, opts) {
@@ -1582,7 +1560,6 @@ function renderCurrentView() {
   else if (state.view === 'categorias') renderCategoriesView();
   else if (state.view === 'obras') renderObrasView();
   else if (state.view === 'precos') renderPricesView();
-  else if (state.view === 'usuarios') renderUsersView();
   else if (state.view === 'auditoria') renderAuditView();
   hydrateIcons(main);
 }
@@ -2391,55 +2368,6 @@ function renderPricesView() {
   hydrateIcons(main);
   const sel = $('priceCategory');
   if (sel) sel.addEventListener('change', () => { state.pricesCategoria = sel.value; renderPricesView(); });
-}
-
-/* ---------- Usuários ---------- */
-function renderUsersView() {
-  if (!isAdmin()) { setView('dashboard'); return; }
-  const main = $('main');
-  const users = state.data.usuarios || [];
-  const pendentes = users.filter((u) => u.status === 'PENDENTE');
-  main.innerHTML = `
-    <div class="page-head"><div><div class="eyebrow">Segurança</div><h2>Acessos e permissões</h2><p>Contas de acesso ao sistema. Cadastros feitos pela tela de login ficam pendentes até a aprovação do administrador.</p></div><div class="page-actions"><button type="button" class="btn btn-primary" data-action="new-user">${icon('userPlus')} Novo usuário</button></div></div>
-    <div class="users-toolbar">
-      <div class="flex flex-wrap"><span class="badge">${fmtQty(users.length)} conta(s)</span><span class="badge green">${fmtQty(users.filter((u) => u.status === 'ATIVO').length)} ativa(s)</span><span class="badge gray">${fmtQty(users.filter((u) => u.perfil === 'ADMINISTRADOR').length)} administrador(es)</span>${pendentes.length ? `<span class="badge pending">${fmtQty(pendentes.length)} pendente(s)</span>` : ''}</div>
-      <button type="button" class="btn btn-sm btn-secondary" id="toggleUsers" aria-expanded="${!state.usersCollapsed}">${state.usersCollapsed ? 'Mostrar lista' : 'Ocultar lista'}</button>
-    </div>
-    ${pendentes.length ? `<div class="alert alert-warn users-pending">${icon('alert')}<div><strong>${fmtQty(pendentes.length)} cadastro(s) aguardando aprovação.</strong> Aprove para liberar o acesso somente de consulta.</div><button type="button" class="btn btn-sm btn-primary" data-action="show-pending">Mostrar pendentes</button></div>` : ''}
-    <div id="usersList" class="${state.usersCollapsed ? 'users-collapsed' : ''}">
-      ${users.length ? `<div class="user-list">${users.map(userRow).join('')}</div>` : `<div class="card">${emptyState('shield', 'Nenhuma conta', 'Crie o primeiro usuário.')}</div>`}
-      <div class="users-empty-hint">${pendentes.length ? `${fmtQty(pendentes.length)} cadastro(s) pendente(s). ` : ''}Lista de usuários oculta. Use “Mostrar lista” para exibir as contas.</div>
-    </div>
-  `;
-  $('toggleUsers').addEventListener('click', () => {
-    state.usersCollapsed = !state.usersCollapsed;
-    localStorage.setItem(USERS_COLLAPSED_KEY, state.usersCollapsed ? '1' : '0');
-    const list = $('usersList');
-    const btn = $('toggleUsers');
-    list.classList.toggle('users-collapsed', state.usersCollapsed);
-    btn.textContent = state.usersCollapsed ? 'Mostrar lista' : 'Ocultar lista';
-    btn.setAttribute('aria-expanded', String(!state.usersCollapsed));
-  });
-  hydrateIcons(main);
-}
-
-function userRow(u) {
-  const self = state.user && u.id === state.user.id;
-  const pendente = u.status === 'PENDENTE';
-  const statusBadge = pendente
-    ? '<span class="badge pending">Pendente</span>'
-    : `<span class="badge ${u.status === 'ATIVO' ? 'green' : 'red'}">${u.status === 'ATIVO' ? 'Ativo' : 'Bloqueado'}</span>`;
-  return `<div class="user-row">
-    <span class="avatar">${esc(initials(u.nome))}</span>
-    <div class="user-row-info"><strong>${esc(u.nome)}${self ? ' <span class="badge gray" style="font-size:9px;padding:2px 5px">você</span>' : ''}</strong><span>${esc(u.email)} · ${esc(roleLabel(u.perfil))}${u.ultimoAcesso ? ' · último acesso ' + esc(fmtDateTime(u.ultimoAcesso)) : ''}</span></div>
-    ${statusBadge}
-    <div class="user-row-actions">
-      ${pendente ? `<button type="button" class="btn btn-sm btn-primary" data-action="approve-user" data-id="${esc(u.id)}">Aprovar</button><button type="button" class="btn btn-sm btn-ghost" data-action="reject-user" data-id="${esc(u.id)}">Recusar</button>` : ''}
-      <button type="button" class="btn btn-sm btn-ghost" data-action="edit-user" data-id="${esc(u.id)}">Editar</button>
-      ${!pendente ? `<button type="button" class="btn btn-sm btn-ghost" data-action="reset-user-password" data-id="${esc(u.id)}">Redefinir senha</button>` : ''}
-      ${!self && !pendente ? (u.status === 'ATIVO' ? `<button type="button" class="btn btn-sm btn-ghost" data-action="block-user" data-id="${esc(u.id)}">Bloquear</button>` : `<button type="button" class="btn btn-sm btn-ghost" data-action="unblock-user" data-id="${esc(u.id)}">Desbloquear</button>`) : ''}
-    </div>
-  </div>`;
 }
 
 /* ---------- Auditoria ---------- */
@@ -3313,65 +3241,6 @@ function openCategoryForm(c) {
   });
 }
 
-function openUserForm(u) {
-  if (!isAdmin()) return;
-  const editing = !!u;
-  const e = u || { perfil: 'COLABORADOR' };
-  openModal({
-    title: editing ? 'Editar usuário' : 'Novo usuário',
-    subtitle: editing ? 'A alteração de perfil encerra as sessões abertas desse usuário.' : 'A conta é separada do cadastro de colaborador.',
-    body: `<form id="userForm" class="form-stack" novalidate>
-      <label class="field"><span>Nome <b class="required"></b></span><input name="nome" value="${esc(e.nome || '')}" required></label>
-      <label class="field"><span>Usuário ou e-mail <b class="required"></b></span><input name="email" type="text" inputmode="text" autocomplete="username" value="${esc(e.email || '')}" required></label>
-      <label class="field"><span>Perfil</span><select name="perfil"><option value="COLABORADOR" ${e.perfil === 'COLABORADOR' ? 'selected' : ''}>Colaborador — somente consulta</option><option value="ADMINISTRADOR" ${e.perfil === 'ADMINISTRADOR' ? 'selected' : ''}>Administrador — acesso completo</option></select></label>
-      ${editing ? '' : `<div class="form-row"><label class="field"><span>Senha inicial <b class="required"></b></span><input name="senha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required></label><label class="field"><span>Confirmar senha <b class="required"></b></span><input name="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required></label></div>`}
-      <label class="field"><span>Observações</span><textarea name="observacoes" placeholder="Opcional">${esc(e.observacoes || '')}</textarea></label>
-      <div class="form-help">O perfil COLABORADOR pode visualizar, pesquisar e consultar. Todas as alterações são bloqueadas no servidor.</div>
-    </form>`,
-    foot: `<button type="button" class="btn btn-ghost" data-action="close-modal">Cancelar</button><button type="submit" form="userForm" class="btn btn-primary">${editing ? 'Salvar' : 'Criar conta'}</button>`,
-    onMount: () => {
-      $('userForm').addEventListener('submit', (ev) => {
-        ev.preventDefault();
-        const form = ev.currentTarget;
-        if (!validateRequired(form, ['nome', 'email'])) return;
-        if (!editing) {
-          if (!validateRequired(form, ['senha', 'senha2'])) return;
-          if (formVal(form, 'senha').length < 8) { fieldError(form, 'senha', 'A senha deve ter pelo menos 8 caracteres.'); return; }
-          if (formVal(form, 'senha') !== formVal(form, 'senha2')) { fieldError(form, 'senha2', 'As senhas não conferem.'); return; }
-        }
-        const payload = { nome: formVal(form, 'nome'), email: formVal(form, 'email'), perfil: formVal(form, 'perfil'), observacoes: formVal(form, 'observacoes') };
-        if (editing) payload.id = u.id; else payload.senha = formVal(form, 'senha');
-        submitModalForm(form, editing ? 'editarUsuario' : 'criarUsuario', () => payload, { successMsg: editing ? 'Usuário atualizado.' : 'Conta criada.' });
-      });
-    },
-  });
-}
-
-function openResetPassword(u) {
-  if (!isAdmin()) return;
-  openModal({
-    title: 'Redefinir senha',
-    subtitle: `Defina uma nova senha para ${u.nome}. As sessões abertas serão encerradas.`,
-    size: 'sm',
-    body: `<form id="resetPasswordForm" class="form-stack" novalidate>
-      <label class="field"><span>Nova senha <b class="required"></b></span><input name="novaSenha" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required></label>
-      <label class="field"><span>Confirmar senha <b class="required"></b></span><input name="novaSenha2" type="password" autocomplete="new-password" placeholder="Repita a senha" required></label>
-      <div class="form-help">A senha é gravada apenas como hash com sal. O administrador não consegue visualizar a senha anterior.</div>
-    </form>`,
-    foot: `<button type="button" class="btn btn-ghost" data-action="close-modal">Cancelar</button><button type="submit" form="resetPasswordForm" class="btn btn-primary">Redefinir senha</button>`,
-    onMount: () => {
-      $('resetPasswordForm').addEventListener('submit', (ev) => {
-        ev.preventDefault();
-        const form = ev.currentTarget;
-        if (!validateRequired(form, ['novaSenha', 'novaSenha2'])) return;
-        if (formVal(form, 'novaSenha').length < 8) { fieldError(form, 'novaSenha', 'A senha deve ter pelo menos 8 caracteres.'); return; }
-        if (formVal(form, 'novaSenha') !== formVal(form, 'novaSenha2')) { fieldError(form, 'novaSenha2', 'As senhas não conferem.'); return; }
-        submitModalForm(form, 'resetarSenhaUsuario', () => ({ id: u.id, novaSenha: formVal(form, 'novaSenha') }), { successMsg: 'Senha redefinida. As sessões antigas foram encerradas.' });
-      });
-    },
-  });
-}
-
 function openChangePassword() {
   openModal({
     title: 'Alterar minha senha',
@@ -3409,21 +3278,17 @@ function openChangePassword() {
 }
 
 /* ---------- Ajuda / observações ---------- */
-function openHelp(tab) {
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function openHelp() {
   openModal({
-    title: 'Ajuda e instalação',
-    subtitle: 'Use o aplicativo no computador e adicione à tela inicial do celular.',
+    title: 'Ajuda',
+    subtitle: 'Informações úteis para usar o controle de máquinas.',
     size: 'lg',
     body: `<div class="help-list">
-      <div class="help-item"><span class="help-num">1</span><div><strong>Android (Chrome)</strong><p>Abra o endereço do aplicativo no Chrome. Toque no menu ⋮ e escolha <b>Instalar aplicativo</b> ou <b>Adicionar à tela inicial</b>. O ícone abrirá o GitHub Pages em tela cheia.</p></div></div>
-      <div class="help-item"><span class="help-num">2</span><div><strong>iPhone / iPad (Safari)</strong><p>Abra o endereço no <b>Safari</b>. Toque em <b>Compartilhar</b> (ícone de quadrado com seta) → <b>Adicionar à Tela de Início</b> → <b>Adicionar</b>. No iPhone, outros navegadores não instalam o PWA da mesma forma.</p></div></div>
-      <div class="help-item"><span class="help-num">3</span><div><strong>Atualização dos dados</strong><p>O aplicativo lê os dados atuais ao abrir e ao tocar em <b>Atualizar</b>. Alterações feitas diretamente na planilha aparecem ao recarregar a tela. Não há promessa de atualização em tempo real.</p></div></div>
-      <div class="help-item"><span class="help-num">4</span><div><strong>Permissões</strong><p><b>Administrador</b> cadastra, edita, entrega, devolve, transfere, mantém e administra contas. <b>Colaborador</b> apenas visualiza, pesquisa e consulta. O servidor bloqueia qualquer tentativa de alteração por esse perfil.</p></div></div>
-      <div class="help-item"><span class="help-num">5</span><div><strong>Histórico e exclusão</strong><p>Equipamentos com movimentações não são excluídos: são inativados para preservar o histórico. A exclusão definitiva só é liberada quando não existe nenhum registro vinculado.</p></div></div>
-      <div class="help-item"><span class="help-num">6</span><div><strong>Esqueci a senha do administrador</strong><p>A recuperação de acesso é feita pelo painel principal. Não existe uma senha separada para este aplicativo.</p></div></div>
-    </div>
-    ${ios && !window.navigator.standalone ? `<div class="alert alert-info mt-16">${icon('info')}<div>Você está no iPhone/iPad. Use o Safari e o menu Compartilhar para adicionar à Tela de Início.</div></div>` : ''}`,
+      <div class="help-item"><span class="help-num">1</span><div><strong>Atualização dos dados</strong><p>O aplicativo lê os dados atuais ao abrir e ao tocar em <b>Atualizar</b>. Alterações feitas por outros usuários aparecem ao atualizar a tela.</p></div></div>
+      <div class="help-item"><span class="help-num">2</span><div><strong>Permissões</strong><p><b>Administrador</b> cadastra, edita, entrega, devolve, transfere e mantém os registros. <b>Colaborador</b> apenas visualiza, pesquisa e consulta. O servidor bloqueia qualquer tentativa de alteração por esse perfil. Contas e senhas são administradas no painel principal.</p></div></div>
+      <div class="help-item"><span class="help-num">3</span><div><strong>Histórico e exclusão</strong><p>Equipamentos com movimentações não são excluídos: são inativados para preservar o histórico. A exclusão definitiva só é liberada quando não existe nenhum registro vinculado.</p></div></div>
+      <div class="help-item"><span class="help-num">4</span><div><strong>Esqueci a senha do administrador</strong><p>A recuperação de acesso é feita pelo painel principal. Não existe uma senha separada para este aplicativo.</p></div></div>
+    </div>`,
     foot: `<button type="button" class="btn btn-secondary" data-action="close-modal">Fechar</button>`,
   });
 }
@@ -3475,36 +3340,6 @@ document.addEventListener('click', async (ev) => {
     if (action === 'edit-collaborator') { const c = (state.data.colaboradores || []).find((x) => x.id === id); if (c) openCollaboratorForm(c); return; }
     if (action === 'new-category') { openCategoryForm(); return; }
     if (action === 'edit-category') { const c = (state.data.categorias || []).find((x) => x.id === id); if (c) openCategoryForm(c); return; }
-    if (action === 'new-user') { openUserForm(); return; }
-    if (action === 'edit-user') { const u = (state.data.usuarios || []).find((x) => x.id === id); if (u) openUserForm(u); return; }
-    if (action === 'reset-user-password') { const u = (state.data.usuarios || []).find((x) => x.id === id); if (u) openResetPassword(u); return; }
-    if (action === 'approve-user') {
-      const u = (state.data.usuarios || []).find((x) => x.id === id);
-      if (u) runAction(actionEl, 'aprovarUsuario', { id }, { successMsg: 'Cadastro aprovado. O usuário já pode entrar.' });
-      return;
-    }
-    if (action === 'reject-user') {
-      const u = (state.data.usuarios || []).find((x) => x.id === id);
-      if (u) openConfirm({ title: 'Recusar cadastro', message: `Recusar o cadastro de <strong>${esc(u.nome)}</strong>? A conta ficará bloqueada e não poderá entrar.`, confirmLabel: 'Recusar', danger: true, action: 'bloquearUsuario', payload: { id }, successMsg: 'Cadastro recusado.' });
-      return;
-    }
-    if (action === 'show-pending') {
-      state.usersCollapsed = false;
-      localStorage.setItem(USERS_COLLAPSED_KEY, '0');
-      if (state.view === 'usuarios') renderUsersView();
-      setTimeout(() => { const el = $('usersList'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
-      return;
-    }
-    if (action === 'block-user') {
-      const u = (state.data.usuarios || []).find((x) => x.id === id);
-      if (u) openConfirm({ title: 'Bloquear usuário', message: `Bloquear <strong>${esc(u.nome)}</strong>? As sessões abertas serão encerradas.`, confirmLabel: 'Bloquear', danger: true, action: 'bloquearUsuario', payload: { id }, successMsg: 'Usuário bloqueado.' });
-      return;
-    }
-    if (action === 'unblock-user') {
-      const u = (state.data.usuarios || []).find((x) => x.id === id);
-      if (u) openConfirm({ title: 'Desbloquear usuário', message: `Liberar o acesso de <strong>${esc(u.nome)}</strong>?`, confirmLabel: 'Desbloquear', action: 'desbloquearUsuario', payload: { id }, successMsg: 'Usuário desbloqueado.' });
-      return;
-    }
     if (action === 'inactivate-collaborator') {
       openConfirm({ title: 'Inativar colaborador', message: 'O colaborador deixará de aparecer para novas entregas. O histórico é preservado. Só é permitido se não houver pendências.', confirmLabel: 'Inativar', danger: true, action: 'inativarColaborador', payload: { id }, successMsg: 'Colaborador inativado.' });
       return;
@@ -3636,16 +3471,6 @@ function bindStaticEvents() {
   $('retryConnection')?.addEventListener('click', checkInitial);
   $('connectionLogout')?.addEventListener('click', () => { saveToken(''); resetListCaches(); showAuth('login'); });
   $('helpBtn')?.addEventListener('click', () => openHelp());
-  $('authInstallBtn')?.addEventListener('click', async () => {
-    if (state.deferredPrompt) {
-      state.deferredPrompt.prompt();
-      await state.deferredPrompt.userChoice;
-      state.deferredPrompt = null;
-      $('installAppBtn').hidden = true;
-    } else {
-      openHelp('install');
-    }
-  });
   $('menuBtn').addEventListener('click', openSidebar);
   $('sidebarClose').addEventListener('click', closeSidebar);
   $('sidebarBackdrop').addEventListener('click', closeSidebar);
@@ -3691,26 +3516,6 @@ function initPWA() {
   if (panelRetry) panelRetry.addEventListener('click', () => { saveToken(''); location.reload(); });
   const panelOpen = document.getElementById('panelOpenBtn');
   if (panelOpen) panelOpen.addEventListener('click', () => { window.top.location.href = new URL('./',location.href).href; });
-
-  /* Service worker desativado no painel: o app roda dentro do iframe do GVG&ARTEFAL. */
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    state.deferredPrompt = e;
-    $('installAppBtn').hidden = false;
-    updateChrome();
-  });
-  window.addEventListener('appinstalled', () => {
-    state.deferredPrompt = null;
-    $('installAppBtn').hidden = true;
-    showToast('Aplicativo instalado na tela inicial.', 'success');
-  });
-  $('installAppBtn').addEventListener('click', async () => {
-    if (!state.deferredPrompt) { openHelp('install'); return; }
-    state.deferredPrompt.prompt();
-    await state.deferredPrompt.userChoice;
-    state.deferredPrompt = null;
-    $('installAppBtn').hidden = true;
-  });
 }
 
 /* ---------- Inicialização ---------- */
