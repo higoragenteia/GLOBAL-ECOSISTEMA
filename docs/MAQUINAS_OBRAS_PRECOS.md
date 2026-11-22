@@ -53,6 +53,17 @@ A migração:
 
 Nenhum dado real é incluído na migração.
 
+## Status live (21/11/2026)
+
+- `database/maquinas-obras.sql` aplicado no Supabase (coleção `OBRAS` criada e
+  colunas `OBRA_ID`/`PRECO_UNITARIO` adicionadas; 164 registros preservados).
+- `global-api` redeployada com as novas funções.
+- Teste live com usuário temporário: bootstrap com `obras`, criação de obra,
+  bloqueio de duplicidade, vínculo de obra e preço no equipamento, bloqueio de
+  exclusão com vínculo, restauração do equipamento e exclusão da obra.
+- Frontend publicado no GitHub Pages (workflow 44977138620); produção idêntica
+  ao `dist/` local e já com os menus Obras e Preços.
+
 ## Testes
 
 - `npm test`: 25 testes, incluindo criação/renomeação/exclusão de obra,
