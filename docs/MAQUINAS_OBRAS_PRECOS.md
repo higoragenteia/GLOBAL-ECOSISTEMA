@@ -66,6 +66,9 @@ Nenhum dado real é incluído na migração.
 - A foto de perfil continua sendo exibida no topo do módulo, igual à do
   painel; apenas a opção de clicar para trocar/baixar a foto foi desativada
   nesse módulo.
+- Tema visual do módulo alterado para **preto com laranja** (#F06020): fundo
+  preto profundo, cartões escuros, botões e destaques em laranja com brilhos
+  sutis. Os demais módulos e o painel mantêm o visual anterior.
 
 ## Status live (21/11/2026)
 
