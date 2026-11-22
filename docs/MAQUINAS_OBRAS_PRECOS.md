@@ -61,6 +61,8 @@ Nenhum dado real é incluído na migração.
   instalação PWA do app.
 - Ajuda reescrita sem as instruções de instalação; permanecem atualização de
   dados, permissões, histórico/exclusão e recuperação de senha.
+- Removida a opção de foto de perfil deste módulo (`shared-profile.js`); a foto
+  e a opção continuam disponíveis no painel central.
 
 ## Status live (21/11/2026)
 

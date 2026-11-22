@@ -67,6 +67,7 @@ test('Máquinas: interface inclui Obras, Preços e a seleção na ficha',()=>{
  assert.doesNotMatch(html,/id="installAppBtn"/,'instalação removida do menu lateral');
  assert.doesNotMatch(html,/Ajuda e instalação/,'ajuda sem conteúdo de instalação');
  assert.doesNotMatch(html,/Instalar aplicativo/,'sem textos de instalação');
+ assert.doesNotMatch(html,/shared-profile\.js/,'opção de foto de perfil fica fora do módulo de máquinas');
 });
 test('Máquinas: entrega, transferência e devolução mantêm saldo; excesso é rejeitado',()=>{
  const a=app('maquinas');let counter=0;
