@@ -63,8 +63,9 @@ Nenhum dado real é incluído na migração.
   dados, permissões, histórico/exclusão e recuperação de senha.
 - Removidas as opções **Sair do sistema** e **Alterar minha senha** deste
   módulo; sessão e senha são gerenciadas no painel central.
-- Removido o avatar/foto de perfil do topo do módulo (`shared-profile.js`);
-  a foto e a opção continuam disponíveis no painel central.
+- A foto de perfil continua sendo exibida no topo do módulo, igual à do
+  painel; apenas a opção de clicar para trocar/baixar a foto foi desativada
+  nesse módulo.
 
 ## Status live (21/11/2026)
 

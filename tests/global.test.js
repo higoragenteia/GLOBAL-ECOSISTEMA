@@ -68,7 +68,8 @@ test('Máquinas: interface inclui Obras, Preços e a seleção na ficha',()=>{
  assert.doesNotMatch(html,/Ajuda e instalação/,'ajuda sem conteúdo de instalação');
  assert.doesNotMatch(html,/Instalar aplicativo/,'sem textos de instalação');
  assert.doesNotMatch(html,/Alterar minha senha|Sair do sistema|userMenuBtn/,'opções de conta ficam no painel central');
- assert.doesNotMatch(html,/shared-profile\.js/,'avatar/foto de perfil fica só no painel central');
+ assert.match(html,/shared-profile\.js/,'foto de perfil igual à do painel');
+ assert.match(html,/stopImmediatePropagation/,'opção de clicar/trocar foto desativada no módulo');
 });
 test('Máquinas: entrega, transferência e devolução mantêm saldo; excesso é rejeitado',()=>{
  const a=app('maquinas');let counter=0;
