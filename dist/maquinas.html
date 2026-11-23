@@ -1139,6 +1139,14 @@ input::placeholder, textarea::placeholder { color:#9990A6; }
 .legend .l-ent { background: #F4C866; }
 .pending-icon { color: var(--amber); }
 
+
+.machine-photo { object-fit: contain; vertical-align: middle; margin-inline-end: .45rem; border-radius: 5px; background: #fff; }
+.machine-photo[hidden], select[hidden] { display: none !important; }
+.machine-category-picker { position: relative; min-width: 0; }
+.machine-category-picker summary { cursor: pointer; }
+.machine-category-options { position: absolute; z-index: 20; top: 100%; inset-inline-start: 0; min-width: 100%; width: max-content; max-width: min(320px, 86vw); max-height: 55vh; overflow: auto; background: #242035; border: 1px solid #74688d; border-radius: 8px; padding: 4px; color: #fff; }
+.machine-category-options button { display: block; width: 100%; text-align: start; padding: 6px 9px; background: transparent; color: inherit; border: 0; border-radius: 4px; cursor: pointer; }
+.machine-category-options button:hover, .machine-category-options button:focus-visible, .machine-category-options button[aria-pressed="true"] { background: #594676; }
 </style>
 <link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script>
 /* Foto de perfil igual à do painel, mas sem a opção de clicar/trocar neste módulo. */
@@ -1447,6 +1455,64 @@ function roleLabel(perfil) {
   return perfil === 'ADMINISTRADOR' ? 'Administrador' : 'Colaborador · consulta';
 }
 function isAdmin() { return state.user && state.user.perfil === 'ADMINISTRADOR'; }
+
+const MACHINE_CATEGORY_PHOTOS = {
+  "PARAFUSADEIRA": "https://drive.google.com/thumbnail?id=1bk8mDlfNPhW7TjH-JcNfbWz0CCFNlNnW&sz=w700",
+  "APLICADOR E ALINHADOR DE FITA": "https://drive.google.com/thumbnail?id=1cwglyGZhkytU6nrjd5YSWKuRoNT-GpFZ&sz=w700",
+  "ESMERILHADEIRA": "https://drive.google.com/thumbnail?id=1efS-bVtBqsZxjc0qvUuHuB0_d4CF-Nd1&sz=w700",
+  "MARTELETE": "https://drive.google.com/thumbnail?id=1sMnieLZqzQh1b8jz6NgJr3MQhvmri7As&sz=w700",
+  "SERRA MARM 110MM": "https://drive.google.com/thumbnail?id=1HdOeF6fcGcmVravlTD3KXdB3cbZhEEFI&sz=w700",
+  "FURADEIRA ELETRICA": "https://drive.google.com/thumbnail?id=1AoQQhmx-Bhkx3FCiWaKMtWILdAq30lds&sz=w700",
+  "SERRA TICO TICO": "https://drive.google.com/thumbnail?id=1voBco4-co9MZcQ2P_Je4kXZTO3TuRDNq&sz=w700"
+};
+function machinePhoto(category, title = '') {
+  const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  const name = normalize(category);
+  const label = normalize(title);
+  const key = name || Object.keys(MACHINE_CATEGORY_PHOTOS).find(item => label.startsWith(item));
+  const url = MACHINE_CATEGORY_PHOTOS[key];
+  return url ? `<img class="machine-photo" src="${esc(url)}" width="32" height="32" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">` : '';
+}
+
+function illustratedCategoryFilter(id) {
+  const select = document.getElementById(id);
+  if (!select) return;
+  const details = document.createElement('details');
+  details.className = 'machine-category-picker';
+  const summary = document.createElement('summary');
+  summary.className = 'select';
+  const menu = document.createElement('div');
+  menu.className = 'machine-category-options';
+  const label = (option) => (option.value ? machinePhoto(option.text) : '') + esc(option.text);
+  const sync = () => {
+    summary.innerHTML = label(select.selectedOptions[0]);
+    menu.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.value === select.value)));
+  };
+  for (const option of select.options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.value = option.value;
+    button.innerHTML = label(option);
+    button.onclick = () => {
+      select.value = option.value;
+      details.open = false;
+      summary.focus();
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    menu.append(button);
+  }
+  details.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { details.open = false; summary.focus(); }
+  });
+  details.addEventListener('focusout', (event) => {
+    if (!details.contains(event.relatedTarget)) details.open = false;
+  });
+  select.addEventListener('change', sync);
+  details.append(summary, menu);
+  select.after(details);
+  select.hidden = true;
+  sync();
+}
 function eqName(eq) { return eq.nome || [eq.categoria, eq.modelo || eq.codigoModelo || eq.codigo].filter(Boolean).join(' '); }
 function movementTypeClass(t) {
   if (t === 'ENTREGA') return 'entrega';
@@ -2060,7 +2126,7 @@ function categoryRow(c) {
   const man = Number(c.manutencao) || 0;
   const base = total || 1;
   return `<button type="button" class="category-row" data-action="filter-category" data-id="${esc(c.id)}" style="border:0;background:none;text-align:left;padding:0;width:100%">
-    <span class="category-name">${esc(c.nome)}${c.revisar ? ' <span class="badge gold" style="font-size:9px;padding:2px 5px">revisar</span>' : ''}<span>${plural(total, 'item', 'itens')}</span></span>
+    <span class="category-name">${machinePhoto(c.nome)}${esc(c.nome)}${c.revisar ? ' <span class="badge gold" style="font-size:9px;padding:2px 5px">revisar</span>' : ''}<span>${plural(total, 'item', 'itens')}</span></span>
     <span class="category-bar" aria-hidden="true"><span class="seg-disp" style="width:${(disp / base) * 100}%"></span><span class="seg-ent" style="width:${(ent / base) * 100}%"></span><span class="seg-man" style="width:${(man / base) * 100}%"></span></span>
     <span class="category-meta"><span><strong>${fmtQty(disp)}</strong> disp.</span><span><strong>${fmtQty(ent)}</strong> entr.</span><span><strong>${fmtQty(man)}</strong> man.</span></span>
   </button>`;
@@ -2086,7 +2152,7 @@ function pendingItem(l) {
   return `<div class="pending-item">
     <span class="pending-icon">${icon(l.quantidade > 0 ? 'arrowUpRight' : 'battery')}</span>
     <div class="pending-body">
-      <div class="pending-title">${esc(l.equipamentoCodigo)} — ${esc(l.equipamentoNome)}</div>
+      <div class="pending-title">${machinePhoto(l.categoriaNome, l.equipamentoNome)}${esc(l.equipamentoCodigo)} — ${esc(l.equipamentoNome)}</div>
       <div class="pending-sub">${esc(l.colaboradorNome)} · ${l.quantidade > 0 ? `${plural(l.quantidade, 'unidade', 'unidades')} · ` : ''}${esc(fmtDate(l.dataEntrega))}${acc ? ' · ' + esc(acc) : ''}</div>
     </div>
     <div class="pending-actions">
@@ -2099,7 +2165,7 @@ function manutencaoItem(m) {
   return `<div class="pending-item">
     <span class="pending-icon">${icon('wrench')}</span>
     <div class="pending-body">
-      <div class="pending-title">${esc(m.equipamentoCodigo)} — ${esc(m.equipamentoNome)}</div>
+      <div class="pending-title">${machinePhoto(m.categoriaNome, m.equipamentoNome)}${esc(m.equipamentoCodigo)} — ${esc(m.equipamentoNome)}</div>
       <div class="pending-sub">${esc(m.defeito || 'Sem defeito informado')} · ${esc(fmtDate(m.dataEnvio))}${m.responsavel ? ' · ' + esc(m.responsavel) : ''}${m.celularResponsavel ? ' · ' + esc(m.celularResponsavel) : ''}</div>
     </div>
     <div class="pending-actions">
@@ -2191,7 +2257,7 @@ function renderEquipmentList() {
   const rows = pageItems.map((e) => `
     <tr class="clickable" data-action="open-equipment" data-id="${esc(e.id)}">
       <td><span class="cell-code">${esc(e.codigo)}</span>${e.revisar ? '<span class="badge gold review-badge" style="margin-left:6px;font-size:9px;padding:2px 5px">revisar</span>' : ''}<span class="cell-sub">${esc(e.origemNumero ? 'Nº origem ' + e.origemNumero : '')}</span></td>
-      <td><span class="cell-main">${esc(e.nome)}</span><span class="cell-sub">${esc([e.marca, e.modelo || e.codigoModelo, e.numeroSerie].filter(Boolean).join(' · ') || 'Sem marca/modelo informado')}</span></td>
+      <td><span class="cell-main">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</span><span class="cell-sub">${esc([e.marca, e.modelo || e.codigoModelo, e.numeroSerie].filter(Boolean).join(' · ') || 'Sem marca/modelo informado')}</span></td>
       <td>${esc(e.categoria)}</td><td>${esc(e.obra || '—')}</td>
       <td>${statusPill(e.status)}<span class="cell-sub">${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)} disp.</span></td>
       <td><span class="badge ${e.estadoConservacao === 'NOVO' ? 'green' : e.estadoConservacao === 'NAO_INFORMADO' ? 'gray' : ''}">${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</span>${e.estadoOrigem && e.estadoOrigem !== e.estadoConservacao ? `<span class="cell-sub">origem: ${esc(e.estadoOrigem)}</span>` : ''}</td>
@@ -2204,7 +2270,7 @@ function renderEquipmentList() {
     </tr>`).join('');
   const cards = pageItems.map((e) => `
     <article class="eq-card" data-action="open-equipment" data-id="${esc(e.id)}">
-      <div class="eq-card-head"><div><div class="eq-card-code">${esc(e.codigo)}</div><div class="eq-card-title">${esc(e.nome)}</div><div class="eq-card-sub">${esc(e.categoria)} · ${esc(e.marca || 'marca não informada')}</div></div>${statusPill(e.status)}</div>
+      <div class="eq-card-head"><div><div class="eq-card-code">${esc(e.codigo)}</div><div class="eq-card-title">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</div><div class="eq-card-sub">${esc(e.categoria)} · ${esc(e.marca || 'marca não informada')}</div></div>${statusPill(e.status)}</div>
       <dl class="eq-card-grid">
         <div><dt>Disponível</dt><dd>${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)}</dd></div>
         <div><dt>Conservação</dt><dd>${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</dd></div>
@@ -2259,6 +2325,7 @@ function bindEquipmentFilterEvents() {
     if (el) el.addEventListener('change', () => { state.eqFilters[key] = el.value; state.eqPage = 1; renderEquipmentList(); });
   };
   bindSelect('eqCategoria', 'categoria');
+  illustratedCategoryFilter('eqCategoria');
   bindSelect('eqObra', 'obra');
   bindSelect('eqStatus', 'status');
   bindSelect('eqConservacao', 'conservacao');
@@ -2339,14 +2406,14 @@ function paintMovements(data, el) {
       <tbody>${data.items.map((m) => `<tr>
         <td class="nowrap">${esc(fmtDate(m.data))}</td>
         <td><span class="type-chip ${movementTypeClass(m.tipo)}">${icon(movementIcon(m.tipo))} ${esc(TIPO_LABEL[m.tipo] || m.tipo)}</span></td>
-        <td><button type="button" class="link-btn" data-action="open-equipment" data-id="${esc(m.equipamentoId)}">${esc(m.equipamentoCodigo)}</button><span class="cell-sub">${esc(m.categoriaNome)}</span></td>
+        <td>${machinePhoto(m.categoriaNome, m.equipamentoNome)}<button type="button" class="link-btn" data-action="open-equipment" data-id="${esc(m.equipamentoId)}">${esc(m.equipamentoCodigo)}</button><span class="cell-sub">${esc(m.categoriaNome)}</span></td>
         <td><span class="cell-main">${esc(m.colaboradorOrigemNome || 'Estoque')}</span> <span class="muted">→</span> <span class="cell-main">${esc(m.colaboradorDestinoNome || 'Estoque')}</span></td>
         <td class="cell-qty">${fmtQty(m.quantidade)}</td>
         <td>${esc(m.usuarioEmail || '—')}</td>
         <td><span class="audit-detail">${esc(m.observacoes || '—')}</span></td>
       </tr>`).join('')}</tbody>
     </table></div>
-    <div class="mobile-cards">${data.items.map((m) => `<article class="eq-card"><div class="eq-card-head"><div><div class="eq-card-code">${esc(TIPO_LABEL[m.tipo] || m.tipo)} · ${esc(fmtDate(m.data))}</div><div class="eq-card-title">${esc(m.equipamentoCodigo)}</div><div class="eq-card-sub">${esc(m.colaboradorOrigemNome || 'Estoque')} → ${esc(m.colaboradorDestinoNome || 'Estoque')}</div></div><span class="badge">${fmtQty(m.quantidade)} un.</span></div>${m.observacoes ? `<p class="small muted mt-8">${esc(m.observacoes)}</p>` : ''}</article>`).join('')}</div>
+    <div class="mobile-cards">${data.items.map((m) => `<article class="eq-card"><div class="eq-card-head"><div><div class="eq-card-code">${esc(TIPO_LABEL[m.tipo] || m.tipo)} · ${esc(fmtDate(m.data))}</div><div class="eq-card-title">${machinePhoto(m.categoriaNome, m.equipamentoNome)}${esc(m.equipamentoCodigo)}</div><div class="eq-card-sub">${esc(m.colaboradorOrigemNome || 'Estoque')} → ${esc(m.colaboradorDestinoNome || 'Estoque')}</div></div><span class="badge">${fmtQty(m.quantidade)} un.</span></div>${m.observacoes ? `<p class="small muted mt-8">${esc(m.observacoes)}</p>` : ''}</article>`).join('')}</div>
     <div class="table-foot"><span class="muted">${fmtQty(data.total)} movimentação(ões) · página ${data.page} de ${data.totalPaginas}</span><div class="pagination">
       <button type="button" class="page-btn" data-action="mov-page" data-page="${data.page - 1}" ${data.page <= 1 ? 'disabled' : ''}>${icon('chevronLeft')}</button>
       <button type="button" class="page-btn" data-action="mov-page" data-page="${data.page + 1}" ${data.page >= data.totalPaginas ? 'disabled' : ''}>${icon('chevronRight')}</button>
@@ -2423,7 +2490,7 @@ function paintMaintenances(data, el) {
 function manCard(m) {
   const admin = isAdmin();
   return `<article class="entity-card">
-    <div class="entity-head"><div><div class="entity-title">${esc(m.equipamentoCodigo)} — ${esc(m.equipamentoNome)}</div><div class="entity-sub">${esc(m.categoriaNome)} · envio ${esc(fmtDate(m.dataEnvio))}</div></div>${manPill(m.status)}</div>
+    <div class="entity-head"><div><div class="entity-title">${machinePhoto(m.categoriaNome, m.equipamentoNome)}${esc(m.equipamentoCodigo)} — ${esc(m.equipamentoNome)}</div><div class="entity-sub">${esc(m.categoriaNome)} · envio ${esc(fmtDate(m.dataEnvio))}</div></div>${manPill(m.status)}</div>
     <div class="small"><strong>Defeito:</strong> ${esc(m.defeito || 'não informado')}</div>
     <div class="small muted">Responsável: ${esc(m.responsavel || 'não informado')}${m.celularResponsavel ? ' · ' + esc(m.celularResponsavel) : ''}${m.previsaoRetorno ? ' · previsão ' + esc(fmtDate(m.previsaoRetorno)) : ''}${m.dataRetorno ? ' · retorno ' + esc(fmtDate(m.dataRetorno)) : ''}</div>
     <div class="entity-metrics"><div class="entity-metric"><strong>${fmtMoney(m.custo)}</strong>custo</div><div class="entity-metric"><strong>${esc(m.estadoRetorno || '—')}</strong>estado retorno</div></div>
@@ -2480,7 +2547,7 @@ function renderCategoriesView() {
 function catCard(c) {
   const admin = isAdmin();
   return `<article class="entity-card" style="${c.ativo ? '' : 'opacity:.72;'}">
-    <div class="entity-head"><div><div class="entity-title">${esc(c.nome)}</div><div class="entity-sub">Prefixo ${esc(c.prefixo || '—')} · campo “${esc(c.campoItem || 'ITEM')}”${c.nomeAba ? ' · aba ' + esc(c.nomeAba) : ''}</div></div><span class="badge ${c.ativo ? 'green' : 'gray'}">${c.ativo ? 'Ativa' : 'Inativa'}</span></div>
+    <div class="entity-head"><div><div class="entity-title">${machinePhoto(c.nome)}${esc(c.nome)}</div><div class="entity-sub">Prefixo ${esc(c.prefixo || '—')} · campo “${esc(c.campoItem || 'ITEM')}”${c.nomeAba ? ' · aba ' + esc(c.nomeAba) : ''}</div></div><span class="badge ${c.ativo ? 'green' : 'gray'}">${c.ativo ? 'Ativa' : 'Inativa'}</span></div>
     <div class="entity-metrics"><div class="entity-metric"><strong>${fmtQty(c.quantidadeEquipamentos)}</strong>cadastro(s)</div><div class="entity-metric"><strong>${fmtQty(c.quantidadeDisponivel)}</strong>disponível(is)</div><div class="entity-metric"><strong>${fmtQty(c.quantidadeEntregue)}</strong>entregue(s)</div><div class="entity-metric"><strong>${fmtQty(c.quantidadeManutencao)}</strong>manutenção</div></div>
     ${c.observacaoImportacao ? `<div class="entity-note">${esc(c.observacaoImportacao)}</div>` : ''}
     ${c.observacaoOrigem ? `<div class="small muted">Observação da origem: ${esc(c.observacaoOrigem)}</div>` : ''}
@@ -2571,7 +2638,7 @@ function renderPricesView() {
           <thead><tr><th>Código</th><th>Equipamento</th><th>Categoria</th><th>Obra</th><th>Qtd.</th><th>Preço (R$)</th><th>Subtotal</th><th style="text-align:right">Ações</th></tr></thead>
           <tbody>${eqs.map((e) => `<tr>
             <td><span class="cell-code">${esc(e.codigo)}</span></td>
-            <td><span class="cell-main">${esc(e.nome)}</span></td>
+            <td><span class="cell-main">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</span></td>
             <td>${esc(e.categoria)}</td>
             <td>${esc(e.obra || '—')}</td>
             <td>${fmtQty(e.quantidadeTotal)}</td>
@@ -2585,6 +2652,7 @@ function renderPricesView() {
   `;
   hydrateIcons(main);
   const sel = $('priceCategory');
+  illustratedCategoryFilter('priceCategory');
   if (sel) sel.addEventListener('change', () => { state.pricesCategoria = sel.value; renderPricesView(); });
 }
 
@@ -2699,7 +2767,7 @@ function renderDetailDrawer() {
       <div class="drawer-head">
         <div class="drawer-head-top">
           <div style="min-width:0">
-            ${eq ? `<div class="drawer-code">${esc(eq.codigo)}</div><h2 class="drawer-title">${esc(eq.nome)}</h2><p class="drawer-sub">${esc(eq.categoria)}${eq.marca ? ' · ' + esc(eq.marca) : ''}${eq.modelo || eq.codigoModelo ? ' · ' + esc(eq.modelo || eq.codigoModelo) : ''}</p>
+            ${eq ? `<div class="drawer-code">${esc(eq.codigo)}</div><h2 class="drawer-title">${machinePhoto(eq.categoria, eq.nome)}${esc(eq.nome)}</h2><p class="drawer-sub">${esc(eq.categoria)}${eq.marca ? ' · ' + esc(eq.marca) : ''}${eq.modelo || eq.codigoModelo ? ' · ' + esc(eq.modelo || eq.codigoModelo) : ''}</p>
             <div class="drawer-badges">${statusPill(eq.status)}<span class="badge">${esc(CONSERVACAO_LABEL[eq.estadoConservacao] || eq.estadoConservacao)}</span>${eq.revisar ? '<span class="badge gold review-badge">revisar</span>' : ''}<span class="badge gray">${fmtQty(eq.quantidadeDisponivel)} de ${fmtQty(eq.quantidadeTotal)} disp.</span></div>` : `<div class="drawer-code">CARREGANDO</div><h2 class="drawer-title">Abrindo ficha…</h2>`}
           </div>
           <button type="button" class="icon-btn" data-action="close-detail" aria-label="Fechar">${icon('x')}</button>
