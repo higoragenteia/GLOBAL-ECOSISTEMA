@@ -1141,6 +1141,8 @@ input::placeholder, textarea::placeholder { color:#9990A6; }
 
 
 .machine-photo { object-fit: contain; vertical-align: middle; margin-inline-end: .45rem; border-radius: 5px; background: #fff; }
+.machine-equipment-label { display: flex; align-items: center; gap: .45rem; }
+.machine-equipment-label .machine-photo { flex: none; margin-inline-end: 0; }
 .machine-photo[hidden], select[hidden] { display: none !important; }
 .machine-category-picker { position: relative; min-width: 0; }
 .machine-category-picker summary { cursor: pointer; }
@@ -1466,10 +1468,12 @@ const MACHINE_CATEGORY_PHOTOS = {
   "SERRA TICO TICO": "https://drive.google.com/thumbnail?id=1voBco4-co9MZcQ2P_Je4kXZTO3TuRDNq&sz=w700"
 };
 function machinePhoto(category, title = '') {
-  const normalize = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  const normalize = (value) => norm(value).replace(/\s+/g, ' ').trim().toUpperCase();
   const name = normalize(category);
   const label = normalize(title);
-  const key = name || Object.keys(MACHINE_CATEGORY_PHOTOS).find(item => label.startsWith(item));
+  const key = name || Object.keys(MACHINE_CATEGORY_PHOTOS).find(
+    (item) => label === item || label.startsWith(item + ' ')
+  );
   const url = MACHINE_CATEGORY_PHOTOS[key];
   return url ? `<img class="machine-photo" src="${esc(url)}" width="32" height="32" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true">` : '';
 }
@@ -1485,7 +1489,7 @@ function illustratedCategoryFilter(id) {
   menu.className = 'machine-category-options';
   const label = (option) => (option.value ? machinePhoto(option.text) : '') + esc(option.text);
   const sync = () => {
-    summary.innerHTML = label(select.selectedOptions[0]);
+    summary.textContent = select.selectedOptions[0]?.text || '';
     menu.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.value === select.value)));
   };
   for (const option of select.options) {
@@ -2257,7 +2261,7 @@ function renderEquipmentList() {
   const rows = pageItems.map((e) => `
     <tr class="clickable" data-action="open-equipment" data-id="${esc(e.id)}">
       <td><span class="cell-code">${esc(e.codigo)}</span>${e.revisar ? '<span class="badge gold review-badge" style="margin-left:6px;font-size:9px;padding:2px 5px">revisar</span>' : ''}<span class="cell-sub">${esc(e.origemNumero ? 'Nº origem ' + e.origemNumero : '')}</span></td>
-      <td><span class="cell-main">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</span><span class="cell-sub">${esc([e.marca, e.modelo || e.codigoModelo, e.numeroSerie].filter(Boolean).join(' · ') || 'Sem marca/modelo informado')}</span></td>
+      <td><span class="cell-main machine-equipment-label">${machinePhoto(e.categoria, e.nome)}<span>${esc(e.nome)}</span></span><span class="cell-sub">${esc([e.marca, e.modelo || e.codigoModelo, e.numeroSerie].filter(Boolean).join(' · ') || 'Sem marca/modelo informado')}</span></td>
       <td>${esc(e.categoria)}</td><td>${esc(e.obra || '—')}</td>
       <td>${statusPill(e.status)}<span class="cell-sub">${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)} disp.</span></td>
       <td><span class="badge ${e.estadoConservacao === 'NOVO' ? 'green' : e.estadoConservacao === 'NAO_INFORMADO' ? 'gray' : ''}">${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</span>${e.estadoOrigem && e.estadoOrigem !== e.estadoConservacao ? `<span class="cell-sub">origem: ${esc(e.estadoOrigem)}</span>` : ''}</td>
@@ -2270,7 +2274,7 @@ function renderEquipmentList() {
     </tr>`).join('');
   const cards = pageItems.map((e) => `
     <article class="eq-card" data-action="open-equipment" data-id="${esc(e.id)}">
-      <div class="eq-card-head"><div><div class="eq-card-code">${esc(e.codigo)}</div><div class="eq-card-title">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</div><div class="eq-card-sub">${esc(e.categoria)} · ${esc(e.marca || 'marca não informada')}</div></div>${statusPill(e.status)}</div>
+      <div class="eq-card-head"><div><div class="eq-card-code">${esc(e.codigo)}</div><div class="eq-card-title machine-equipment-label">${machinePhoto(e.categoria, e.nome)}<span>${esc(e.nome)}</span></div><div class="eq-card-sub">${esc(e.categoria)} · ${esc(e.marca || 'marca não informada')}</div></div>${statusPill(e.status)}</div>
       <dl class="eq-card-grid">
         <div><dt>Disponível</dt><dd>${fmtQty(e.quantidadeDisponivel)} de ${fmtQty(e.quantidadeTotal)}</dd></div>
         <div><dt>Conservação</dt><dd>${esc(CONSERVACAO_LABEL[e.estadoConservacao] || e.estadoConservacao || '—')}</dd></div>
@@ -2638,7 +2642,7 @@ function renderPricesView() {
           <thead><tr><th>Código</th><th>Equipamento</th><th>Categoria</th><th>Obra</th><th>Qtd.</th><th>Preço (R$)</th><th>Subtotal</th><th style="text-align:right">Ações</th></tr></thead>
           <tbody>${eqs.map((e) => `<tr>
             <td><span class="cell-code">${esc(e.codigo)}</span></td>
-            <td><span class="cell-main">${machinePhoto(e.categoria, e.nome)}${esc(e.nome)}</span></td>
+            <td><span class="cell-main machine-equipment-label">${machinePhoto(e.categoria, e.nome)}<span>${esc(e.nome)}</span></span></td>
             <td>${esc(e.categoria)}</td>
             <td>${esc(e.obra || '—')}</td>
             <td>${fmtQty(e.quantidadeTotal)}</td>
