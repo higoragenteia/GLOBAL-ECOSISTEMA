@@ -1149,6 +1149,127 @@ input::placeholder, textarea::placeholder { color:#9990A6; }
 .machine-category-options { position: absolute; z-index: 20; top: 100%; inset-inline-start: 0; min-width: 100%; width: max-content; max-width: min(320px, 86vw); max-height: 55vh; overflow: auto; background: #242035; border: 1px solid #74688d; border-radius: 8px; padding: 4px; color: #fff; }
 .machine-category-options button { display: block; width: 100%; text-align: start; padding: 6px 9px; background: transparent; color: inherit; border: 0; border-radius: 4px; cursor: pointer; }
 .machine-category-options button:hover, .machine-category-options button:focus-visible, .machine-category-options button[aria-pressed="true"] { background: #594676; }
+/* Visão geral: azul ardósia e alumínio. A barra lateral é irmã de .app-main. */
+.app-main.overview-slate {
+  color-scheme: light;
+  --navy: #172334;
+  --text: #202d3c;
+  --text-2: #26354a;
+  --muted: #485a70;
+  --muted-2: #546578;
+  --surface: #f8fafc;
+  --surface-2: #edf1f6;
+  --line: #c7d2df;
+  --line-2: #b8c7d6;
+  --blue: #6332a1;
+  --blue-2: #713eaf;
+  --blue-3: #eee5f7;
+  --gold-2: #61378b;
+  --gold-3: #ece5f4;
+  --green: #175b42;
+  --green-bg: #e2f1e9;
+  --amber: #765006;
+  --amber-bg: #fff0cc;
+  --red: #9b2435;
+  --red-bg: #f8e2e6;
+  --gray: #3e5064;
+  --gray-bg: #e9eef3;
+  --violet: #683891;
+  --violet-bg: #eee5f6;
+  --aluminum: linear-gradient(155deg, #ffffff9e, transparent 44%),
+              linear-gradient(180deg, #f8fafb, #e6eaf0);
+  --shadow-sm: inset 0 1px #fff, 0 2px 0 #a8b5c4, 0 6px 14px #213a561c;
+  --shadow: inset 0 1px #fff, 0 2px 0 #a1b0c1, 0 8px 18px #213a5624;
+  color: var(--text);
+  background: linear-gradient(145deg, #e7edf4, #d7e3ef 66%, #e7edf4);
+}
+.overview-slate .topbar {
+  background: #e2ebf4f5;
+  border-bottom-color: var(--line-2);
+}
+.overview-slate .global-search,
+.overview-slate .global-search kbd {
+  background: #f4f7fb;
+  box-shadow: inset 0 1px #fff;
+}
+.overview-slate .global-search:focus-within { border-color: var(--blue-2); box-shadow: 0 0 0 3px #713eaf28; }
+.overview-slate .global-search input::placeholder { color: var(--muted-2); }
+.overview-slate .page-head h2 { text-shadow: none; }
+.overview-slate .card,
+.overview-slate .stat-card {
+  background: var(--aluminum);
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-sm);
+}
+.overview-slate .stat-card { border-top-width: 1px; }
+.overview-slate .stat-card::after { content: none; }
+.overview-slate .stat-card:hover,
+.overview-slate .card:hover { border-color: #9faec0; }
+.overview-slate .stat-card:hover { box-shadow: var(--shadow); }
+.overview-slate .stat-icon {
+  color: #fff;
+  flex: 0 0 auto;
+  background: linear-gradient(155deg, #647fd6, #284b9b);
+  border-color: #2f54a3;
+  box-shadow: inset 0 1px #ffffff77, 0 2px 4px #1b315b33;
+}
+.overview-slate [data-action="stat-go-pending"] > .stat-top > .stat-icon:not(.gold) {
+  background: linear-gradient(155deg, #b87b12, #835302);
+  border-color: #865600;
+}
+.overview-slate .stat-icon.green { background: linear-gradient(155deg, #36986a, #216042); border-color: #216042; }
+.overview-slate .stat-icon.red { background: linear-gradient(155deg, #d34f61, #9b2435); border-color: #9b2435; }
+
+.overview-slate .quick-action,
+.overview-slate .quick-action.primary,
+.overview-slate .btn-secondary {
+  background: var(--aluminum);
+  color: var(--text-2);
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-sm);
+}
+.overview-slate .quick-action:hover,
+.overview-slate .btn-secondary:hover { border-color: #899db3; box-shadow: var(--shadow); }
+.overview-slate .quick-action.primary strong { color: var(--navy); }
+.overview-slate .quick-action.primary small { color: var(--muted); }
+.overview-slate .quick-action .quick-action-icon {
+  position: relative;
+  color: #35404c;
+  border: 1px solid #9aa5b0;
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 4px 4px, #7d8791 1px, #fff 1.7px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 4px) 4px, #7d8791 1px, #fff 1.7px, transparent 2.4px),
+    radial-gradient(circle at 4px calc(100% - 4px), #7d8791 1px, #fff 1.7px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 4px) calc(100% - 4px), #7d8791 1px, #fff 1.7px, transparent 2.4px),
+    linear-gradient(155deg, #fdfefe, #c4cbd2 63%, #e8ecef);
+  box-shadow: inset 0 1px #fff, inset 0 -2px #9da6af80, 0 2px 3px #26374540;
+}
+.overview-slate .quick-action-icon svg { filter: drop-shadow(0 1px #ffffffd9); }
+
+.overview-slate .pending-item { background: #f0f3f7; }
+.overview-slate .pending-icon { color: var(--violet); }
+.overview-slate .category-bar { background: #dce4ed; }
+.overview-slate .badge { border-color: #cbb8e0; }
+.overview-slate .badge.green { border-color: #aed4bd; }
+.overview-slate .badge.gray { border-color: #bccad7; }
+.overview-slate .alert-warn { color: var(--amber); background: var(--amber-bg); border-color: #ddbf70; }
+.overview-slate .alert-warn .link-btn { color: var(--blue); }
+
+.overview-slate .movement-dot .machine-photo {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  border-radius: inherit;
+}
+.overview-slate .movement-fallback { display: grid; place-items: center; }
+.overview-slate .movement-fallback svg { width: 15px; height: 15px; }
+.overview-slate .movement-dot img:not([hidden]) + .movement-fallback { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .overview-slate .quick-action, .overview-slate .stat-card { transition: none; }
+  .overview-slate .quick-action:hover, .overview-slate .stat-card:hover { transform: none; }
+}
 </style>
 <link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script>
 /* Foto de perfil igual à do painel, mas sem a opção de clicar/trocar neste módulo. */
@@ -1372,6 +1493,8 @@ const ICON_PATHS = {
   arrowRight: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
   filter: '<path d="M4 4h16l-6 7v6l-4 2v-8Z"/>',
   list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  deliveryTruck: '<path d="M3 5h12v12H3zM15 9h4l3 3v5h-2M15 17h1M9 17h7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
+  team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M5 5a3 3 0 0 0 0 6m14-6a3 3 0 0 1 0 6M2 19v-2a4 4 0 0 1 3-4m17 6v-2a4 4 0 0 0-3-4"/>',
   arrowUpRight: '<path d="M7 17 17 7"/><path d="M7 7h10v10"/>',
   fileText: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
@@ -1845,6 +1968,7 @@ function renderCurrentView() {
   if (!state.data) return;
   const main = $('main');
   if (!main) return;
+  main.closest('.app-main').classList.toggle('overview-slate', state.view === 'dashboard');
   if (state.view === 'dashboard') renderDashboard();
   else if (state.view === 'equipamentos') renderEquipmentView();
   else if (state.view === 'movimentacoes') renderMovementsView();
@@ -2016,6 +2140,7 @@ function renderDashboard() {
   const mans = (d.manutencoesAbertas || []).slice(0, 4);
   const cats = (d.porCategoria || []).filter((c) => c.total > 0 || c.revisar > 0);
   const movs = (d.movimentacoesRecentes || []).slice(0, 8);
+  const movementCategories = new Map((d.equipamentos || []).map((item) => [item.id, item.categoria]));
   const alertCount = (d.avisos || []).length;
   const patrimonio = (d.equipamentos || []).filter((e) => e.status !== 'INATIVO').reduce((s, e) => s + (Number(e.preco) || 0) * (Number(e.quantidadeTotal) || 0), 0);
 
@@ -2037,10 +2162,10 @@ function renderDashboard() {
         <button type="button" class="quick-sync" data-action="sync-sheet">Atualizar dados</button>
       </div>
       <div class="quick-actions-grid">
-        ${quickAction('new-delivery', 'Registrar entrega', 'Nova saída de equipamento', 'arrowUpRight', 'primary')}
-        ${quickAction('new-equipment', 'Cadastrar equipamento', 'Novo item no controle', 'plus')}
+        ${quickAction('new-delivery', 'Registrar entrega', 'Nova saída de equipamento', 'deliveryTruck', 'primary')}
+        ${quickAction('new-equipment', 'Cadastrar equipamento', 'Novo item no controle', 'package')}
         ${quickAction('new-maintenance', 'Enviar para manutenção', 'Indisponibiliza o item', 'wrench')}
-        ${quickAction('new-collaborator', 'Novo colaborador', 'Quem recebe equipamentos', 'userPlus')}
+        ${quickAction('new-collaborator', 'Novo colaborador', 'Quem recebe equipamentos', 'team')}
         ${quickAction('new-category', 'Nova categoria', 'Cria uma categoria', 'tag')}
         ${quickAction('new-obra', 'Nova obra', 'Obra/local dos equipamentos', 'mapPin')}
       </div>
@@ -2094,7 +2219,7 @@ function renderDashboard() {
           <button type="button" class="btn btn-sm btn-ghost" data-action="go-movimentacoes">Ver todas ${icon('arrowRight')}</button>
         </div>
         <div class="card-body">
-          ${movs.length ? `<div class="movement-list">${movs.map(movementItem).join('')}</div>` : emptyState('history', 'Sem movimentações', 'As movimentações aparecerão aqui.')}
+          ${movs.length ? `<div class="movement-list">${movs.map((m) => movementItem(m, movementCategories.get(m.equipamentoId))).join('')}</div>` : emptyState('history', 'Sem movimentações', 'As movimentações aparecerão aqui.')}
         </div>
       </section>
 
@@ -2141,13 +2266,14 @@ function categoryRow(c) {
   </button>`;
 }
 
-function movementItem(m) {
+function movementItem(m, currentCategory) {
+  const photo = machinePhoto(m.categoriaNome) || machinePhoto(currentCategory);
   const cls = movementTypeClass(m.tipo);
   const rota = m.colaboradorOrigemNome || m.colaboradorDestinoNome
     ? `${m.colaboradorOrigemNome ? esc(m.colaboradorOrigemNome) : 'Estoque'} <span class="muted">→</span> ${m.colaboradorDestinoNome ? esc(m.colaboradorDestinoNome) : 'Estoque'}`
     : (m.observacoes ? esc(m.observacoes) : '—');
   return `<div class="movement-item">
-    <span class="movement-dot ${cls}">${icon(movementIcon(m.tipo))}</span>
+    <span class="movement-dot ${cls}">${photo}<span class="movement-fallback">${icon(movementIcon(m.tipo))}</span></span>
     <div class="movement-body">
       <div class="movement-title">${esc(TIPO_LABEL[m.tipo] || m.tipo)} · <strong>${esc(m.equipamentoCodigo || '')}</strong>${m.quantidade ? ` <span class="muted">(${fmtQty(m.quantidade)})</span>` : ''}</div>
       <div class="movement-sub">${rota}${m.usuarioEmail ? ' · ' + esc(m.usuarioEmail) : ''}</div>
