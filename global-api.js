@@ -27,6 +27,12 @@
   if(!write)inflight.set(cacheKey,promise);
   try{return await promise;}finally{if(!write)inflight.delete(cacheKey);}
  };
+ async function finishPanelLogin(session) {
+  const result = await window.PanelAuth.finishLogin(session);
+  const profile = await window.globalCall('painel','perfil');
+  for(const key of ['globalEco:gvgUsrToken','pedidosTeste:gvgUsrToken']) localStorage.setItem(key,result.token);
+  return {...result,...profile};
+ }
  let pendingFactor;
  window.GlobalPanelMfa = {
   async start(user, password) {
@@ -39,6 +45,7 @@
    });
    const status = await response.json();
    if(!response.ok || !status.data?.ok) throw Error(status.error || 'A verificação do painel está indisponível.');
+   if(status.data.requiresMfa === false) return {profile:await finishPanelLogin(first)};
    const factors = first.user?.factors || [];
    const verified = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'verified');
    const abandoned = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'unverified');
@@ -57,10 +64,7 @@
    const verified = await window.PanelAuth.request(path+'verify',{challenge_id:challenge.id,code},pending.token);
    if(pendingFactor !== pending) throw Error('A verificação foi encerrada.');
    pendingFactor = null;
-   const result = await window.PanelAuth.finishLogin({...verified,user:verified.user||pending.user});
-   const profile = await window.globalCall('painel','perfil');
-   for(const key of ['globalEco:gvgUsrToken','pedidosTeste:gvgUsrToken']) localStorage.setItem(key,result.token);
-   return {...result,...profile};
+   return finishPanelLogin({...verified,user:verified.user||pending.user});
   },
   cancel() { pendingFactor = null; }
  };

@@ -1119,7 +1119,7 @@ window.addEventListener('beforeinstallprompt', event => {
     .gvgp-cat-icon{max-width:150px}
   }
 </style>
-<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js?v=totp-1"></script><script src="./global-api.js?v=totp-1"></script><script src="./shared-profile.js"></script></head>
+<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js?v=totp-1"></script><script src="./global-api.js?v=totp-2"></script><script src="./shared-profile.js"></script></head>
 <body>
 <div id="gvgpApp" class="gvgp-app gvgp-locked gvgp-cat-login">
   <button type="button" id="gvgpFocusMenuBtn" class="gvgp-focus-menu-btn" aria-label="Abrir menu do painel" aria-expanded="false" aria-controls="gvgpSidebar" title="Abrir menu do painel">
@@ -2144,6 +2144,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     try{
       if(document.requestStorageAccess)document.requestStorageAccess().catch(()=>{});
       const factor=await window.GlobalPanelMfa.start(user,pass.value);
+      if(factor.profile){finishPanelLogin(factor.profile);return;}
       $('gvgpMfaHelp').textContent=factor.setup
         ? 'Escaneie o QR code com seu aplicativo autenticador e digite o código de 6 dígitos.'
         : 'Digite o código de 6 dígitos do seu aplicativo autenticador.';
@@ -2167,28 +2168,31 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     try{
       const d=await window.GlobalPanelMfa.verify(code.value.trim());
       resetMfa();
-      const msg=$('gvgpLoginMsg');
-      if(!d||!d.token) throw new Error('O servidor não confirmou a sessão.');
-      store.set('globalEco:gvgUsrToken',d.token);
-      if(['ADMIN','SUPERADMIN'].indexOf(String(d.perfil||'').toUpperCase())>=0){state.adminToken=d.token;}
-      else {state.adminToken='';}
-      store.remove('globalEco:gvgAdminToken');
-      state.token=d.token; state.user={id:d.id||'',nome:d.nome,login:d.login,email:d.email,perfil:d.perfil,permissoes:d.permissoes||{}};
-      $('gvgpLoginPass').value='';
-      msg.style.color='#0f766e'; msg.textContent='Acesso autorizado.';
-      loadDashboard(d.token);
-      if(state.frameLoaded){ const f=$('gvgpPedidosFrame'); if(f) f.src=PEDIDOS_URL; }
-      if(state.gastosFrameLoaded){ const g=$('gvgpGastosFrame'); if(g) g.src=GASTOS_URL; }
-      if(state.fornecedoresFrameLoaded){ const f=$('gvgpFornecedoresFrame'); if(f) f.src=FORNECEDORES_URL; }
-      if(state.maquinasFrameLoaded){ const m=$('gvgpMaquinasFrame'); if(m) m.src=MAQUINAS_URL; }
-      if(state.frotasFrameLoaded){ const f=$('gvgpFrotasFrame'); if(f) f.src=frotasFrameUrl(); }
-      toast('Bem-vindo(a), '+d.nome+'!');
+      finishPanelLogin(d);
     }catch(err){
       msg.textContent=err.code==='mfa_verification_failed'
         ? 'Código inválido. Confira o código atual no autenticador e tente novamente.'
         : err.message||'Não foi possível verificar o código.';
       code.select();
     }finally{btn.disabled=false;back.disabled=false;}
+  }
+  function finishPanelLogin(d){
+    const msg=$('gvgpLoginMsg');
+    if(!d||!d.token) throw new Error('O servidor não confirmou a sessão.');
+    store.set('globalEco:gvgUsrToken',d.token);
+    if(['ADMIN','SUPERADMIN'].indexOf(String(d.perfil||'').toUpperCase())>=0){state.adminToken=d.token;}
+    else {state.adminToken='';}
+    store.remove('globalEco:gvgAdminToken');
+    state.token=d.token; state.user={id:d.id||'',nome:d.nome,login:d.login,email:d.email,perfil:d.perfil,permissoes:d.permissoes||{}};
+    $('gvgpLoginPass').value='';
+    msg.style.color='#0f766e'; msg.textContent='Acesso autorizado.';
+    loadDashboard(d.token);
+    if(state.frameLoaded){ const f=$('gvgpPedidosFrame'); if(f) f.src=PEDIDOS_URL; }
+    if(state.gastosFrameLoaded){ const g=$('gvgpGastosFrame'); if(g) g.src=GASTOS_URL; }
+    if(state.fornecedoresFrameLoaded){ const f=$('gvgpFornecedoresFrame'); if(f) f.src=FORNECEDORES_URL; }
+    if(state.maquinasFrameLoaded){ const m=$('gvgpMaquinasFrame'); if(m) m.src=MAQUINAS_URL; }
+    if(state.frotasFrameLoaded){ const f=$('gvgpFrotasFrame'); if(f) f.src=frotasFrameUrl(); }
+    toast('Bem-vindo(a), '+d.nome+'!');
   }
   function revogarSessaoMaquinas_(){}
   function logout(){
