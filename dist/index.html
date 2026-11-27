@@ -2656,6 +2656,8 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
   });
   $('gvgpLoginForm').addEventListener('submit',login);
+  const loginLogo=$('gvgpLoginForm').querySelector('.gvgp-login-logo');
+  if(loginLogo)$('gvgpMfaForm').prepend(loginLogo.cloneNode(true));
   $('gvgpMfaForm').addEventListener('submit',verifyMfa);
   $('gvgpMfaCancel').addEventListener('click',()=>{
     resetMfa();
