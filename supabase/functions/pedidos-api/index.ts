@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.119.1';
 
+import {mfaMessage,mfaSatisfied} from '../_shared/mfa.js';
+
 const URL = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const db = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -224,6 +226,7 @@ Deno.serve(async (req: Request) => {
   if (fn === 'sairFuncionario' || fn === 'sairAdminGVG') { await db.auth.admin.signOut(token, 'local'); return answer({ data: { ok: true } }); }
   const u = checked(await db.from('pedidos_usuarios').select('*').eq('id', auth.data.user.id).maybeSingle());
   if (!u || u.status !== 'ATIVO') fail(u?.status === 'PENDENTE' ? 'Cadastro aguardando aprovação.' : 'Acesso não autorizado ou bloqueado.');
+  if (!await mfaSatisfied(db.auth, token, auth.data.user)) return answer({ error: mfaMessage, code: 'MFA_REQUIRED' }, 403);
   return answer({ data: await run(fn, args, u) });
  } catch (e) {
   const message = e instanceof Error ? e.message : 'Falha na operação.';

@@ -1119,7 +1119,7 @@ window.addEventListener('beforeinstallprompt', event => {
     .gvgp-cat-icon{max-width:150px}
   }
 </style>
-<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js?v=totp-1"></script><script src="./global-api.js?v=totp-2"></script><script src="./shared-profile.js"></script></head>
+<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js?v=totp-1"></script><script src="./global-api.js?v=totp-optional-1"></script><script src="./shared-profile.js"></script></head>
 <body>
 <div id="gvgpApp" class="gvgp-app gvgp-locked gvgp-cat-login">
   <button type="button" id="gvgpFocusMenuBtn" class="gvgp-focus-menu-btn" aria-label="Abrir menu do painel" aria-expanded="false" aria-controls="gvgpSidebar" title="Abrir menu do painel">
@@ -1364,10 +1364,6 @@ window.addEventListener('beforeinstallprompt', event => {
           <form id="gvgpMfaForm" class="gvgp-login-form gvgp-login-panel gvgp-hidden">
             <h2>Verificação em duas etapas</h2>
             <p id="gvgpMfaHelp">Digite o código de 6 dígitos do seu aplicativo autenticador.</p>
-            <div id="gvgpMfaSetup" class="gvgp-hidden">
-              <img id="gvgpMfaQr" width="164" height="164" alt="QR code para configurar o aplicativo autenticador" style="display:block;margin:0 auto 10px">
-              <details><summary>Inserir chave manualmente</summary><code id="gvgpMfaSecret" style="overflow-wrap:anywhere"></code></details>
-            </div>
             <div class="gvgp-field">
               <label for="gvgpMfaCode">Código de verificação</label>
               <div class="gvgp-input-wrap">
@@ -1557,6 +1553,25 @@ window.addEventListener('beforeinstallprompt', event => {
     <form method="dialog"><button type="submit" class="gvgp-install-action">Fechar</button></form>
     <button type="button" class="gvgp-install-action gvgp-install-action-primary gvgp-hidden" id="gvgpConfirmInstall">Instalar app</button>
   </div>
+</dialog>
+<dialog id="gvgpSecurityDialog" class="gvgp-install-dialog" aria-labelledby="gvgpSecurityTitle">
+  <h2 id="gvgpSecurityTitle">Verificação em duas etapas</h2>
+  <p id="gvgpSecurityStatus" role="status"></p>
+  <form id="gvgpSecurityForm">
+    <div id="gvgpSecuritySetup" class="gvgp-hidden">
+      <img id="gvgpSecurityQr" width="164" height="164" alt="QR Code do autenticador" style="display:block;margin:0 auto 12px">
+      <details><summary>Digitar chave manualmente</summary><code id="gvgpSecuritySecret" style="overflow-wrap:anywhere"></code></details>
+      <label class="gvgp-perm-field" style="margin:12px 0">
+        <span>Código de 6 dígitos</span>
+        <input id="gvgpSecurityCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required disabled>
+      </label>
+    </div>
+    <div class="gvgp-install-actions">
+      <button type="button" class="gvgp-install-action" id="gvgpSecurityClose">Fechar</button>
+      <button type="button" class="gvgp-install-action gvgp-install-action-primary gvgp-hidden" id="gvgpSecurityEnroll">Ativar 2FA</button>
+      <button type="submit" class="gvgp-install-action gvgp-install-action-primary gvgp-hidden" id="gvgpSecurityConfirm">Confirmar ativação</button>
+    </div>
+  </form>
 </dialog>
 <div id="gvgpToast" class="gvgp-toast" role="status" aria-live="polite"></div>
 <div id="gvgpPendingModal" class="gvgp-pending-modal gvgp-hidden" role="dialog" aria-modal="true" aria-labelledby="gvgpPendingTitle">
@@ -1848,6 +1863,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   }
   function closePending(){$('gvgpPendingModal').classList.add('gvgp-hidden');}
   function renderLoggedOut(){
+    $('gvgpSecurityDialog').close();
     resetMfa();
     state.token=''; state.adminToken=''; state.user=null; state.data=null; state.gastosFrameLoaded=false; state.fornecedoresFrameLoaded=false; state.maquinasFrameLoaded=false; state.frotasFrameLoaded=false; state.frotasAlert=''; externosLastFetch=0;externosLastToken='';lastUserSignature='';activitiesSig='';moduleUseOrder=state.frameLoaded?['pedidos']:[];
     const gastosFrame=$('gvgpGastosFrame'); if(gastosFrame)gastosFrame.src='about:blank';
@@ -1880,10 +1896,11 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const who=((user&&(user.email||'')+' '+(user.login||'')+' '+(user.nome||''))||'').toLowerCase();
     const foto=user&&user.foto?String(user.foto):'';
     const avatar=foto?'<img src="'+safe(foto)+'" alt="">':(who.includes('higor')?'<img src="'+HIGOR_AVATAR+'" alt="">':safe(initial));
+    const security=['ADMIN','SUPERADMIN'].includes(roleKey)?'<button type="button" class="gvgp-logout" id="gvgpSecurityBtn" aria-label="Configurar verificação em duas etapas" aria-haspopup="dialog">2FA</button>':'';
     const pending=isSuperadmin(user)?'<button type="button" class="gvgp-logout gvgp-pending-btn" id="gvgpPendingBtn" title="Gerenciar usuários e permissões"><span class="gvgp-pending-label">Usuários</span> <span class="gvgp-pending-count" id="gvgpPendingCount">0</span></button>':'';
     const meta='<span class="gvgp-user-role">'+safe(role)+'</span>'+(user&&user.email?'<span class="gvgp-user-email"> · '+safe(user.email)+'</span>':'');
     return '<span class="gvgp-user-chip"><span class="gvgp-user-avatar" role="button" tabindex="0" title="Alterar foto de perfil">'+avatar+'</span><span class="gvgp-user-meta"><strong>'+safe(user?user.nome:'')+'</strong><span>'+meta+'</span></span></span>'+
-      pending+'<button type="button" class="gvgp-logout" id="gvgpLogoutBtn">Sair</button>';
+      pending+security+'<button type="button" class="gvgp-logout" id="gvgpLogoutBtn">Sair</button>';
   }
   function applyMenuPermissions(){
     GVG_PROJECTS.forEach(p=>{
@@ -2125,8 +2142,6 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   }
   function resetMfa(){
     window.GlobalPanelMfa.cancel();
-    $('gvgpMfaQr').removeAttribute('src');
-    $('gvgpMfaSecret').textContent='';
     $('gvgpMfaCode').value='';
     $('gvgpMfaMsg').textContent='';
     $('gvgpMfaForm').classList.add('gvgp-hidden');
@@ -2145,14 +2160,6 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       if(document.requestStorageAccess)document.requestStorageAccess().catch(()=>{});
       const factor=await window.GlobalPanelMfa.start(user,pass.value);
       if(factor.profile){finishPanelLogin(factor.profile);return;}
-      $('gvgpMfaHelp').textContent=factor.setup
-        ? 'Escaneie o QR code com seu aplicativo autenticador e digite o código de 6 dígitos.'
-        : 'Digite o código de 6 dígitos do seu aplicativo autenticador.';
-      $('gvgpMfaSetup').classList.toggle('gvgp-hidden',!factor.setup);
-      if(factor.setup){
-        $('gvgpMfaQr').src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(factor.qr);
-        $('gvgpMfaSecret').textContent=factor.secret;
-      }
       $('gvgpLoginForm').classList.add('gvgp-hidden');
       $('gvgpMfaForm').classList.remove('gvgp-hidden');
       $('gvgpMfaCode').focus();
@@ -2175,6 +2182,66 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
         : err.message||'Não foi possível verificar o código.';
       code.select();
     }finally{btn.disabled=false;back.disabled=false;}
+  }
+  function clearSecuritySetup(){
+    window.GlobalPanelMfa.cancel();
+    $('gvgpSecuritySetup').classList.add('gvgp-hidden');
+    $('gvgpSecurityConfirm').classList.add('gvgp-hidden');
+    $('gvgpSecurityEnroll').classList.add('gvgp-hidden');
+    $('gvgpSecurityQr').removeAttribute('src');
+    $('gvgpSecuritySecret').textContent='';
+    $('gvgpSecurityCode').value='';
+    $('gvgpSecurityCode').disabled=true;
+  }
+  async function openSecurity(){
+    const dialog=$('gvgpSecurityDialog'), status=$('gvgpSecurityStatus');
+    clearSecuritySetup();
+    status.textContent='Consultando sua conta…';
+    dialog.showModal();
+    try{
+      const info=await window.GlobalPanelMfa.enrollmentStatus();
+      if(!dialog.open)return;
+      status.textContent=info.requiresMfa?'O 2FA está ativo nesta conta.'
+        :info.canEnroll?'A ativação é opcional. Se ativar, você vai usar o código do autenticador nos próximos logins.'
+        :'A configuração de 2FA é exclusiva de administradores.';
+      $('gvgpSecurityEnroll').classList.toggle('gvgp-hidden',info.requiresMfa||!info.canEnroll);
+    }catch(err){if(dialog.open)status.textContent=err.message;}
+  }
+  async function enrollSecurity(){
+    const dialog=$('gvgpSecurityDialog'), status=$('gvgpSecurityStatus'), button=$('gvgpSecurityEnroll');
+    button.disabled=true;
+    status.textContent='Gerando QR Code…';
+    try{
+      const factor=await window.GlobalPanelMfa.enroll();
+      if(!dialog.open)return;
+      $('gvgpSecurityQr').src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(factor.qr);
+      $('gvgpSecuritySecret').textContent=factor.secret;
+      $('gvgpSecuritySetup').classList.remove('gvgp-hidden');
+      $('gvgpSecurityConfirm').classList.remove('gvgp-hidden');
+      button.classList.add('gvgp-hidden');
+      status.textContent='Escaneie o QR Code com seu aplicativo autenticador e confirme o código de 6 dígitos.';
+      const code=$('gvgpSecurityCode');
+      code.disabled=false;
+      code.focus();
+    }catch(err){if(dialog.open)status.textContent=err.message;}
+    finally{button.disabled=false;}
+  }
+  async function verifySecurity(ev){
+    ev.preventDefault();
+    const dialog=$('gvgpSecurityDialog'), status=$('gvgpSecurityStatus');
+    const code=$('gvgpSecurityCode'), confirm=$('gvgpSecurityConfirm'), close=$('gvgpSecurityClose');
+    confirm.disabled=close.disabled=true;
+    status.textContent='Confirmando o código…';
+    try{
+      await window.GlobalPanelMfa.verify(code.value.trim());
+      if(!dialog.open)return;
+      clearSecuritySetup();
+      status.textContent='2FA ativado. O código será solicitado nos próximos logins.';
+      close.focus();
+    }catch(err){
+      status.textContent=err.code==='mfa_verification_failed'?'Código inválido. Confira o código atual e tente novamente.':err.message;
+      code.select();
+    }finally{confirm.disabled=close.disabled=false;}
   }
   function finishPanelLogin(d){
     const msg=$('gvgpLoginMsg');
@@ -2659,6 +2726,12 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     const show=p.type==='password';p.type=show?'text':'password';
     b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
   });
+  $('gvgpTopUser').addEventListener('click',e=>{if(e.target.closest('#gvgpSecurityBtn'))openSecurity();});
+  $('gvgpSecurityEnroll').addEventListener('click',enrollSecurity);
+  $('gvgpSecurityForm').addEventListener('submit',verifySecurity);
+  $('gvgpSecurityClose').addEventListener('click',()=>$('gvgpSecurityDialog').close());
+  $('gvgpSecurityDialog').addEventListener('close',clearSecuritySetup);
+  $('gvgpSecurityDialog').addEventListener('cancel',e=>{if($('gvgpSecurityConfirm').disabled)e.preventDefault();});
   $('gvgpLoginForm').addEventListener('submit',login);
   const loginLogo=$('gvgpLoginForm').querySelector('.gvgp-login-logo');
   if(loginLogo)$('gvgpMfaForm').prepend(loginLogo.cloneNode(true));

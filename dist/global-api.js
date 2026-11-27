@@ -33,32 +33,45 @@
   for(const key of ['globalEco:gvgUsrToken','pedidosTeste:gvgUsrToken']) localStorage.setItem(key,result.token);
   return {...result,...profile};
  }
+ async function mfaStatus(token) {
+  const response = await fetch(URL+'/functions/v1/global-api', {
+   method:'POST', headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({modulo:'painel',fn:'prepararSegundoFator'})
+  });
+  const status = await response.json();
+  if(!response.ok || !status.data?.ok) throw Error(status.error || 'A verificação do painel está indisponível.');
+  return status.data;
+ }
  let pendingFactor;
  window.GlobalPanelMfa = {
   async start(user, password) {
    pendingFactor = null;
    const first = await window.PanelAuth.passwordLogin(user, password);
    const token = first.access_token;
-   const response = await fetch(URL+'/functions/v1/global-api', {
-    method:'POST', headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
-    body:JSON.stringify({modulo:'painel',fn:'prepararSegundoFator'})
-   });
-   const status = await response.json();
-   if(!response.ok || !status.data?.ok) throw Error(status.error || 'A verificação do painel está indisponível.');
-   if(status.data.requiresMfa === false) return {profile:await finishPanelLogin(first)};
-   const factors = first.user?.factors || [];
-   const verified = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'verified');
-   const abandoned = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'unverified');
-   if(!verified && abandoned) await window.PanelAuth.request('factors/'+encodeURIComponent(abandoned.id),undefined,token,'DELETE');
-   const factor = verified || await window.PanelAuth.request('factors',{
-    factor_type:'totp',friendly_name:'Global Ecossistema'
-   },token);
-   pendingFactor = {token, id:encodeURIComponent(factor.id), user:first.user};
-   return {setup:!verified, qr:factor.totp?.qr_code, secret:factor.totp?.secret};
+   const status = await mfaStatus(token);
+   if(!status.requiresMfa) return {profile:await finishPanelLogin(first)};
+   const id = status.factorId || first.user?.factors?.find(f=>f.factor_type==='totp'&&f.status==='verified')?.id;
+   if(!id) throw Error('Não foi possível localizar o autenticador desta conta.');
+   pendingFactor = {token, id:encodeURIComponent(id), user:first.user};
+   return {};
+  },
+  async enrollmentStatus() {
+   const token = await window.GlobalSession.access();
+   return mfaStatus(token);
+  },
+  async enroll() {
+   const pending = {};
+   pendingFactor = pending;
+   const token = await window.GlobalSession.access();
+   const user = await window.PanelAuth.request('user',undefined,token,'GET');
+   const factor = await window.globalCall('painel','ativarSegundoFator');
+   if(pendingFactor!==pending) throw Error('A configuração foi encerrada.');
+   Object.assign(pending,{token,id:encodeURIComponent(factor.factorId),user});
+   return factor;
   },
   async verify(code) {
    const pending = pendingFactor;
-   if(!pending) throw Error('Entre novamente para gerar uma nova sessão.');
+   if(!pending?.id) throw Error('Entre novamente para gerar uma nova sessão.');
    const path = 'factors/'+pending.id+'/';
    const challenge = await window.PanelAuth.request(path+'challenge',{},pending.token);
    const verified = await window.PanelAuth.request(path+'verify',{challenge_id:challenge.id,code},pending.token);

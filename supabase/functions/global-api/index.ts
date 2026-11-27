@@ -1,5 +1,6 @@
 // @ts-nocheck
 import {createClient} from 'npm:@supabase/supabase-js@2.119.1';
+import {mfaMessage,mfaSatisfied,verifiedTotp} from '../_shared/mfa.js';
 import {makeRuntime} from './records.js';
 import {createModule as gastos} from './gastos.js';
 import {createModule as fornecedores} from './fornecedores.js';
@@ -15,6 +16,21 @@ const str=(v,max=200)=>String(v??'').trim().slice(0,max);
 const isSuper=u=>u.perfil==='SUPERADMIN';
 function level(u,m){if(!keys.includes(m))return '';return u.perfil==='SUPERADMIN'?'GERENCIAR':u.permissoes?.[m]||'';}
 function publicUser(u){const perms=Object.fromEntries(keys.map(m=>[m,level(u,m)]));return {id:u.id,nome:u.nome,login:u.login,email:u.email,foto:u.foto,perfil:u.perfil,status:u.status,superadmin:isSuper(u),permissoes:perms,projetos:keys.filter(k=>!!perms[k]),podeGerenciarPedidos:perms.pedidos==='GERENCIAR',podeOperarPedidos:['GERENCIAR','OPERAR'].includes(perms.pedidos)};}
+const canEnrollMfa = u => ['ADMIN','SUPERADMIN'].includes(u.perfil);
+async function enrollMfa(token,user) {
+ const headers={apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
+ const previous=(user.factors||[]).filter(f=>f.factor_type==='totp'&&f.status==='unverified');
+ for(const factor of previous){
+  const removed=await fetch(URL+'/auth/v1/factors/'+encodeURIComponent(factor.id),{method:'DELETE',headers});
+  if(!removed.ok)throw Error('Não foi possível reiniciar a configuração do autenticador.');
+ }
+ const response=await fetch(URL+'/auth/v1/factors',{
+  method:'POST',headers,body:JSON.stringify({factor_type:'totp',friendly_name:'Global Ecossistema'})
+ });
+ const factor=await response.json();
+ if(!response.ok||!factor.id||!factor.totp?.qr_code)throw Error('Não foi possível gerar o QR Code do autenticador.');
+ return {factorId:factor.id,qr:factor.totp.qr_code,secret:factor.totp.secret};
+}
 async function allUsers(){return checked(await db.from('pedidos_usuarios').select('*').order('criado_em'));}
 async function userAction(fn,args,u){
  if(!isSuper(u))throw Error('Somente o Superadministrador pode gerenciar usuários.');
@@ -106,17 +122,21 @@ Deno.serve(async req=>{
   const token=(req.headers.get('authorization')||'').replace(/^Bearer\s+/i,'');if(!token)return reply({error:'Entre na sua conta.'},401);
   const auth=await db.auth.getUser(token);if(auth.error||!auth.data.user)return reply({error:'Sessão expirada.'},401);
   const u=checked(await db.from('pedidos_usuarios').select('*').eq('id',auth.data.user.id).maybeSingle());if(!u||u.status!=='ATIVO')return reply({error:'Cadastro pendente ou bloqueado.'},403);
+  if(m==='painel'&&fn==='prepararSegundoFator'){
+   const factor=verifiedTotp(auth.data.user);
+   return reply({data:{ok:true,requiresMfa:!!factor,factorId:factor?.id,canEnroll:canEnrollMfa(u)}});
+  }
+  if(!await mfaSatisfied(db.auth,token,auth.data.user)){
+   return reply({error:mfaMessage,code:'MFA_REQUIRED'},403);
+  }
   let result;
   if(m==='painel'){
-   const requiresMfa=isSuper(u);
-   if(fn==='prepararSegundoFator')return reply({data:{ok:true,requiresMfa}});
-   if(requiresMfa){
-    const assurance=await db.auth.getClaims(token);
-    if(assurance.error||assurance.data?.claims?.aal!=='aal2'){
-     return reply({error:'Confirme o código do aplicativo autenticador para entrar.',code:'MFA_REQUIRED'},403);
-    }
+   if(fn==='ativarSegundoFator'){
+    if(!canEnrollMfa(u))return reply({error:'A configuração de 2FA é exclusiva de administradores.'},403);
+    if(verifiedTotp(auth.data.user))return reply({error:'O 2FA já está ativo.'},409);
+    result=await enrollMfa(token,auth.data.user);
    }
-   if(fn==='getPainelInicial'||fn==='getPainelExternos')result=await panel(u);
+   else if(fn==='getPainelInicial'||fn==='getPainelExternos')result=await panel(u);
    else if(fn==='perfil')result=publicUser(u);
    else if(fn==='alterarMinhaSenha')result=await changeOwnPassword(args[0]||{},u,token);
    else result=await userAction(fn,args,u);

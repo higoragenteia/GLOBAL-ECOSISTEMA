@@ -1,6 +1,7 @@
 // GVG & ARTEFAL — Frotas / Supabase. Nenhuma chamada ao Apps Script em tempo de execução.
 // Acesso via sessão Supabase do Painel GLOBAL, com autorização e auditoria a cada requisição.
 import {createClient} from 'npm:@supabase/supabase-js@2.119.1';
+import {mfaMessage,mfaSatisfied} from '../_shared/mfa.js';
 import {fetchCollections, counts} from './import-data.js';
 const url=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -63,6 +64,7 @@ async function actor(req:Request) {
  if(res.error||!res.data.user)throw Error('Sessão inválida ou expirada.');
  const u=q(await db.from('pedidos_usuarios').select('id,nome,email,perfil,status,permissoes').eq('id',res.data.user.id).maybeSingle());
  if(!u||u.status!=='ATIVO')throw Error('Usuário sem acesso ativo.');
+ if(!await mfaSatisfied(db.auth,token,res.data.user))throw Object.assign(Error(mfaMessage),{status:403});
  const lvl=level(u);if(!lvl)throw Error('Permissão de Frotas não concedida no GLOBAL.');
  return {id:u.id,nome:u.nome,email:u.email||'',perfil:u.perfil,superadmin:u.perfil==='SUPERADMIN',nivel:lvl};
 }
@@ -214,5 +216,5 @@ Deno.serve(async(req:Request)=>{
    return json({data:{ok:true}});
   }
   return json({error:'Ação desconhecida.'},400);
- }catch(e){console.error('frotas-api',String((e as Error)?.message||e));return json({error:clean((e as Error)?.message||'Erro no Frotas',300)},400);}
+ }catch(e){console.error('frotas-api',String((e as Error)?.message||e));return json({error:clean((e as Error)?.message||'Erro no Frotas',300)},e instanceof Error&&'status' in e&&e.status===403?403:400);}
 });
