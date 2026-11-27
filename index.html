@@ -1119,7 +1119,7 @@ window.addEventListener('beforeinstallprompt', event => {
     .gvgp-cat-icon{max-width:150px}
   }
 </style>
-<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js"></script><script src="./global-api.js"></script><script src="./shared-profile.js"></script></head>
+<link rel="icon" type="image/webp" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><link rel="apple-touch-icon" sizes="256x256" href="./assets/logo-gvg-artefal-icone.webp?v=global2"><script src="./pedidos-api.js?v=totp-1"></script><script src="./global-api.js?v=totp-1"></script><script src="./shared-profile.js"></script></head>
 <body>
 <div id="gvgpApp" class="gvgp-app gvgp-locked gvgp-cat-login">
   <button type="button" id="gvgpFocusMenuBtn" class="gvgp-focus-menu-btn" aria-label="Abrir menu do painel" aria-expanded="false" aria-controls="gvgpSidebar" title="Abrir menu do painel">
@@ -1360,6 +1360,23 @@ window.addEventListener('beforeinstallprompt', event => {
                 <small id="gvgpLoginInstallNotice" hidden>App já instalado neste dispositivo</small>
               </span>
             </button>
+          </form>
+          <form id="gvgpMfaForm" class="gvgp-login-form gvgp-login-panel gvgp-hidden">
+            <h2>Verificação em duas etapas</h2>
+            <p id="gvgpMfaHelp">Digite o código de 6 dígitos do seu aplicativo autenticador.</p>
+            <div id="gvgpMfaSetup" class="gvgp-hidden">
+              <img id="gvgpMfaQr" width="164" height="164" alt="QR code para configurar o aplicativo autenticador" style="display:block;margin:0 auto 10px">
+              <details><summary>Inserir chave manualmente</summary><code id="gvgpMfaSecret" style="overflow-wrap:anywhere"></code></details>
+            </div>
+            <div class="gvgp-field">
+              <label for="gvgpMfaCode">Código de verificação</label>
+              <div class="gvgp-input-wrap">
+                <input id="gvgpMfaCode" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+              </div>
+            </div>
+            <button type="submit" class="gvgp-btn gvgp-btn-teal" id="gvgpMfaConfirm">Confirmar e entrar</button>
+            <button type="button" class="gvgp-btn" id="gvgpMfaCancel">Voltar ao login</button>
+            <p id="gvgpMfaMsg" class="gvgp-login-msg" role="status" aria-live="polite"></p>
           </form>
         </div>
         </div>
@@ -1831,6 +1848,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
   }
   function closePending(){$('gvgpPendingModal').classList.add('gvgp-hidden');}
   function renderLoggedOut(){
+    resetMfa();
     state.token=''; state.adminToken=''; state.user=null; state.data=null; state.gastosFrameLoaded=false; state.fornecedoresFrameLoaded=false; state.maquinasFrameLoaded=false; state.frotasFrameLoaded=false; state.frotasAlert=''; externosLastFetch=0;externosLastToken='';lastUserSignature='';activitiesSig='';moduleUseOrder=state.frameLoaded?['pedidos']:[];
     const gastosFrame=$('gvgpGastosFrame'); if(gastosFrame)gastosFrame.src='about:blank';
     const fornecedoresFrame=$('gvgpFornecedoresFrame'); if(fornecedoresFrame)fornecedoresFrame.src='about:blank';
@@ -2094,7 +2112,7 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       if(state.token!==token||state.data)return;
       if(err.status===401||err.status===403||err.sessionExpired){
         renderLoggedOut();
-        $('gvgpLoginMsg').textContent=err.status===403?'Seu acesso ao painel está indisponível.':'Sua sessão precisa ser renovada. Entre novamente.';
+        $('gvgpLoginMsg').textContent=err.code==='MFA_REQUIRED'?err.message:err.status===403?'Seu acesso ao painel está indisponível.':'Sua sessão precisa ser renovada. Entre novamente.';
         return;
       }
       $('gvgpTopUser').querySelector('.gvgp-user-meta span').textContent='Conexão indisponível. Sessão mantida.';
@@ -2105,15 +2123,51 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       }));
     });
   }
-  function login(ev){
-    if(ev)ev.preventDefault();
-    const user=$('gvgpLoginUser').value.trim(), pass=$('gvgpLoginPass').value;
+  function resetMfa(){
+    window.GlobalPanelMfa.cancel();
+    $('gvgpMfaQr').removeAttribute('src');
+    $('gvgpMfaSecret').textContent='';
+    $('gvgpMfaCode').value='';
+    $('gvgpMfaMsg').textContent='';
+    $('gvgpMfaForm').classList.add('gvgp-hidden');
+    $('gvgpLoginForm').classList.remove('gvgp-hidden');
+  }
+  async function login(ev){
+    ev.preventDefault();
+    const user=$('gvgpLoginUser').value.trim(), pass=$('gvgpLoginPass');
     const msg=$('gvgpLoginMsg'), btn=$('gvgpLoginBtn');
-    msg.textContent=''; msg.style.color='#b42318';
-    if(!user||!pass){ msg.textContent='Informe usuário e senha.'; return; }
-    btn.disabled=true; btn.textContent='Entrando…';
-    try{if(document.requestStorageAccess)document.requestStorageAccess().catch(function(){});}catch(e){}
-    run('entrarFuncionario',user,pass).then(d=>{
+    msg.textContent='';
+    msg.style.color='#b42318';
+    if(!user||!pass.value){msg.textContent='Informe usuário e senha.';return;}
+    btn.disabled=true;
+    btn.textContent='Entrando…';
+    try{
+      if(document.requestStorageAccess)document.requestStorageAccess().catch(()=>{});
+      const factor=await window.GlobalPanelMfa.start(user,pass.value);
+      $('gvgpMfaHelp').textContent=factor.setup
+        ? 'Escaneie o QR code com seu aplicativo autenticador e digite o código de 6 dígitos.'
+        : 'Digite o código de 6 dígitos do seu aplicativo autenticador.';
+      $('gvgpMfaSetup').classList.toggle('gvgp-hidden',!factor.setup);
+      if(factor.setup){
+        $('gvgpMfaQr').src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(factor.qr);
+        $('gvgpMfaSecret').textContent=factor.secret;
+      }
+      $('gvgpLoginForm').classList.add('gvgp-hidden');
+      $('gvgpMfaForm').classList.remove('gvgp-hidden');
+      $('gvgpMfaCode').focus();
+    }catch(err){msg.textContent=err.message||'Não foi possível iniciar a verificação.';}
+    finally{pass.value='';btn.disabled=false;btn.textContent='Entrar no painel';}
+  }
+  async function verifyMfa(ev){
+    ev.preventDefault();
+    const code=$('gvgpMfaCode'), btn=$('gvgpMfaConfirm'), back=$('gvgpMfaCancel'), msg=$('gvgpMfaMsg');
+    msg.textContent='';
+    btn.disabled=true;
+    back.disabled=true;
+    try{
+      const d=await window.GlobalPanelMfa.verify(code.value.trim());
+      resetMfa();
+      const msg=$('gvgpLoginMsg');
       if(!d||!d.token) throw new Error('O servidor não confirmou a sessão.');
       store.set('globalEco:gvgUsrToken',d.token);
       if(['ADMIN','SUPERADMIN'].indexOf(String(d.perfil||'').toUpperCase())>=0){state.adminToken=d.token;}
@@ -2129,9 +2183,12 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
       if(state.maquinasFrameLoaded){ const m=$('gvgpMaquinasFrame'); if(m) m.src=MAQUINAS_URL; }
       if(state.frotasFrameLoaded){ const f=$('gvgpFrotasFrame'); if(f) f.src=frotasFrameUrl(); }
       toast('Bem-vindo(a), '+d.nome+'!');
-    }).catch(err=>{
-      msg.style.color='#b42318'; msg.textContent=String(err&&err.message||err).replace(/^Error:\s*/,'');
-    }).finally(()=>{btn.disabled=false;btn.textContent='Entrar no painel';});
+    }catch(err){
+      msg.textContent=err.code==='mfa_verification_failed'
+        ? 'Código inválido. Confira o código atual no autenticador e tente novamente.'
+        : err.message||'Não foi possível verificar o código.';
+      code.select();
+    }finally{btn.disabled=false;back.disabled=false;}
   }
   function revogarSessaoMaquinas_(){}
   function logout(){
@@ -2599,6 +2656,11 @@ const FROTAS_URL = new URL("./frotas.html?v=" + Date.now(), location.href).href;
     b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
   });
   $('gvgpLoginForm').addEventListener('submit',login);
+  $('gvgpMfaForm').addEventListener('submit',verifyMfa);
+  $('gvgpMfaCancel').addEventListener('click',()=>{
+    resetMfa();
+    $('gvgpLoginPass').focus();
+  });
   window.addEventListener('online',()=>{
     if(state.token&&!state.data)loadDashboard();
   });

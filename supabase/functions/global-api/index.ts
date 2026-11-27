@@ -108,6 +108,11 @@ Deno.serve(async req=>{
   const u=checked(await db.from('pedidos_usuarios').select('*').eq('id',auth.data.user.id).maybeSingle());if(!u||u.status!=='ATIVO')return reply({error:'Cadastro pendente ou bloqueado.'},403);
   let result;
   if(m==='painel'){
+   if(fn==='prepararSegundoFator')return reply({data:{ok:true}});
+   const assurance=await db.auth.getClaims(token);
+   if(assurance.error||assurance.data?.claims?.aal!=='aal2'){
+    return reply({error:'Confirme o código do aplicativo autenticador para entrar.',code:'MFA_REQUIRED'},403);
+   }
    if(fn==='getPainelInicial'||fn==='getPainelExternos')result=await panel(u);
    else if(fn==='perfil')result=publicUser(u);
    else if(fn==='alterarMinhaSenha')result=await changeOwnPassword(args[0]||{},u,token);

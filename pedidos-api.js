@@ -7,8 +7,11 @@
  let session = null, refreshing = null;
  try { session = JSON.parse(localStorage.getItem(STORAGE) || 'null'); } catch (_) {}
  function save(value) { session = value; if (value) localStorage.setItem(STORAGE, JSON.stringify(value)); else localStorage.removeItem(STORAGE); }
- async function auth(path, body) {
-  const response = await fetch(URL + '/auth/v1/' + path, { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+ async function auth(path, body, token, method = 'POST') {
+  const response = await fetch(URL + '/auth/v1/' + path, {
+   method, headers: { apikey: KEY, 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+   body: JSON.stringify(body)
+  });
   const result = await response.json();
   if (!response.ok) {
    const e = new Error(path.endsWith('=password') && response.status === 400 ? 'Usuário ou senha inválidos.' : result.msg || result.error_description || 'Não foi possível validar a sessão.');
@@ -54,15 +57,22 @@
   if (!response.ok || result.error) { const e = new Error(result.error || 'Não foi possível concluir a operação.'); e.status = response.status; throw e; }
   return result.data;
  }
+ const passwordLogin = (user, password) => {
+  const login = String(user || '').trim().toLowerCase();
+  const email = login.includes('@') ? login : login + '@pedidos.gvg.invalid';
+  return auth('token?grant_type=password', { email, password: String(password || '') });
+ };
+ async function finishLogin(result) {
+  save({ ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + result.expires_in });
+  try {
+   const profile = await call('estadoSessaoFuncionarioGVG', []);
+   window.dispatchEvent(new Event('global-profile-updated'));
+   return { ...profile, token: 'SUPABASE-' + profile.id };
+  } catch (e) { save(null); throw e; }
+ }
+ window.PanelAuth = { passwordLogin, request: auth, finishLogin };
  window.pedidosCall = async (fn, ...args) => {
-  if (fn === 'entrarFuncionario') {
-   const login = String(args[0] || '').trim().toLowerCase();
-   const email = login.includes('@') ? login : login + '@pedidos.gvg.invalid';
-   const result = await auth('token?grant_type=password', { email, password: String(args[1] || '') });
-   save({ ...result, expires_at: result.expires_at || Math.floor(Date.now() / 1000) + result.expires_in });
-   try { const profile = await call('estadoSessaoFuncionarioGVG', []); window.dispatchEvent(new Event('global-profile-updated')); return { ...profile, token: 'SUPABASE-' + profile.id }; }
-   catch (e) { save(null); throw e; }
-  }
+  if (fn === 'entrarFuncionario') return finishLogin(await passwordLogin(...args));
   if (fn === 'sairFuncionario' || fn === 'sairAdminGVG') {
    // O frontend original encerra os dois tipos de sessão em paralelo.
    const token = session?.access_token; save(null);

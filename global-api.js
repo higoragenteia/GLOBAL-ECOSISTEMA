@@ -27,6 +27,43 @@
   if(!write)inflight.set(cacheKey,promise);
   try{return await promise;}finally{if(!write)inflight.delete(cacheKey);}
  };
+ let pendingFactor;
+ window.GlobalPanelMfa = {
+  async start(user, password) {
+   pendingFactor = null;
+   const first = await window.PanelAuth.passwordLogin(user, password);
+   const token = first.access_token;
+   const response = await fetch(URL+'/functions/v1/global-api', {
+    method:'POST', headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({modulo:'painel',fn:'prepararSegundoFator'})
+   });
+   const status = await response.json();
+   if(!response.ok || !status.data?.ok) throw Error(status.error || 'A verificação do painel está indisponível.');
+   const factors = first.user?.factors || [];
+   const verified = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'verified');
+   const abandoned = factors.find(factor => factor.factor_type === 'totp' && factor.status === 'unverified');
+   if(!verified && abandoned) await window.PanelAuth.request('factors/'+encodeURIComponent(abandoned.id),undefined,token,'DELETE');
+   const factor = verified || await window.PanelAuth.request('factors',{
+    factor_type:'totp',friendly_name:'Global Ecossistema'
+   },token);
+   pendingFactor = {token, id:encodeURIComponent(factor.id), user:first.user};
+   return {setup:!verified, qr:factor.totp?.qr_code, secret:factor.totp?.secret};
+  },
+  async verify(code) {
+   const pending = pendingFactor;
+   if(!pending) throw Error('Entre novamente para gerar uma nova sessão.');
+   const path = 'factors/'+pending.id+'/';
+   const challenge = await window.PanelAuth.request(path+'challenge',{},pending.token);
+   const verified = await window.PanelAuth.request(path+'verify',{challenge_id:challenge.id,code},pending.token);
+   if(pendingFactor !== pending) throw Error('A verificação foi encerrada.');
+   pendingFactor = null;
+   const result = await window.PanelAuth.finishLogin({...verified,user:verified.user||pending.user});
+   const profile = await window.globalCall('painel','perfil');
+   for(const key of ['globalEco:gvgUsrToken','pedidosTeste:gvgUsrToken']) localStorage.setItem(key,result.token);
+   return {...result,...profile};
+  },
+  cancel() { pendingFactor = null; }
+ };
  window.globalPanelCall=async(fn,...args)=>{
   if(fn==='entrarFuncionario'){
    const result=await window.pedidosCall(fn,...args);
