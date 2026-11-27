@@ -36,14 +36,58 @@ let current={};for(let x of b.rows){let d=formatDate_(x.v[0]);if(d.slice(0,7)>ta
 const budgets={};for(let [key,x] of Object.entries(current)){if(!key.endsWith('||Custo do Funcionário'))budgets[key]=x.value;}
 const inMonth=expenses.filter(x=>x.date.slice(0,7)===target);const inAdj=adjustments.filter(x=>x.date.slice(0,7)===target);const sums={};for(let x of inMonth){let k=x.person+'||'+x.category;sums[k]=(sums[k]||0)+x.value;}for(let x of inAdj){let k=x.person+'||'+x.category;budgets[k]=(budgets[k]||0)+(x.type==='Adicionar'?x.value:-x.value)}
 const budgetTotal=Object.values(budgets).reduce((a,b)=>a+b,0),spent=inMonth.reduce((a,b)=>a+b.value,0);
-return {month:target,people:[...new Set([...people,...Object.keys(budgets).map(x=>x.split('||')[0])])],categories:[...new Set(cats)],companies:[...new Set(companies)],payments:[...new Set(payments)],expenses,adjustments,budgets,spentByKey:sums,summary:{budget:budgetTotal,spent,remaining:budgetTotal-spent}};}
+const allPeople=[...new Set([...people,...Object.keys(budgets).map(x=>x.split('||')[0])])];
+const excluded=excludedEmployees_();
+const activePeople=allPeople.filter(person=>!excluded.has(person.toLowerCase()));
+return {month:target,people:allPeople,activePeople,categories:[...new Set(cats)],companies:[...new Set(companies)],payments:[...new Set(payments)],expenses,adjustments,budgets,spentByKey:sums,summary:{budget:budgetTotal,spent,remaining:budgetTotal-spent}};}
+const excludedEmployeesCollection='Funcionários excluídos';
+function excludedEmployees_(){
+  const sheet=book_().getSheetByName(excludedEmployeesCollection);
+  const rows=sheet ? sheet.getDataRange().getValues().slice(1) : [];
+  return new Map(rows.flatMap(([name], index)=>s_(name) ? [[s_(name).toLowerCase(), index+2]] : []));
+}
+
+function excluirFuncionario(nome, mes){
+  requireAdmin_();
+  const person=s_(nome);
+  if(!person)throw Error('Selecione um funcionário.');
+  if(excludedEmployees_().has(person.toLowerCase()))return {ok:true};
+  if(!getDadosDashboard(mes).activePeople.includes(person))throw Error('Funcionário não encontrado na lista.');
+  const book=book_();
+  let sheet=book.getSheetByName(excludedEmployeesCollection);
+  if(!sheet){
+    sheet=book.insertSheet(excludedEmployeesCollection);
+    sheet.getRange(1,1).setValue('Pessoa');
+  }
+  sheet.appendRow([person]);
+  audit_('EXCLUIR FUNCIONÁRIO DA LISTA',{person});
+  return {ok:true};
+}
+
 function addGasto(o){requireAdmin_();guard_(o);const lock=LockService.getScriptLock();lock.waitLock(15000);try{const t=table_(CFG.base,'Data'),cols=t.headers;const d=validDate_(o.date),value=money_(o.value);if(!s_(o.person)||!s_(o.category)||!s_(o.description))throw Error('Pessoa, categoria e descrição são obrigatórios');if(value===0)throw Error('Valor do gasto deve ser maior que zero');const row=Array(cols.length).fill('');const set=(name,v)=>row[col_(t,name)]=v;
 set('Data',d);set('Descrição do Gasto',s_(o.description));set('Pessoa',s_(o.person));set('Categoria',s_(o.category));set('Empresa',s_(o.company));set('Forma de Pagamento',s_(o.payment));set('Valor (R$)',value);set('Observações',s_(o.notes));let last=Math.max(t.heading,...t.rows.map(x=>x.row));let dest=last+1;for(let c=0;c<row.length;c++){if(c===7)continue;t.sh.getRange(dest,c+1).setValue(row[c]);}if(!t.sh.getRange(dest,8).getFormula()){const prev=t.sh.getRange(Math.max(6,dest-1),8);if(prev.getFormula())prev.copyTo(t.sh.getRange(dest,8),SpreadsheetApp.CopyPasteType.PASTE_FORMULA,false);}audit_('NOVO GASTO',{row:dest,person:o.person,value});return {ok:true};}finally{lock.releaseLock();}}
 function editarGasto(o){requireAdmin_();guard_(o);const lock=LockService.getScriptLock();lock.waitLock(15000);try{const t=table_(CFG.base,'Data'),n=Number(o.row);if(!t.rows.some(x=>x.row===n))throw Error('Lançamento não encontrado');const val=money_(o.value);if(!s_(o.person)||!s_(o.category)||!s_(o.description)||val===0)throw Error('Preencha os campos obrigatórios');const updates={'Data':validDate_(o.date),'Descrição do Gasto':s_(o.description),'Pessoa':s_(o.person),'Categoria':s_(o.category),'Empresa':s_(o.company),'Forma de Pagamento':s_(o.payment),'Valor (R$)':val,'Observações':s_(o.notes)};for(const [k,v] of Object.entries(updates))t.sh.getRange(n,col_(t,k)+1).setValue(v);audit_('EDITAR GASTO',{row:n});return {ok:true};}finally{lock.releaseLock();}}
 function excluirGasto(row){requireAdmin_();const lock=LockService.getScriptLock();lock.waitLock(15000);try{const t=table_(CFG.base,'Data'),n=Number(row);if(!t.rows.some(x=>x.row===n))throw Error('Gasto não localizado');const old=t.sh.getRange(n,1,1,t.headers.length).getValues()[0];audit_('EXCLUIR GASTO',{row:n,old:old.map(x=>x instanceof Date?formatDate_(x):x)});t.sh.getRange(n,1,1,t.headers.length).clearContent();if(n>6){const f=t.sh.getRange(n-1,8);if(f.getFormula())f.copyTo(t.sh.getRange(n,8),SpreadsheetApp.CopyPasteType.PASTE_FORMULA,false);}return {ok:true};}finally{lock.releaseLock();}}
 function ajustarSaldo(o){requireAdmin_();guard_(o);const lock=LockService.getScriptLock();lock.waitLock(15000);try{if(!s_(o.person)||!s_(o.category)||!['Adicionar','Retirar'].includes(o.type))throw Error('Selecione pessoa, categoria e operação');const v=money_(o.value);if(!v)throw Error('Valor deve ser maior que zero');sh_(CFG.adjust).appendRow([validDate_(o.date),s_(o.person),s_(o.category),o.type,v,s_(o.notes)]);audit_('AJUSTAR SALDO',{person:o.person,category:o.category,type:o.type,value:v});return {ok:true};}finally{lock.releaseLock();}}
 function alterarOrcamento(o){requireAdmin_();guard_(o);const lock=LockService.getScriptLock();lock.waitLock(15000);try{let t=table_(CFG.budget,'A partir de (mês)'),ci=t.headers.indexOf(s_(o.person));if(ci<2)throw Error('Pessoa não encontrada nas colunas do orçamento. Cadastre a coluna primeiro.');const cat=s_(o.category);if(!cat)throw Error('Categoria obrigatória');const first=String(o.month||'').slice(0,7)+'-01';const d=validDate_(first);let row=t.rows.find(x=>formatDate_(x.v[0]).slice(0,7)===first.slice(0,7)&&s_(x.v[1])===cat);if(!row){let target=Math.max(t.heading,...t.rows.map(x=>x.row))+1;t.sh.getRange(target,1,1,t.headers.length).setValues([Array(t.headers.length).fill('')]);t.sh.getRange(target,1).setValue(d);t.sh.getRange(target,2).setValue(cat);row={row:target};}t.sh.getRange(row.row,ci+1).setValue(money_(o.value));audit_('ALTERAR ORÇAMENTO',{month:first,person:o.person,category:cat,value:o.value});return {ok:true};}finally{lock.releaseLock();}}
-function cadastrarOpcao(o){requireAdmin_();guard_(o);const col={category:1,person:2,payment:3,company:4}[o.kind];if(!col)throw Error('Tipo de cadastro inválido');let value=s_(o.value);if(!value)throw Error('Informe o nome');const sh=sh_(CFG.reg),t=table_(CFG.reg,'Categoria');if(t.rows.some(x=>s_(x.v[col-1]).toLowerCase()===value.toLowerCase()))throw Error('Cadastro já existe');let target=t.heading+1;while(s_(sh.getRange(target,col).getValue()))target++;sh.getRange(target,col).setValue(value);if(o.kind==='person'){let b=sh_(CFG.budget),h=table_(CFG.budget,'A partir de (mês)');let j=h.headers.length+1;b.getRange(h.heading,j).setValue(value);b.getRange(h.heading,j).setBackground('#286f9c').setFontColor('#ffffff').setFontWeight('bold');}audit_('CADASTRAR OPÇÃO',{kind:o.kind,value});return {ok:true,message:'Cadastro criado.'};}
+function cadastrarOpcao(o){requireAdmin_();guard_(o);const col={category:1,person:2,payment:3,company:4}[o.kind];if(!col)throw Error('Tipo de cadastro inválido');let value=s_(o.value);if(!value)throw Error('Informe o nome');
+if(o.kind==='person'){
+  const row=excludedEmployees_().get(value.toLowerCase());
+  if(row){
+    const cell=sh_(excludedEmployeesCollection).getRange(row,1);
+    const original=cell.getValue();
+    const cadastro=table_(CFG.reg,'Categoria');
+    if(!cadastro.rows.some(x=>s_(x.v[1]).toLowerCase()===value.toLowerCase())){
+      let target=cadastro.heading+1;
+      while(s_(cadastro.sh.getRange(target,2).getValue()))target++;
+      cadastro.sh.getRange(target,2).setValue(original);
+    }
+    cell.clearContent();
+    audit_('REATIVAR FUNCIONÁRIO NA LISTA',{person:original});
+    return {ok:true,message:'Cadastro reativado.'};
+  }
+}
+const sh=sh_(CFG.reg),t=table_(CFG.reg,'Categoria');if(t.rows.some(x=>s_(x.v[col-1]).toLowerCase()===value.toLowerCase()))throw Error('Cadastro já existe');let target=t.heading+1;while(s_(sh.getRange(target,col).getValue()))target++;sh.getRange(target,col).setValue(value);if(o.kind==='person'){let b=sh_(CFG.budget),h=table_(CFG.budget,'A partir de (mês)');let j=h.headers.length+1;b.getRange(h.heading,j).setValue(value);b.getRange(h.heading,j).setBackground('#286f9c').setFontColor('#ffffff').setFontWeight('bold');}audit_('CADASTRAR OPÇÃO',{kind:o.kind,value});return {ok:true,message:'Cadastro criado.'};}
 
 function editarAjuste(o){requireAdmin_();guard_(o);const lock=LockService.getScriptLock();lock.waitLock(15000);try{const sh=sh_(CFG.adjust),row=Number(o.row);if(row<2||row>sh.getLastRow()||!sh.getRange(row,1).getValue())throw Error('Ajuste não localizado');if(!['Adicionar','Retirar'].includes(o.type)||!s_(o.person)||!s_(o.category))throw Error('Confira pessoa, categoria e operação');let old=sh.getRange(row,1,1,6).getValues()[0];sh.getRange(row,1,1,6).setValues([[validDate_(o.date),s_(o.person),s_(o.category),o.type,money_(o.value),s_(o.notes)]]);audit_('EDITAR AJUSTE',{row,old:old.map(x=>x instanceof Date?formatDate_(x):x),novo:o});return {ok:true};}finally{lock.releaseLock();}}
 function excluirAjuste(row){requireAdmin_();const lock=LockService.getScriptLock();lock.waitLock(15000);try{const sh=sh_(CFG.adjust),n=Number(row);if(n<2||n>sh.getLastRow()||!sh.getRange(n,1).getValue())throw Error('Ajuste não encontrado');const old=sh.getRange(n,1,1,6).getValues()[0];audit_('EXCLUIR AJUSTE',{row:n,old:old.map(x=>x instanceof Date?formatDate_(x):x)});sh.getRange(n,1,1,6).clearContent();return {ok:true};}finally{lock.releaseLock();}}
@@ -218,6 +262,7 @@ function apiCall(fn, args, token, painelToken) {
     ajustarSaldo: ajustarSaldo,
     alterarOrcamento: alterarOrcamento,
     cadastrarOpcao: cadastrarOpcao,
+    excluirFuncionario: excluirFuncionario,
     editarAjuste: editarAjuste,
     excluirAjuste: excluirAjuste
   };
